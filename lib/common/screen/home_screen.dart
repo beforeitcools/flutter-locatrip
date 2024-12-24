@@ -15,10 +15,10 @@ class _HomeScreenState extends State<HomeScreen> {
   // 탭에 따라 표시할 화면들
   final List<Widget> _pages = [
     MainScreen(),
-    Text("지도"),
-    Text("여행첨삭소"),
-    Text("채팅"),
-    Text("마이페이지")
+    MapScreen(),
+    AdviceScreen(),
+    ChattingScreen(),
+    MypageScreen(),
   ];
 
   // 탭 선택 시 호출 함수
