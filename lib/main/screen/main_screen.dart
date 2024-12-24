@@ -18,8 +18,9 @@ class _MainScreenState extends State<MainScreen> {
         child: AppBar(
           title: Text(
             "여행자, 평온한토미님!",
-            // style: Theme.of(context).textTheme.headlineLarge,
             style: TextStyle(fontSize: 20),
+            // 참고용
+            // style: Theme.of(context).textTheme.headlineLarge,
           ),
           actions: [
             IconButton(onPressed: () {}, icon: Icon(Icons.notifications)),
