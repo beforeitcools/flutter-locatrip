@@ -14,7 +14,11 @@ class _MainScreenState extends State<MainScreen> {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(64),
         child: AppBar(
-          title: Image.asset("assets/logo.png"),
+          title: Text(
+            "여행자, 평온한토미님!",
+            // style: Theme.of(context).textTheme.headlineLarge,
+            style: TextStyle(fontSize: 20),
+          ),
           actions: [
             IconButton(onPressed: () {}, icon: Icon(Icons.notifications)),
           ],
