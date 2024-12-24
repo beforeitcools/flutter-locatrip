@@ -13,28 +13,45 @@ class _TripScreenState extends State<TripScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
-        // decoration: BoxDecoration(
-        //   image: DecorationImage(
-        //     fit: BoxFit.cover,
-        //     image: AssetImage('assets/bg-1.jpg'),
-        //   ),
-        // ),
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            fit: BoxFit.cover,
+            image: AssetImage('assets/bg-1.jpg'),
+          ),
+        ),
         child: Column(
           children: [
-            Image(
-              image: AssetImage('assets/bg-1.jpg'),
-            ),
+            // Image(
+            //   image: AssetImage('assets/bg-1.jpg'),
+            // ),
             Container(
               padding: EdgeInsets.only(top: 24, right: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  IconButton(
-                    onPressed: () {},
-                    icon: Icon(
-                      Icons.close,
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      //borderRadius: BorderRadius.circular(100),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.25),
+                          offset: Offset(0, 4),
+                          blurRadius: 4,
+                        ),
+                      ],
                     ),
-                  ),
+                    child: IconButton(
+                      padding: EdgeInsets.all(5),
+                      constraints: BoxConstraints(),
+                      onPressed: () {},
+                      icon: Icon(
+                        Icons.close,
+                        // size: 24,
+                      ),
+                    ),
+                  )
                 ],
               ),
             ),
