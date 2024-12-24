@@ -18,4 +18,8 @@ var theme = ThemeData(
     // elevation: 8.0
   ),
   textTheme: appTextTheme(),
+  floatingActionButtonTheme: FloatingActionButtonThemeData(
+    backgroundColor: pointBlueColor,
+    foregroundColor: Colors.white,
+  ),
 );
