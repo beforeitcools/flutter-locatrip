@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../widget/selectPlaceBottomSheet.dart';
+import '../widget/bottom_sheet_content.dart';
 
 class TripScreen extends StatefulWidget {
   const TripScreen({super.key});
@@ -10,6 +10,19 @@ class TripScreen extends StatefulWidget {
 }
 
 class _TripScreenState extends State<TripScreen> {
+  void _showBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      // shape: RoundedRectangleBorder(
+      //   borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      // ),
+      builder: (BuildContext context) {
+        return const BottomSheetContent();
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -17,14 +30,17 @@ class _TripScreenState extends State<TripScreen> {
       //   backgroundColor: Colors.transparent,
       // ),
       backgroundColor: Colors.transparent,
-      body: Container(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              fit: BoxFit.cover,
-              image: AssetImage('assets/bg-1.jpg'),
+      body: GestureDetector(
+          onTap: () {
+            _showBottomSheet(context);
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                fit: BoxFit.cover,
+                image: AssetImage('assets/bg-1.jpg'),
+              ),
             ),
-          ),
-          child: GestureDetector(
             child: Column(
               children: [
                 Container(
