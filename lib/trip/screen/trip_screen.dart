@@ -14,11 +14,15 @@ class _TripScreenState extends State<TripScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
+      isScrollControlled: true,
       // shape: RoundedRectangleBorder(
       //   borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       // ),
       builder: (BuildContext context) {
-        return const BottomSheetContent();
+        return FractionallySizedBox(
+          heightFactor: 0.97,
+          child: BottomSheetContent(),
+        );
       },
     );
   }
@@ -62,7 +66,7 @@ class _TripScreenState extends State<TripScreen> {
                           ],
                         ),
                         child: IconButton(
-                          padding: EdgeInsets.zero,
+                          padding: EdgeInsets.all(5),
                           constraints: BoxConstraints(),
                           onPressed: () {
                             Navigator.pushReplacementNamed(context, "/home");
