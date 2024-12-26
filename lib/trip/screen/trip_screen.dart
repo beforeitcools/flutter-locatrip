@@ -69,7 +69,8 @@ class _TripScreenState extends State<TripScreen> {
                           padding: EdgeInsets.all(5),
                           constraints: BoxConstraints(),
                           onPressed: () {
-                            Navigator.pushReplacementNamed(context, "/home");
+                            //Navigator.pushReplacementNamed(context, "/home");
+                            Navigator.pop(context);
                           },
                           icon: Icon(
                             Icons.close,
