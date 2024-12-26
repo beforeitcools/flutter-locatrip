@@ -1,10 +1,9 @@
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
 class ChatRoomSetting extends StatelessWidget {
-  const ChatRoomSetting({super.key});
+  final String chatRoom;
+  const ChatRoomSetting({super.key, required this.chatRoom});
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +35,7 @@ class ChatRoomSetting extends StatelessWidget {
                   children: [
                     Text("채팅방 이름", style: Theme.of(context).textTheme.bodyMedium),
                     Expanded(child: Container(
-                      child: Text("울릉도동남쪽뱃길따라87k외로운섬", style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.right) //TODO 20자 넘어가지 못하게 할 것임
+                      child: Text(chatRoom, style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.right) //TODO 20자 넘어가지 못하게 할 것임
                     ))
                   ])),
               SizedBox(

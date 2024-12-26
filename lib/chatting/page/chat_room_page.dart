@@ -24,7 +24,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         title: Text(widget.chatModel.name),
         actions: [
           IconButton(onPressed: (){}, icon: Icon(Icons.search), color: grayColor),
-          IconButton(onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (context)=>ChatRoomSetting()));}, icon: Icon(Icons.settings_outlined), color: grayColor)
+          IconButton(onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (context)=>ChatRoomSetting(chatRoom: widget.chatModel.name)));}, icon: Icon(Icons.settings_outlined), color: grayColor)
         ],),
         body: Container(
           height: MediaQuery.of(context).size.height,
