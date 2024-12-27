@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/trip/model/region_model.dart';
 import 'package:flutter_locatrip/trip/widget/no_result.dart';
-import 'package:flutter_locatrip/trip/widget/selected_regions.dart';
 
 import '../screen/create_trip_screen.dart';
 
@@ -319,14 +318,14 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                               // contentPadding: EdgeInsets.only(bottom: 20),
                               leading: Image.asset(
                                 _displayedRegions[i]["imageUrl"] ?? "",
-                                width: 50,
-                                height: 50,
+                                width: 36,
+                                height: 36,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
                                   return Image.asset(
                                     defaultImageUrl,
-                                    width: 50,
-                                    height: 50,
+                                    width: 36,
+                                    height: 36,
                                   );
                                 },
                               ),
@@ -469,8 +468,7 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                                   MaterialPageRoute(
                                     builder: (context) => CreateTripScreen(
                                         selectedRegions: selectedRegions,
-                                        defaultImageUrl: defaultImageUrl,
-                                        isAbled: isAbled),
+                                        defaultImageUrl: defaultImageUrl),
                                     fullscreenDialog: true,
                                   ));
                             }

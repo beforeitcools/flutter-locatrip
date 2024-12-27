@@ -1,48 +1,48 @@
 import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/common/widget/color.dart';
 
-class CalendarModel {
-  DateTime? startDate;
-  DateTime? endDate;
+import 'date_range_model.dart';
 
-  CalendarModel({this.startDate, this.endDate});
+class CalendarPickerModal {
+  static DateTime today = DateTime.now(); // 오늘 날짜
+  static int currentYear = today.year;
 
-  String getFormattedRange() {
-    if (startDate != null && endDate != null) {
-      return '${startDate!.toLocal()} - ${endDate!.toLocal()}';
-    } else {
-      return 'No date range selected';
-    }
-  }
-
-  // 날짜 범위 선택 메서드
-  Future<void> selectDateRange(BuildContext context) async {
-    final List<DateTime>? selectedDates = await showDialog<List<DateTime>>(
+  static Future<DateRangeModel?> showDateRangePickerModal({
+    required BuildContext context,
+    required DateRangeModel initialRange,
+  }) async {
+    List<DateTime?>? results = await showCalendarDatePicker2Dialog(
       context: context,
-      builder: (BuildContext context) {
-        return Material(
-          // Material 위젯만 추가
-          child: CalendarDatePicker2(
-            config: CalendarDatePicker2Config(
-              firstDate: DateTime.now().subtract(Duration(days: 365)),
-              lastDate: DateTime.now().add(Duration(days: 365)),
-            ),
-            value: startDate != null && endDate != null
-                ? [startDate!, endDate!] // value 파라미터에 선택된 날짜 범위를 전달
-                : [],
-            onValueChanged: (dates) {
-              if (dates != null && dates.isNotEmpty && dates.length == 2) {
-                Navigator.of(context).pop(dates); // 선택된 날짜를 반환
-              }
-            },
-          ),
-        );
-      },
+      config: CalendarDatePicker2WithActionButtonsConfig(
+        calendarType: CalendarDatePicker2Type.range,
+        selectedDayHighlightColor: pointBlueColor,
+        firstDate: today,
+        lastDate: DateTime(currentYear + 5),
+        rangeBidirectional: true,
+        centerAlignModePicker: true,
+        daySplashColor: Colors.white,
+        cancelButton: Text(
+          "취소",
+          style: TextStyle(color: grayColor),
+        ),
+        okButton: Text(
+          "확인",
+          style: TextStyle(color: pointBlueColor, fontWeight: FontWeight.w600),
+        ),
+      ),
+      dialogSize: const Size(325, 400),
+      borderRadius: BorderRadius.circular(16),
+      value: [initialRange.startDate, initialRange.endDate],
+      dialogBackgroundColor: Colors.white,
     );
 
-    if (selectedDates != null && selectedDates.length == 2) {
-      startDate = selectedDates[0];
-      endDate = selectedDates[1];
+    if (results != null) {
+      return DateRangeModel(
+        startDate: results.isNotEmpty ? results[0] : null,
+        endDate: results.length > 1 ? results[1] : results[0],
+      );
     }
+    return null;
   }
 }

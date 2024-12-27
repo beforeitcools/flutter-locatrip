@@ -1,34 +1,90 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:flutter_locatrip/trip/model/calendar_model.dart';
+import 'package:flutter_locatrip/trip/model/trip_model.dart';
+import 'package:flutter_locatrip/trip/screen/trip_view_screen.dart';
 
 import '../../common/widget/color.dart';
+import '../model/date_range_model.dart';
 
 class CreateTripScreen extends StatefulWidget {
   final List<Map<String, String>> selectedRegions;
   final String defaultImageUrl;
-  final bool isAbled;
+
   const CreateTripScreen(
       {super.key,
       required this.selectedRegions,
-      required this.defaultImageUrl,
-      required this.isAbled});
+      required this.defaultImageUrl});
 
   @override
   State<CreateTripScreen> createState() => _CreateTripScreenState();
 }
 
 class _CreateTripScreenState extends State<CreateTripScreen> {
-  final CalendarModel _calendarModel = CalendarModel();
-  // DateTimeRange? selectedDateRange;
   late List<Map<String, String>> selectedRegions;
   late String defaultImageUrl;
-  late bool isAbled;
 
   TextEditingController _titleInputController = TextEditingController();
-  Future<void> _selectDateRange() async {
-    await _calendarModel.selectDateRange(context); // 날짜 범위 선택
-    setState(() {}); // 날짜 범위가 변경되었을 때 UI 업데이트
+
+  DateRangeModel _dateRangeModel = DateRangeModel();
+  bool isCreated = false;
+
+  TripModel _tripModel = TripModel();
+
+  void _openDatePicker() async {
+    DateRangeModel? newRange =
+        await CalendarPickerModal.showDateRangePickerModal(
+      context: context,
+      initialRange: _dateRangeModel,
+    );
+
+    if (newRange != null) {
+      setState(() {
+        _dateRangeModel.startDate = newRange.startDate;
+        _dateRangeModel.endDate =
+            newRange.endDate ?? newRange.startDate; // 종료 날짜 없으면 시작 날짜로 설정
+
+        if (_titleInputController.text.isNotEmpty) {
+          isCreated = true;
+        }
+      });
+    }
+  }
+
+  void _insertTrip() async {
+    List<String> selectedRegionList = [];
+    for (var item in selectedRegions) {
+      selectedRegionList.add(item["name"].toString());
+    }
+
+    String startDateString = _dateRangeModel.startDate != null
+        ? _dateRangeModel.startDate!.toIso8601String()
+        : "";
+
+    String endDateString = _dateRangeModel.endDate != null
+        ? _dateRangeModel.endDate!.toIso8601String()
+        : "";
+
+    Map<String, dynamic> tripData = {
+      // 임시데이터 - 유저아이디 실제로 받아와야함!!
+      "userId": 1,
+      "title": _titleInputController.text.toString(),
+      "startDate": startDateString,
+      "endDate": endDateString,
+      "regions": selectedRegionList
+    };
+
+    try {
+      String result = await _tripModel.insertTrip(tripData);
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(result)));
+    } catch (e) {
+      print("에러메시지 : $e");
+      /*ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error : $e')));*/
+    }
   }
 
   @override
@@ -36,16 +92,16 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
     super.initState();
     selectedRegions = widget.selectedRegions;
     defaultImageUrl = widget.defaultImageUrl;
-    isAbled = widget.isAbled;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await _selectDateRange(); // 날짜 범위 선택
+    Future.delayed(Duration.zero, () {
+      _openDatePicker();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        backgroundColor: lightGrayColor,
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
@@ -53,13 +109,17 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
               Navigator.pop(context);
             },
           ),
+          backgroundColor: lightGrayColor,
         ),
         body: Padding(
             padding: EdgeInsets.fromLTRB(16, 25, 16, 0),
             child: Column(
               children: [
-                Padding(
+                Container(
                   padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.all(Radius.circular(16))),
                   child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -75,8 +135,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                                   child: Column(
                                     children: [
                                       ClipRRect(
-                                        borderRadius: BorderRadius.circular(
-                                            12), // 이미지 둥글게
+                                        borderRadius: BorderRadius.circular(12),
                                         child: Image.asset(
                                           region["imageUrl"].toString() ??
                                               defaultImageUrl,
@@ -108,6 +167,35 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                           ),
                         ),
                         Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                              border: Border(
+                                  top: BorderSide(
+                                      color: lightGrayColor,
+                                      width: 1.0,
+                                      style: BorderStyle.solid))),
+                          child: TextButton(
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.all(16),
+                                alignment: Alignment.centerLeft,
+                              ),
+                              onPressed: () {
+                                _openDatePicker();
+                              },
+                              child: Text(
+                                  _dateRangeModel.startDate == null
+                                      ? '날짜를 선택해주세요'
+                                      : _dateRangeModel.startDate ==
+                                              _dateRangeModel.endDate
+                                          ? '${_dateRangeModel.startDate!.toString().split(' ')[0] ?? '미설정'}'
+                                          : '${_dateRangeModel.startDate!.toString().split(' ')[0]} ~ '
+                                              '${_dateRangeModel.endDate?.toString().split(' ')[0] ?? '미설정'}',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(fontWeight: FontWeight.w600))),
+                        ),
+                        Container(
                           // 선
                           width: double.infinity,
                           height: 1,
@@ -115,6 +203,20 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                         ),
                         TextField(
                           controller: _titleInputController,
+                          onChanged: (value) {
+                            setState(() {
+                              if (value.isNotEmpty &&
+                                  _dateRangeModel.startDate != null) {
+                                isCreated = true;
+                              } else {
+                                isCreated = false;
+                              }
+
+                              print(value.isNotEmpty);
+                              print(_dateRangeModel.startDate);
+                            });
+                          },
+                          maxLength: 20,
                           decoration: InputDecoration(
                             hintText: "여행 제목",
                             hintStyle: Theme.of(context)
@@ -133,7 +235,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                                 color: Colors.transparent,
                               ),
                             ),
-                            contentPadding: EdgeInsets.all(16),
+                            contentPadding: EdgeInsets.fromLTRB(16, 16, 16, 0),
                             border: InputBorder.none,
                           ),
                           style: Theme.of(context).textTheme.bodyMedium,
@@ -146,13 +248,31 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: TextButton(
-                      onPressed: _selectDateRange,
+                      onPressed: isCreated
+                          ? () {
+                              _insertTrip();
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => TripViewScreen(
+                                        /*selectedRegions: selectedRegions,
+                                      dateRangeModel: _dateRangeModel,
+                                      title: _titleInputController.text,*/
+                                        ),
+                                    fullscreenDialog: true,
+                                  ));
+                            }
+                          : null,
                       style: TextButton.styleFrom(
                         minimumSize: Size(100, 56), // 최소 높이 설정
                         backgroundColor:
-                            !isAbled ? lightGrayColor : pointBlueColor,
+                            !isCreated ? lightGrayColor : pointBlueColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(6), // 둥근 테두리 설정
+                        ),
+                        side: BorderSide(
+                          color: isCreated ? Colors.transparent : Colors.white,
+                          width: 1,
                         ),
                       ),
                       child: Text(
