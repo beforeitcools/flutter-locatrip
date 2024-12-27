@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/chatting/model/chat_model.dart';
+import 'package:flutter_locatrip/chatting/ui/own_message_ui.dart';
 import 'package:flutter_locatrip/chatting/widgets//chat_room_setting.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
@@ -49,7 +50,11 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           width: MediaQuery.of(context).size.width,
           child: Stack(
             children: [
-              ListView(),
+              ListView(
+                children: [
+                  OwnMessageUi(),
+                ],
+              ),
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Row(
