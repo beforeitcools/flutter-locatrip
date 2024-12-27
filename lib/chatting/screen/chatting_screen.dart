@@ -11,11 +11,30 @@ class ChattingScreen extends StatefulWidget {
 }
 
 class _ChattingScreenState extends State<ChattingScreen> {
-  List<ChatModel> chats = [
-    ChatModel(name: "민주", isGroup: false, time: "16:04", currentMessage: "민주주의 만세"),
-    ChatModel(name: "현지", isGroup: false, time: "11:13", currentMessage: "탄핵하라"),
-    ChatModel(name: "회먹음이연합", isGroup: true, time: "11:13", currentMessage: "탄핵하라")
-  ];
+  final ChatModel _chatModel = ChatModel();
+  List<dynamic> _chats = [];
+  dynamic _selectedChat;
+
+  // List<ChatModel> chats = [
+  //   ChatModel(name: "민주", isGroup: false, time: "16:04", currentMessage: "민주주의 만세"),
+  //   ChatModel(name: "현지", isGroup: false, time: "11:13", currentMessage: "탄핵하라"),
+  //   ChatModel(name: "회먹음이연합", isGroup: true, time: "11:13", currentMessage: "탄핵하라")
+  // ];
+
+  void _loadChatData() async
+  {
+    List<dynamic> chatData = await _chatModel.fetchMessageData();
+    setState(() {
+      _chats = chatData;
+    });
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
+    _loadChatData();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,10 +50,13 @@ class _ChattingScreenState extends State<ChattingScreen> {
             ),
         )],
       ),
-      body: ListView.builder(
-        itemCount: chats.length,
-        itemBuilder: (context, index) => (ChatListUi(chatModel: chats[index],)),
-      ),
+      body: _chats.isEmpty ? Center(child: Text("메세지 불러오는 중"))
+          : ListView.builder(
+              itemCount: _chats.length,
+              itemBuilder: (context, index){
+                final chat = _chats[index];
+                return ChatListUi(chatroomId: chat["chatroomId"], sender: chat["userId"].toString(), currentMessage: chat["messageContents"],);
+              }),
     );
   }
 }

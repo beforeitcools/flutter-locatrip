@@ -1,17 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/chatting/model/chat_model.dart';
-import 'package:flutter_locatrip/chatting/page/chat_room_setting.dart';
+import 'package:flutter_locatrip/chatting/widgets//chat_room_setting.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
 class ChatRoomPage extends StatefulWidget {
-  const ChatRoomPage({super.key, required this.chatModel});
-  final ChatModel chatModel;
+  const ChatRoomPage({super.key, required this.chatroomId, required this.sender});
+  final String sender;
+  final int chatroomId;
 
   @override
   State<ChatRoomPage> createState() => _ChatRoomPageState();
 }
 
 class _ChatRoomPageState extends State<ChatRoomPage> {
+  final ChatModel _chatModel = ChatModel();
+  List<dynamic> _chats = [];
+  dynamic _selectedChat;
+
+  void _loadChatsById() async {
+    print("${widget.chatroomId} <= 이거는 채팅방 Id");
+    List<dynamic> chatData = await _chatModel.fetchChatRoomData(widget.chatroomId);
+    _chats = chatData;
+    print(_chats);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadChatsById();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,10 +39,10 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           onTap: (){Navigator.pop(context);},
           child:  Icon(Icons.arrow_back),
         ),
-        title: Text(widget.chatModel.name),
+        title: Text(widget.sender),
         actions: [
           IconButton(onPressed: (){}, icon: Icon(Icons.search), color: grayColor),
-          IconButton(onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (context)=>ChatRoomSetting(chatRoom: widget.chatModel.name)));}, icon: Icon(Icons.settings_outlined), color: grayColor)
+          IconButton(onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (context)=>ChatRoomSetting(chatRoom: widget.sender)));}, icon: Icon(Icons.settings_outlined), color: grayColor)
         ],),
         body: Container(
           height: MediaQuery.of(context).size.height,
