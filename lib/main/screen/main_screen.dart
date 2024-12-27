@@ -23,7 +23,8 @@ class _MainScreenState extends State<MainScreen> {
             // style: Theme.of(context).textTheme.headlineLarge,
           ),
           actions: [
-            IconButton(onPressed: () {}, icon: Icon(Icons.notifications)),
+            IconButton(
+                onPressed: () {}, icon: Icon(Icons.notifications_outlined)),
           ],
         ),
       ),

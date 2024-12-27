@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/trip/model/region_model.dart';
 import 'package:flutter_locatrip/trip/widget/no_result.dart';
-import 'package:flutter_locatrip/trip/widget/selected_regions.dart';
 
 import '../screen/create_trip_screen.dart';
 
@@ -22,7 +21,7 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
   // 우리나라 시군
   List<Map<String, String>> _allRegionsList = [];
 
-  // 추천 장소들 - 나중에 이미지 추가할 때 변경하기
+  // 추천 장소들
   List<Map<String, String>> _recommendedRegions = [];
   List _recommendedNames = [
     "가평",
@@ -78,6 +77,9 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
   bool isAbled = false;
   bool isLoading = true;
   bool isNoResult = false;
+
+  // 스크롤 컨트롤러
+  final ScrollController _scrollController = ScrollController();
 
   // 전체 시군 가져오기
   void _loadRegions() async {
@@ -139,9 +141,61 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
       if (exists) {
         selectedRegions.removeWhere((item) => item['name'] == region);
       } else {
-        selectedRegions.add({"name": region, "imageUrl": imageUrl});
+        if (selectedRegions.length < 10) {
+          selectedRegions.add({"name": region, "imageUrl": imageUrl});
+        } else {
+          showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  backgroundColor: Colors.white,
+                  actionsPadding: EdgeInsets.fromLTRB(24, 0, 24, 0),
+                  contentPadding: EdgeInsets.all(24),
+                  content: Text(
+                    "최대 10개 도시까지\n선택 가능합니다.",
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  actions: [
+                    Container(
+                      decoration: BoxDecoration(
+                          border: Border(
+                              top: BorderSide(
+                                  color: lightGrayColor,
+                                  width: 1.0,
+                                  style: BorderStyle.solid))),
+                      child: Center(
+                          child: TextButton(
+                              style: TextButton.styleFrom(
+                                  padding: EdgeInsets.all(24)),
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: Text(
+                                "확인",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelMedium
+                                    ?.copyWith(
+                                        color: pointBlueColor,
+                                        fontWeight: FontWeight.w600),
+                              ))),
+                    )
+                  ],
+                );
+              });
+        }
       }
       isAbled = selectedRegions.isNotEmpty;
+    });
+
+    // 선택된 지역 추가 시 오른쪽 끝으로 스크롤
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
     });
   }
 
@@ -264,14 +318,14 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                               // contentPadding: EdgeInsets.only(bottom: 20),
                               leading: Image.asset(
                                 _displayedRegions[i]["imageUrl"] ?? "",
-                                width: 50,
-                                height: 50,
+                                width: 36,
+                                height: 36,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
                                   return Image.asset(
                                     defaultImageUrl,
-                                    width: 50,
-                                    height: 50,
+                                    width: 36,
+                                    height: 36,
                                   );
                                 },
                               ),
@@ -322,20 +376,22 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                     ),
                   ]),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      ...selectedRegions.map((region) {
-                        return Padding(
-                          padding: EdgeInsets.fromLTRB(0, 0, 20, 20),
-                          child: Column(
-                            children: [
-                              //image 위에 x버튼
-                              Stack(
-                                children: [
-                                  ClipRRect(
-                                      borderRadius:
-                                          BorderRadius.circular(12), // 이미지 둥글게
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    controller: _scrollController,
+                    child: Row(
+                      children: [
+                        ...selectedRegions.map((region) {
+                          return Padding(
+                            padding: EdgeInsets.fromLTRB(0, 0, 20, 20),
+                            child: Column(
+                              children: [
+                                Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
                                       child: Image.asset(
                                         region["imageUrl"].toString() ??
                                             defaultImageUrl,
@@ -350,55 +406,57 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                                             height: 50,
                                           );
                                         },
-                                      )),
-                                  Positioned(
-                                    top: -5,
-                                    right: -5,
-                                    child: SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          shape: BoxShape.circle,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black
-                                                  .withOpacity(0.05),
-                                              offset: Offset(1, 0),
-                                              blurRadius: 2,
-                                            )
-                                          ],
-                                        ),
-                                        child: IconButton(
-                                          padding: EdgeInsets.zero,
-                                          icon: Icon(Icons.close,
-                                              size: 12, color: grayColor),
-                                          onPressed: () {
-                                            setState(() {
-                                              selectedRegions.remove(region);
-                                              if (selectedRegions.isEmpty)
-                                                isAbled = false;
-                                            });
-                                          },
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: -5,
+                                      right: -5,
+                                      child: SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black
+                                                    .withOpacity(0.05),
+                                                offset: Offset(1, 0),
+                                                blurRadius: 2,
+                                              )
+                                            ],
+                                          ),
+                                          child: IconButton(
+                                            padding: EdgeInsets.zero,
+                                            icon: Icon(Icons.close,
+                                                size: 12, color: grayColor),
+                                            onPressed: () {
+                                              setState(() {
+                                                selectedRegions.remove(region);
+                                                if (selectedRegions.isEmpty)
+                                                  isAbled = false;
+                                              });
+                                            },
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              Text(
-                                region["name"].toString(),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelSmall
-                                    ?.copyWith(color: grayColor),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ],
+                                  ],
+                                ),
+                                Text(
+                                  region["name"].toString(),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelSmall
+                                      ?.copyWith(color: grayColor),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                    ),
                   ),
                   SizedBox(
                     width: double.infinity, // 너비 100%
@@ -410,8 +468,7 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                                   MaterialPageRoute(
                                     builder: (context) => CreateTripScreen(
                                         selectedRegions: selectedRegions,
-                                        defaultImageUrl: defaultImageUrl,
-                                        isAbled: isAbled),
+                                        defaultImageUrl: defaultImageUrl),
                                     fullscreenDialog: true,
                                   ));
                             }
