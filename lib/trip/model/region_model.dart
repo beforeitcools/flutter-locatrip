@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+// 시/군 불러오기
 class RegionModel {
   Future<List<Map<String, String>>> searchAllRegions() async {
     final dio = Dio();

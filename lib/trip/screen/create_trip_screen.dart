@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 
 import 'package:flutter_locatrip/trip/model/calendar_model.dart';
 import 'package:flutter_locatrip/trip/model/trip_model.dart';
+import 'package:flutter_locatrip/trip/screen/trip_screen.dart';
 import 'package:flutter_locatrip/trip/screen/trip_view_screen.dart';
+import 'package:intl/intl.dart';
 
 import '../../common/widget/color.dart';
 import '../model/date_range_model.dart';
@@ -52,7 +54,8 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
     }
   }
 
-  void _insertTrip() async {
+  // 일정 생성한 후, tripId 반환
+  Future<int?> _insertTrip() async {
     List<String> selectedRegionList = [];
     for (var item in selectedRegions) {
       selectedRegionList.add(item["name"].toString());
@@ -76,14 +79,14 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
     };
 
     try {
-      String result = await _tripModel.insertTrip(tripData);
+      Map<String, dynamic> result = await _tripModel.insertTrip(tripData);
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(result)));
+      int tripId = result["id"]; //
+
+      return tripId;
     } catch (e) {
       print("에러메시지 : $e");
-      /*ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error : $e')));*/
+      return null;
     }
   }
 
@@ -100,6 +103,14 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final dateFormat = DateFormat('yyyy-MM-dd');
+
+    String dateRangeText = _dateRangeModel.startDate == null
+        ? '날짜를 선택해주세요'
+        : _dateRangeModel.startDate == _dateRangeModel.endDate
+            ? dateFormat.format(_dateRangeModel.startDate!)
+            : '${dateFormat.format(_dateRangeModel.startDate!)} ~ ${dateFormat.format(_dateRangeModel.endDate!)}';
+
     return Scaffold(
         backgroundColor: lightGrayColor,
         appBar: AppBar(
@@ -182,14 +193,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                               onPressed: () {
                                 _openDatePicker();
                               },
-                              child: Text(
-                                  _dateRangeModel.startDate == null
-                                      ? '날짜를 선택해주세요'
-                                      : _dateRangeModel.startDate ==
-                                              _dateRangeModel.endDate
-                                          ? '${_dateRangeModel.startDate!.toString().split(' ')[0] ?? '미설정'}'
-                                          : '${_dateRangeModel.startDate!.toString().split(' ')[0]} ~ '
-                                              '${_dateRangeModel.endDate?.toString().split(' ')[0] ?? '미설정'}',
+                              child: Text(dateRangeText,
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodyMedium
@@ -211,9 +215,6 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                               } else {
                                 isCreated = false;
                               }
-
-                              print(value.isNotEmpty);
-                              print(_dateRangeModel.startDate);
                             });
                           },
                           maxLength: 20,
@@ -248,40 +249,46 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: TextButton(
-                      onPressed: isCreated
-                          ? () {
-                              _insertTrip();
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
+                    onPressed: isCreated
+                        ? () async {
+                            int? newTripId = await _insertTrip();
+                            if (newTripId != null) {
+                              // TripViewScreen(
+                              //   tripId: newTripId,
+                              // );
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
                                     builder: (context) => TripViewScreen(
-                                        /*selectedRegions: selectedRegions,
-                                      dateRangeModel: _dateRangeModel,
-                                      title: _titleInputController.text,*/
-                                        ),
-                                    fullscreenDialog: true,
-                                  ));
+                                        tripId:
+                                            newTripId)), // ***마이페이지로 돌아가도록...! 바꿔줘야함
+
+                                (Route<dynamic> route) =>
+                                    false, // 이전 페이지들을 모두 제거
+                              );
                             }
-                          : null,
-                      style: TextButton.styleFrom(
-                        minimumSize: Size(100, 56), // 최소 높이 설정
-                        backgroundColor:
-                            !isCreated ? lightGrayColor : pointBlueColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6), // 둥근 테두리 설정
-                        ),
-                        side: BorderSide(
-                          color: isCreated ? Colors.transparent : Colors.white,
-                          width: 1,
-                        ),
+                          }
+                        : null,
+                    style: TextButton.styleFrom(
+                      minimumSize: Size(100, 56), // 최소 높이 설정
+                      backgroundColor:
+                          !isCreated ? lightGrayColor : pointBlueColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6), // 둥근 테두리 설정
                       ),
-                      child: Text(
-                        "일정 생성",
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelLarge
-                            ?.copyWith(color: Colors.white),
-                      )),
+                      side: BorderSide(
+                        color: isCreated ? Colors.transparent : Colors.white,
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      "일정 생성",
+                      style: Theme.of(context)
+                          .textTheme
+                          .labelLarge
+                          ?.copyWith(color: Colors.white),
+                    ),
+                  ),
                 ),
               ],
             )));
