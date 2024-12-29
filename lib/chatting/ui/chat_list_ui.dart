@@ -22,7 +22,7 @@ class _ChatListUiState extends State<ChatListUi> {
       leading: CircleAvatar(radius: 20),
       title: Text(widget.sender, style: Theme.of(context).textTheme.labelLarge),
       subtitle: Text(widget.currentMessage, style: Theme.of(context).textTheme.labelMedium),
-      trailing: CircleAvatar(backgroundColor: pointBlueColor,radius: 9, child: Text("1", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w400, fontFamily: 'NotoSansKR', color: Colors.white)),),
+      trailing: CircleAvatar(backgroundColor: pointBlueColor,radius: 9, child: Text("1", style: Theme.of(context).textTheme.bodySmall!.copyWith(color: Colors.white, fontSize: 10)),),
     );
   }
 }

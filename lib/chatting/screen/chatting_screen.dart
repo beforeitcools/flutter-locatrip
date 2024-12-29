@@ -15,12 +15,6 @@ class _ChattingScreenState extends State<ChattingScreen> {
   List<dynamic> _chats = [];
   dynamic _selectedChat;
 
-  // List<ChatModel> chats = [
-  //   ChatModel(name: "민주", isGroup: false, time: "16:04", currentMessage: "민주주의 만세"),
-  //   ChatModel(name: "현지", isGroup: false, time: "11:13", currentMessage: "탄핵하라"),
-  //   ChatModel(name: "회먹음이연합", isGroup: true, time: "11:13", currentMessage: "탄핵하라")
-  // ];
-
   void _loadChatData() async
   {
     List<dynamic> chatData = await _chatModel.fetchMessageData();
@@ -50,7 +44,14 @@ class _ChattingScreenState extends State<ChattingScreen> {
             ),
         )],
       ),
-      body: _chats.isEmpty ? Center(child: Text("메세지 불러오는 중"))
+      body: _chats.isEmpty ? Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text("대화 목록이 아직 없어요", style: Theme.of(context).textTheme.titleMedium),
+              Text("여행을 위한 소통을 시작해 보세요!", style: Theme.of(context).textTheme.titleMedium!.copyWith(color: pointBlueColor))
+        ],
+      ))
           : ListView.builder(
               itemCount: _chats.length,
               itemBuilder: (context, index){

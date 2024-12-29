@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/chatting/model/chat_model.dart';
 import 'package:flutter_locatrip/chatting/ui/own_message_ui.dart';
+import 'package:flutter_locatrip/chatting/ui/reply_message_ui.dart';
 import 'package:flutter_locatrip/chatting/widgets//chat_room_setting.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class ChatRoomPage extends StatefulWidget {
   const ChatRoomPage({super.key, required this.chatroomId, required this.sender});
@@ -17,6 +19,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   final ChatModel _chatModel = ChatModel();
   List<dynamic> _chats = [];
   dynamic _selectedChat;
+  IO.Socket socket;
 
   void _loadChatsById() async {
     print("${widget.chatroomId} <= 이거는 채팅방 Id");
@@ -29,6 +32,10 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   void initState() {
     super.initState();
     _loadChatsById();
+  }
+
+  void connect(){
+    socket = IO.io(); //백엔드 서버 링크
   }
 
   @override
@@ -50,10 +57,23 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           width: MediaQuery.of(context).size.width,
           child: Stack(
             children: [
-              ListView(
-                children: [
-                  OwnMessageUi(),
-                ],
+              Container(
+                height: MediaQuery.of(context).size.height - 130,
+                child: ListView(
+                  shrinkWrap: true, // 리스트뷰의 크기를 현재 표시되는 아이템들의 크기에 맞게 자동으로 조절
+                  children: [
+                    OwnMessageUi(),
+                    ReplyMessageUi(),
+                    OwnMessageUi(),
+                    ReplyMessageUi(),
+                    OwnMessageUi(),
+                    ReplyMessageUi(),
+                    OwnMessageUi(),
+                    ReplyMessageUi(),
+                    OwnMessageUi(),
+                    ReplyMessageUi(),
+                  ],
+                ),
               ),
               Align(
                 alignment: Alignment.bottomCenter,
