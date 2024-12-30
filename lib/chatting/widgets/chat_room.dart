@@ -4,7 +4,6 @@ import 'package:flutter_locatrip/chatting/ui/own_message_ui.dart';
 import 'package:flutter_locatrip/chatting/ui/reply_message_ui.dart';
 import 'package:flutter_locatrip/chatting/widgets//chat_room_setting.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ChatRoomPage extends StatefulWidget {
@@ -17,7 +16,8 @@ class ChatRoomPage extends StatefulWidget {
 }
 
 class _ChatRoomPageState extends State<ChatRoomPage> {
-  final _channel = WebSocketChannel.connect(Uri.parse('')); // 서버 url
+  final _channel = WebSocketChannel.connect(Uri.parse('wss://echo.websocket.events')); // 서버 url
+
   final ChatModel _chatModel = ChatModel();
   final TextEditingController _textController = TextEditingController();
   List<dynamic> _chats = [];
@@ -36,28 +36,24 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   void initState() {
     super.initState();
     _loadChatsById();
-
-    // WebSocket 수신 처리
-    _channel.stream.listen((message) {
-      setState(() {
-        _chats.add({
-          "userId": 2, // TODO: 실제 전송자 ID와 메시지 데이터를 서버에서 받도록 설정
-          "messageContents": message
-        });
-      });
-    });
   }
 
-  void _sendMessage(){
+  void _sendMessage() async{
     if(_textController.text.isNotEmpty){
       String message = _textController.text;
       _channel.sink.add(message);
+      Map<String, dynamic> saveMessage = {
+        "chatroomId": widget.chatroomId,
+        "userId": myUserId,
+        "messageContents": message,
+        "sendTime": DateTime.now().toIso8601String()};
       setState(() {
-        _chats.add({"chatroomId": widget.chatroomId, "userId": myUserId, "messageContents": message, "sendTime": DateTime.now().toIso8601String()});
-        print(_chats);
+        _chats.add(saveMessage);
+        _textController.clear();
       });
-      _textController.clear();
-    }
+
+      await _chatModel.saveMessage(saveMessage);
+    };
   }
 
   @override
@@ -125,7 +121,14 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                                       hintText: "메세지를 입력하세요",
                                       contentPadding: EdgeInsets.only(left: 20, right: 20, bottom: 15)),
                                 )),
-                                IconButton(onPressed: (){_sendMessage();}, icon: Icon(Icons.send), color: grayColor,)
+                                IconButton(onPressed: (){_sendMessage();}, icon: Icon(Icons.send), color: grayColor,),
+                                const SizedBox(height: 24),
+                                StreamBuilder(
+                                  stream: _channel.stream,
+                                  builder: (context, snapshot) {
+                                    return Text(snapshot.hasData ? '${snapshot.data}' : '');
+                                  },
+                                )
                               ],
                             )))),
                 ]),

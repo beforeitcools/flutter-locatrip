@@ -37,6 +37,22 @@ class ChatModel{
       throw Exception("Error : $e");
     }
   }
-
+  
+  Future<void> saveMessage(Map<String, dynamic> message) async{
+    final dio = Dio();
+    
+    try{
+      final response = await dio.post("http://localhost:8082/sendMessage", data: message);
+      if(response.statusCode == 200 || response.statusCode == 201){
+        print("메세지를 성공적으로 보내다");
+      }else
+        {
+          throw Exception("메세지 전송에 실패하다. : ${response.statusCode}");
+        }
+    } catch(e){
+      print('오류가 나당~~~~~~');
+      throw Exception("Error: $e");
+    }
+  }
 
 }

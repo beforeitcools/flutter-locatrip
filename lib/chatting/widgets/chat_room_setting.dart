@@ -15,7 +15,7 @@ class _ChatRoomSettingState extends State<ChatRoomSetting> {
   String _buttonText = "";
   TextEditingController _controller = TextEditingController();
 
-  void toggleTextButton(){
+  void _toggleTextButton(){
     setState(() {
       _showTextField = !_showTextField; // 토글처럼 쓰기 ^^
       if(!_showTextField)
@@ -55,11 +55,21 @@ class _ChatRoomSettingState extends State<ChatRoomSetting> {
                               children: [
                                 Text("채팅방 이름", style: Theme.of(context).textTheme.bodyMedium),
                                 Expanded(child: Container(
-                                    child: TextButton(onPressed: (){/*버튼 눌렀을 때 텍스트 편집 할 수 있도록*/},
+                                    child: TextButton(onPressed: (){ _toggleTextButton();/*버튼 눌렀을 때 텍스트 편집 할 수 있도록*/},
                                         style: ButtonStyle(overlayColor: WidgetStateProperty.all(Colors.transparent)), //MaterialStateProperty 대신에 WidgetStateProperty 쓰기
                                         child: Align(
                                           alignment: Alignment.centerRight,
-                                          child: Text(widget.chatRoom, style: Theme.of(context).textTheme.bodySmall) ,
+                                          child: _showTextField ? 
+                                              Row(children: [
+                                                Expanded(child:  TextFormField(
+                                                  controller: _controller,
+                                                  decoration: InputDecoration(
+                                                      hintText: widget.chatRoom
+                                                  ),
+                                                )),
+                                                TextButton(onPressed: (){ _toggleTextButton();}, child: Text("저장", style: Theme.of(context).textTheme.labelMedium!.copyWith(color: pointBlueColor)))
+                                                ])
+                                              : Text(widget.chatRoom, style: Theme.of(context).textTheme.bodySmall) ,
                                         )) //TODO 20자 넘어가지 못하게 할 것임
                                 ))
                               ])),
