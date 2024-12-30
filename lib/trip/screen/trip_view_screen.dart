@@ -6,6 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../model/current_position_model.dart';
 import '../model/trip_model.dart';
+import '../widget/drag_bottom_sheet.dart';
 
 class TripViewScreen extends StatefulWidget {
   final int tripId;
@@ -149,82 +150,91 @@ class _TripViewScreenState extends State<TripViewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-            onPressed: () {
-              // **추가해야함 ! 뒤로 가기 클릭했을 때 마이페이지로 이동 시키기...!!!
-              // Navigator.pushAndRemoveUntil(
-              //   context,
-              //   MaterialPageRoute(builder: (context) => MyPage()),
-              //       (Route<dynamic> route) => false,
-              // );
-            },
-            icon: Icon(Icons.arrow_back)),
-        actions: [
-          IconButton(onPressed: () {}, icon: Icon(Icons.ios_share)),
-          IconButton(
-              onPressed: () {}, icon: Icon(Icons.notifications_outlined)),
-        ],
-      ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : tripInfo.isEmpty
-              ? Center(child: Text("여행 정보를 불러올 수 없습니다."))
-              : SingleChildScrollView(
-                  child: Column(
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          leading: IconButton(
+              onPressed: () {
+                // **추가해야함 ! 뒤로 가기 클릭했을 때 마이페이지로 이동 시키기...!!!
+                // Navigator.pushAndRemoveUntil(
+                //   context,
+                //   MaterialPageRoute(builder: (context) => MyPage()),
+                //       (Route<dynamic> route) => false,
+                // );
+              },
+              icon: Icon(Icons.arrow_back)),
+          actions: [
+            IconButton(onPressed: () {}, icon: Icon(Icons.ios_share)),
+            IconButton(
+                onPressed: () {}, icon: Icon(Icons.notifications_outlined)),
+          ],
+        ),
+        body: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : tripInfo.isEmpty
+                ? Center(child: Text("여행 정보를 불러올 수 없습니다."))
+                : Stack(
                     children: [
-                      Padding(
-                        padding: EdgeInsets.all(16),
+                      SingleChildScrollView(
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                    child: Text(
-                                  tripInfo["title"] ?? "제목 없음",
-                                  style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold),
-                                )),
-                                TextButton(onPressed: () {}, child: Text("편집")),
-                              ],
+                            Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                          child: Text(
+                                        tripInfo["title"] ?? "제목 없음",
+                                        style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold),
+                                      )),
+                                      TextButton(
+                                          onPressed: () {}, child: Text("편집")),
+                                    ],
+                                  ),
+                                  Text(
+                                    "${tripInfo['startDate'] ?? ''} ~ ${tripInfo['endDate'] ?? ''}",
+                                  ),
+                                  TextButton(
+                                      onPressed: () {},
+                                      child: Text("일행과 함께 짜기")),
+                                  Row(
+                                    children: [
+                                      TextButton(
+                                          onPressed: () {},
+                                          child: Text("체크리스트")),
+                                      TextButton(
+                                          onPressed: () {}, child: Text("가계부")),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                            Text(
-                              "${tripInfo['startDate'] ?? ''} ~ ${tripInfo['endDate'] ?? ''}",
-                            ),
-                            TextButton(
-                                onPressed: () {}, child: Text("일행과 함께 짜기")),
-                            Row(
-                              children: [
-                                TextButton(
-                                    onPressed: () {}, child: Text("체크리스트")),
-                                TextButton(
-                                    onPressed: () {}, child: Text("가계부")),
-                              ],
-                            ),
+                            if (latitude != null && longitude != null)
+                              Container(
+                                height: 300,
+                                child: GoogleMap(
+                                  initialCameraPosition: CameraPosition(
+                                      target: LatLng(latitude!, longitude!),
+                                      zoom: 10),
+                                  myLocationEnabled: true,
+                                  myLocationButtonEnabled: true,
+                                  onMapCreated:
+                                      (GoogleMapController controller) {
+                                    mapController = controller; // 지도 컨트롤러 초기화
+                                  },
+                                ),
+                              )
+                            else
+                              Center(child: CircularProgressIndicator()),
                           ],
                         ),
                       ),
-                      if (latitude != null && longitude != null)
-                        Container(
-                          height: 300,
-                          child: GoogleMap(
-                            initialCameraPosition: CameraPosition(
-                                target: LatLng(latitude!, longitude!),
-                                zoom: 10),
-                            myLocationEnabled: true,
-                            myLocationButtonEnabled: true,
-                            onMapCreated: (GoogleMapController controller) {
-                              mapController = controller; // 지도 컨트롤러 초기화
-                            },
-                          ),
-                        )
-                      else
-                        Center(child: CircularProgressIndicator()),
+                      DragBottomSheet()
                     ],
-                  ),
-                ),
-    );
+                  ));
   }
 }
