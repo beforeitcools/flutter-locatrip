@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
-import 'package:flutter_locatrip/trip/model/date_range_model.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';

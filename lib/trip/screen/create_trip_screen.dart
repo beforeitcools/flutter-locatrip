@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 
 import 'package:flutter_locatrip/trip/model/calendar_model.dart';
 import 'package:flutter_locatrip/trip/model/trip_model.dart';
-import 'package:flutter_locatrip/trip/screen/trip_screen.dart';
 import 'package:flutter_locatrip/trip/screen/trip_view_screen.dart';
 import 'package:intl/intl.dart';
 
