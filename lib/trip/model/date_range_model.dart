@@ -1,3 +1,4 @@
+// 시작/종료날짜
 class DateRangeModel {
   DateTime? startDate;
   DateTime? endDate;

@@ -4,6 +4,7 @@ import 'package:flutter_locatrip/common/widget/color.dart';
 
 import 'date_range_model.dart';
 
+// 캘린더 모달
 class CalendarPickerModal {
   static DateTime today = DateTime.now(); // 오늘 날짜
   static int currentYear = today.year;
