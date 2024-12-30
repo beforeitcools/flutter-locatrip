@@ -5,6 +5,7 @@ import 'package:flutter_locatrip/chatting/ui/reply_message_ui.dart';
 import 'package:flutter_locatrip/chatting/widgets//chat_room_setting.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ChatRoomPage extends StatefulWidget {
   const ChatRoomPage({super.key, required this.chatroomId, required this.sender});
@@ -16,26 +17,54 @@ class ChatRoomPage extends StatefulWidget {
 }
 
 class _ChatRoomPageState extends State<ChatRoomPage> {
+  final _channel = WebSocketChannel.connect(Uri.parse('')); // 서버 url
   final ChatModel _chatModel = ChatModel();
+  final TextEditingController _textController = TextEditingController();
   List<dynamic> _chats = [];
   dynamic _selectedChat;
-  IO.Socket socket;
+
+  int myUserId = 1;
 
   void _loadChatsById() async {
-    print("${widget.chatroomId} <= 이거는 채팅방 Id");
     List<dynamic> chatData = await _chatModel.fetchChatRoomData(widget.chatroomId);
-    _chats = chatData;
-    print(_chats);
+    setState(() {
+      _chats = chatData;
+    });
   }
 
   @override
   void initState() {
     super.initState();
     _loadChatsById();
+
+    // WebSocket 수신 처리
+    _channel.stream.listen((message) {
+      setState(() {
+        _chats.add({
+          "userId": 2, // TODO: 실제 전송자 ID와 메시지 데이터를 서버에서 받도록 설정
+          "messageContents": message
+        });
+      });
+    });
   }
 
-  void connect(){
-    socket = IO.io(); //백엔드 서버 링크
+  void _sendMessage(){
+    if(_textController.text.isNotEmpty){
+      String message = _textController.text;
+      _channel.sink.add(message);
+      setState(() {
+        _chats.add({"chatroomId": widget.chatroomId, "userId": myUserId, "messageContents": message, "sendTime": DateTime.now().toIso8601String()});
+        print(_chats);
+      });
+      _textController.clear();
+    }
+  }
+
+  @override
+  void dispose() {
+    _channel.sink.close();
+    _textController.dispose();
+    super.dispose();
   }
 
   @override
@@ -59,20 +88,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             children: [
               Container(
                 height: MediaQuery.of(context).size.height - 130,
-                child: ListView(
+                child: ListView.builder(
                   shrinkWrap: true, // 리스트뷰의 크기를 현재 표시되는 아이템들의 크기에 맞게 자동으로 조절
-                  children: [
-                    OwnMessageUi(),
-                    ReplyMessageUi(),
-                    OwnMessageUi(),
-                    ReplyMessageUi(),
-                    OwnMessageUi(),
-                    ReplyMessageUi(),
-                    OwnMessageUi(),
-                    ReplyMessageUi(),
-                    OwnMessageUi(),
-                    ReplyMessageUi(),
-                  ],
+                  itemCount: _chats.length,
+                  itemBuilder: (context, index){
+                    final chat = _chats[index];
+                    return chat["userId"] == myUserId ? OwnMessageUi(text: chat["messageContents"], time: chat["sendTime"]) : ReplyMessageUi(text: chat["messageContents"], time: chat["sendTime"]); //TODO: userId 확인해서 "나"면 Own, 외에는 Reply
+                  },
                 ),
               ),
               Align(
@@ -97,12 +119,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                                   keyboardType: TextInputType.multiline,
                                   maxLines: 10,
                                   minLines: 1,
+                                  controller: _textController,
                                   decoration: InputDecoration(
                                       border: InputBorder.none,
                                       hintText: "메세지를 입력하세요",
                                       contentPadding: EdgeInsets.only(left: 20, right: 20, bottom: 15)),
                                 )),
-                                IconButton(onPressed: (){}, icon: Icon(Icons.send), color: grayColor,)
+                                IconButton(onPressed: (){_sendMessage();}, icon: Icon(Icons.send), color: grayColor,)
                               ],
                             )))),
                 ]),

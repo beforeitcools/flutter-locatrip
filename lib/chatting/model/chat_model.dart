@@ -12,7 +12,7 @@ class ChatModel{
     final dio = Dio();
     
     try{
-      final response = await dio.get("http://localhost:8082/chat/selectrecent");
+      final response = await dio.get("http://localhost:8082/api/chat/recent");
       if(response.statusCode == 200){
         return response.data as List<dynamic>;
       }else{
@@ -27,7 +27,7 @@ class ChatModel{
     final dio = Dio();
 
     try{
-      final response = await dio.get("http://localhost:8082/chat/select/$chatroomId");
+      final response = await dio.get("http://localhost:8082/api/chat/$chatroomId");
       if(response.statusCode == 200){
         return response.data as List<dynamic>;
       }else{
@@ -37,4 +37,6 @@ class ChatModel{
       throw Exception("Error : $e");
     }
   }
+
+
 }

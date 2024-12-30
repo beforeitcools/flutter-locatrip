@@ -23,7 +23,6 @@ class _ChattingScreenState extends State<ChattingScreen> {
     });
   }
 
-
   @override
   void initState() {
     super.initState();
@@ -56,7 +55,7 @@ class _ChattingScreenState extends State<ChattingScreen> {
               itemCount: _chats.length,
               itemBuilder: (context, index){
                 final chat = _chats[index];
-                return ChatListUi(chatroomId: chat["chatroomId"], sender: chat["userId"].toString(), currentMessage: chat["messageContents"],);
+                return ChatListUi(chatroomId: chat["chatroomId"], sender: chat["userId"].toString(), currentMessage: chat["messageContents"]);
               }),
     );
   }

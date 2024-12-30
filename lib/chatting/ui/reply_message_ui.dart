@@ -3,10 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
 class ReplyMessageUi extends StatelessWidget {
-  const ReplyMessageUi({super.key});
+  String text;
+  String time;
+  ReplyMessageUi({super.key, required this.text, required this.time});
 
   @override
   Widget build(BuildContext context) {
+    String onlyTime = '${time.split('T')[1].split(':')[0]}:${time.split(':')[1]}';
+
     return Align(alignment: Alignment.centerLeft,
         child: ConstrainedBox(constraints: BoxConstraints(
             maxWidth: MediaQuery.of(context).size.width - 55),
@@ -19,13 +23,13 @@ class ReplyMessageUi extends StatelessWidget {
               children: [
                 Padding(
                     padding: EdgeInsets.only(left: 10, right: 10, top: 10, bottom: 20),
-                    child: Text("Hey 긴 텍스트 테스트 Hey 긴 텍스트 테스트 Hey 긴 텍스트 테스트 Hey 긴 텍스트 테스트", style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: blackColor))),
+                    child: Text(text, style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: blackColor))),
                 Positioned(
                     bottom: 4,
                     right: 10,
                     child: Row(
                       children: [
-                        Text("20:58"),
+                        Text(onlyTime),
                         Text("1")],
                     ))
               ],
