@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+// 시/군 불러오기
 class RegionModel {
   Future<List<Map<String, String>>> searchAllRegions() async {
     final dio = Dio();
@@ -13,6 +14,15 @@ class RegionModel {
 
       if (response.statusCode == 200) {
         final List<dynamic> regcodes = response.data['regcodes'];
+
+        // 전국 시/도 일단 저장
+        for (var item in regcodes) {
+          allResults.add({
+            "name": item['name'],
+            "sub": item['name'],
+            "imageUrl": "assets/imgPlaceholder.png"
+          });
+        }
 
         // 2. '도'로 끝나는 지역 필터링
         final filteredRegions =
@@ -41,8 +51,11 @@ class RegionModel {
                       item['code'].startsWith(region['code'].substring(0, 2)),
                   orElse: () => {"name": "알 수 없음"})['name'];
 
-              allResults
-                  .add({"name": item['name'], "sub": subRegion, "image": ""});
+              allResults.add({
+                "name": item['name'],
+                "sub": subRegion,
+                "imageUrl": "assets/imgPlaceholder.png"
+              });
             }
           } else {
             throw Exception("시/군 데이터 로드 실패");
@@ -57,12 +70,12 @@ class RegionModel {
               // ex. 경기도 과천시 이면 과천 으로 변경
               final String formattedName = fullName.split(' ').length > 1
                   ? fullName.split(' ')[1].replaceAll(RegExp(r'(시|군|구)$'), '')
-                  : fullName; // '시', '군' 제거
+                  : fullName; // 시군구 제거
 
               map[formattedName] = {
                 "name": formattedName,
-                "sub": item['name']!.split(' ')[0], // '도'만 남기기
-                "imageurl": "assets/imgPlaceholder.png" // 기본 이미지로 설정해주기....
+                "sub": item['name']!.split(' ')[0], // 앞단어 만 남기기
+                "imageUrl": "assets/imgPlaceholder.png"
               };
               return map;
             })

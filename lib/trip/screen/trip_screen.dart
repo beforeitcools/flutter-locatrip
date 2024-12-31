@@ -15,9 +15,6 @@ class _TripScreenState extends State<TripScreen> {
       context: context,
       backgroundColor: Colors.white,
       isScrollControlled: true,
-      // shape: RoundedRectangleBorder(
-      //   borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      // ),
       builder: (BuildContext context) {
         return FractionallySizedBox(
           heightFactor: 0.97,
@@ -69,7 +66,8 @@ class _TripScreenState extends State<TripScreen> {
                           padding: EdgeInsets.all(5),
                           constraints: BoxConstraints(),
                           onPressed: () {
-                            Navigator.pushReplacementNamed(context, "/home");
+                            //Navigator.pushReplacementNamed(context, "/home");
+                            Navigator.pop(context);
                           },
                           icon: Icon(
                             Icons.close,
@@ -82,7 +80,6 @@ class _TripScreenState extends State<TripScreen> {
                 ),
                 Expanded(
                   child: Center(
-                    // 텍스트를 가운데로 정렬
                     child: Text(
                       "어디로 떠나시나요?",
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
