@@ -52,7 +52,6 @@ class _TripScreenState extends State<TripScreen> {
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          //borderRadius: BorderRadius.circular(100),
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
@@ -62,8 +61,11 @@ class _TripScreenState extends State<TripScreen> {
                             ),
                           ],
                         ),
+                        width: 34,
+                        height: 34,
+                        padding: EdgeInsets.zero,
                         child: IconButton(
-                          padding: EdgeInsets.all(5),
+                          padding: EdgeInsets.zero,
                           constraints: BoxConstraints(),
                           onPressed: () {
                             //Navigator.pushReplacementNamed(context, "/home");
