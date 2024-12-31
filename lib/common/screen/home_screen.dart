@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/chatting/screen/chatting_screen.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../main/screen/main_screen.dart';
 
