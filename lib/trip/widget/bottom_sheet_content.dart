@@ -474,7 +474,7 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                             }
                           : null,
                       style: TextButton.styleFrom(
-                        minimumSize: Size(100, 56), // 최소 높이 설정
+                        minimumSize: Size(100, 56),
                         backgroundColor:
                             isAbled ? pointBlueColor : lightGrayColor,
                         shape: RoundedRectangleBorder(

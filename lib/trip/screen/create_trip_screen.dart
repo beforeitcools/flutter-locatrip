@@ -258,9 +258,8 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                               Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => TripViewScreen(
-                                        tripId:
-                                            newTripId)), // ***마이페이지로 돌아가도록...! 바꿔줘야함
+                                    builder: (context) =>
+                                        TripViewScreen(tripId: newTripId)),
 
                                 (Route<dynamic> route) =>
                                     false, // 이전 페이지들을 모두 제거

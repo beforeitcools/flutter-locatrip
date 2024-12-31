@@ -81,6 +81,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
     }
   }
 
+  // 지도에서 현위치 때 사용
   _getGeoData() async {
     Position? position = await getCurrentPosition();
     if (position == null) {
@@ -149,7 +150,12 @@ class _TripViewScreenState extends State<TripViewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    var dateRange = tripInfo['startDate'] == tripInfo['endDate']
+        ? "${tripInfo['startDate'] ?? ''}"
+        : "${tripInfo['startDate'] ?? ''} ~ ${tripInfo['endDate'] ?? ''}";
+
     return Scaffold(
+        backgroundColor: Colors.transparent,
         appBar: AppBar(
           backgroundColor: Colors.white,
           leading: IconButton(
@@ -177,8 +183,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
                       SingleChildScrollView(
                         child: Column(
                           children: [
-                            Padding(
+                            Container(
                               padding: EdgeInsets.all(16),
+                              color: Colors.white,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -196,7 +203,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                     ],
                                   ),
                                   Text(
-                                    "${tripInfo['startDate'] ?? ''} ~ ${tripInfo['endDate'] ?? ''}",
+                                    "$dateRange",
                                   ),
                                   TextButton(
                                       onPressed: () {},
@@ -219,7 +226,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                 child: GoogleMap(
                                   initialCameraPosition: CameraPosition(
                                       target: LatLng(latitude!, longitude!),
-                                      zoom: 10),
+                                      zoom: 8),
                                   myLocationEnabled: true,
                                   myLocationButtonEnabled: true,
                                   onMapCreated:
