@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/chatting/model/chat_model.dart';
 import 'package:flutter_locatrip/chatting/ui/own_message_ui.dart';
@@ -16,14 +18,14 @@ class ChatRoomPage extends StatefulWidget {
 }
 
 class _ChatRoomPageState extends State<ChatRoomPage> {
-  final _channel = WebSocketChannel.connect(Uri.parse('wss://echo.websocket.events')); // 서버 url
+  late final WebSocketChannel _channel = WebSocketChannel.connect(Uri.parse('ws://localhost:8082/chattingServer/${widget.chatroomId.toString()}'));// 서버 url
 
   final ChatModel _chatModel = ChatModel();
   final TextEditingController _textController = TextEditingController();
   List<dynamic> _chats = [];
   dynamic _selectedChat;
 
-  int myUserId = 1;
+  int myUserId = 1; // 현재 유저 아이디
 
   void _loadChatsById() async {
     List<dynamic> chatData = await _chatModel.fetchChatRoomData(widget.chatroomId);
@@ -40,19 +42,24 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   void _sendMessage() async{
     if(_textController.text.isNotEmpty){
-      String message = _textController.text;
-      _channel.sink.add(message);
-      Map<String, dynamic> saveMessage = {
-        "chatroomId": widget.chatroomId,
-        "userId": myUserId,
-        "messageContents": message,
-        "sendTime": DateTime.now().toIso8601String()};
-      setState(() {
-        _chats.add(saveMessage);
-        _textController.clear();
-      });
+      try{
+        final message = {
+          "chatroomId": widget.chatroomId,
+          "userId": myUserId,
+          "messageContents": _textController.text,
+          "sendTime": DateTime.now().toIso8601String(),
+          "readCount": 0};
 
-      await _chatModel.saveMessage(saveMessage);
+       final jsonMessage =  json.encode(message);
+        setState(() {
+          _chats.add(message);
+          _channel.sink.add(jsonMessage);
+          _textController.clear();
+        });
+        await _chatModel.saveMessage(jsonMessage);
+      }catch(e){
+        print('메세지를 보내는 중 에러가 발생했습니다 : $e');
+      }
     };
   }
 
@@ -82,17 +89,24 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           width: MediaQuery.of(context).size.width,
           child: Stack(
             children: [
-              Container(
-                height: MediaQuery.of(context).size.height - 130,
-                child: ListView.builder(
-                  shrinkWrap: true, // 리스트뷰의 크기를 현재 표시되는 아이템들의 크기에 맞게 자동으로 조절
-                  itemCount: _chats.length,
-                  itemBuilder: (context, index){
-                    final chat = _chats[index];
-                    return chat["userId"] == myUserId ? OwnMessageUi(text: chat["messageContents"], time: chat["sendTime"]) : ReplyMessageUi(text: chat["messageContents"], time: chat["sendTime"]); //TODO: userId 확인해서 "나"면 Own, 외에는 Reply
-                  },
-                ),
-              ),
+              StreamBuilder(stream: _channel.stream, builder: (context, snapshot){
+                if(snapshot.hasData){
+                  final chat = json.decode(snapshot.data);
+                  _chats.add(chat);
+                }
+                return Container(
+                  height: MediaQuery.of(context).size.height - 130,
+                  child: ListView.builder(
+                    shrinkWrap: true, // 리스트뷰의 크기를 현재 표시되는 아이템들의 크기에 맞게 자동으로 조절
+                    itemCount: _chats.length,
+                    itemBuilder: (context, index){
+                      final chat = _chats[index];
+                      print("내 채 팅   ======>   $chat");
+                      return chat["userId"] == myUserId ? OwnMessageUi(text: chat["messageContents"], time: chat["sendTime"]) : ReplyMessageUi(text: chat["messageContents"], time: chat["sendTime"]); //TODO: userId 확인해서 "나"면 Own, 외에는 Reply
+                    },
+                  ),
+                );
+          }),
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Row(
@@ -116,19 +130,18 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                                   maxLines: 10,
                                   minLines: 1,
                                   controller: _textController,
+                                  onFieldSubmitted: (value){
+                                    if(value.isNotEmpty){
+                                      _sendMessage();
+                                      _textController.text = "";
+                                    }
+                                  },
                                   decoration: InputDecoration(
                                       border: InputBorder.none,
                                       hintText: "메세지를 입력하세요",
                                       contentPadding: EdgeInsets.only(left: 20, right: 20, bottom: 15)),
                                 )),
-                                IconButton(onPressed: (){_sendMessage();}, icon: Icon(Icons.send), color: grayColor,),
-                                const SizedBox(height: 24),
-                                StreamBuilder(
-                                  stream: _channel.stream,
-                                  builder: (context, snapshot) {
-                                    return Text(snapshot.hasData ? '${snapshot.data}' : '');
-                                  },
-                                )
+                                IconButton(onPressed: (){_sendMessage();}, icon: Icon(Icons.send), color: grayColor,)
                               ],
                             )))),
                 ]),

@@ -38,11 +38,17 @@ class ChatModel{
     }
   }
   
-  Future<void> saveMessage(Map<String, dynamic> message) async{
+  Future<void> saveMessage(dynamic message) async{
     final dio = Dio();
     
     try{
-      final response = await dio.post("http://localhost:8082/sendMessage", data: message);
+      final response = await dio.post(
+          "http://localhost:8082/sendMessage",
+          data: message,
+          options: Options(
+              headers: {"Content-Type": "application/json"})
+          );
+
       if(response.statusCode == 200 || response.statusCode == 201){
         print("메세지를 성공적으로 보내다");
       }else
