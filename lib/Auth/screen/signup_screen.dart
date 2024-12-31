@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/Auth/widget/image_pick_widget.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
-import '../widget/image_pick_widget.dart';
+import 'package:image_picker/image_picker.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -16,7 +17,13 @@ class _SignupScreenState extends State<SignupScreen> {
   TextEditingController _pwCheckController = TextEditingController();
   TextEditingController _nickNameController = TextEditingController();
 
-  File? image;
+  File? _image;
+
+  void _selectImage(XFile pickedFile) {
+    setState(() {
+      _image = File(pickedFile.path);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,12 +39,12 @@ class _SignupScreenState extends State<SignupScreen> {
                 Stack(children: [
                   CircleAvatar(
                     radius: 60,
-                    backgroundImage: image != null
-                        ? FileImage(image!)
+                    backgroundImage: _image != null
+                        ? FileImage(_image!)
                         : AssetImage('assets/default_profile_image.png')
                             as ImageProvider,
                   ),
-                  ImagePickWidget(image: image),
+                  ImagePickWidget(selectImage: _selectImage),
                 ]),
                 SizedBox(
                   height: 39,

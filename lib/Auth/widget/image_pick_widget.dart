@@ -1,38 +1,22 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../common/widget/color.dart';
 
-class ImagePickWidget extends StatefulWidget {
-  File? image;
+class ImagePickWidget extends StatelessWidget {
+  late Function selectImage;
+  final ImagePicker _imagePicker = ImagePicker();
 
   ImagePickWidget({
     super.key,
-    required this.image,
+    required this.selectImage,
   });
-
-  @override
-  State<ImagePickWidget> createState() => _ImagePickWidgetState();
-}
-
-class _ImagePickWidgetState extends State<ImagePickWidget> {
-  final ImagePicker _imagePicker = ImagePicker();
-  File? image;
-
-  @override
-  void initState() {
-    image = widget.image;
-  }
 
   Future<void> _pickImageFromGallery() async {
     XFile? pickedFile =
         await _imagePicker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
-      setState(() {
-        image = File(pickedFile.path);
-      });
+      selectImage(pickedFile);
     }
   }
 
@@ -41,13 +25,11 @@ class _ImagePickWidgetState extends State<ImagePickWidget> {
         await _imagePicker.pickImage(source: ImageSource.camera);
 
     if (pickedFile != null) {
-      setState(() {
-        image = File(pickedFile.path);
-      });
+      selectImage(pickedFile);
     }
   }
 
-  void _showImagePickDialog() {
+  void _showImagePickDialog(BuildContext context) {
     showDialog(
         context: context,
         builder: (context) {
@@ -61,8 +43,8 @@ class _ImagePickWidgetState extends State<ImagePickWidget> {
                   },
                   child: Text("갤러리에서 선택")),
               TextButton(
-                  onPressed: () {
-                    _pickImageFromCamera();
+                  onPressed: () async {
+                    await _pickImageFromCamera();
                     Navigator.pop(context);
                   },
                   child: Text("사진 촬영")),
@@ -77,7 +59,7 @@ class _ImagePickWidgetState extends State<ImagePickWidget> {
       bottom: 0,
       right: 4,
       child: GestureDetector(
-        onTap: _showImagePickDialog,
+        onTap: () => _showImagePickDialog(context),
         child: Opacity(
           opacity: 0.7,
           child: Container(
