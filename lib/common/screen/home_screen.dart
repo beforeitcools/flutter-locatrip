@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/chatting/screen/chatting_screen.dart';
 
 import '../../main/screen/main_screen.dart';
 
@@ -17,7 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
     MainScreen(),
     // MapScreen(),
     // AdviceScreen(),
-    // ChattingScreen(),
+    ChattingScreen(),
     // MypageScreen(),
   ];
 

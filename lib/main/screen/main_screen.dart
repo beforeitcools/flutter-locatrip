@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_locatrip/checklist/screen/checklist_screen.dart';
 
 import '../../trip/screen/trip_screen.dart';
 
