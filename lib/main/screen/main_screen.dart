@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../../trip/screen/trip_screen.dart';
+import 'package:flutter_locatrip/trip/screen/first_trip_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
