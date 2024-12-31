@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../trip/screen/trip_screen.dart';
+import 'package:flutter_locatrip/trip/screen/first_trip_screen.dart';
+
+import 'package:flutter_locatrip/checklist/screen/checklist_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -25,6 +27,20 @@ class _MainScreenState extends State<MainScreen> {
           actions: [
             IconButton(
                 onPressed: () {}, icon: Icon(Icons.notifications_outlined)),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ChecklistScreen(),
+                  ),
+                );
+              },
+              child: Text(
+                '체크리스트',
+                style: TextStyle(color: Colors.black),
+              ),
+            ),
           ],
         ),
       ),

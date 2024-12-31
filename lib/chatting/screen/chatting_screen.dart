@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/chatting/model/chat_model.dart';
 import 'package:flutter_locatrip/chatting/ui/chat_list_ui.dart';
+import 'package:flutter_locatrip/chatting/widgets/websocket_page.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
 class ChattingScreen extends StatefulWidget {
@@ -11,11 +12,23 @@ class ChattingScreen extends StatefulWidget {
 }
 
 class _ChattingScreenState extends State<ChattingScreen> {
-  List<ChatModel> chats = [
-    ChatModel(name: "민주", isGroup: false, time: "16:04", currentMessage: "민주주의 만세"),
-    ChatModel(name: "현지", isGroup: false, time: "11:13", currentMessage: "탄핵하라"),
-    ChatModel(name: "회먹음이연합", isGroup: true, time: "11:13", currentMessage: "탄핵하라")
-  ];
+  final ChatModel _chatModel = ChatModel();
+  List<dynamic> _chats = [];
+  dynamic _selectedChat;
+
+  void _loadChatData() async
+  {
+    List<dynamic> chatData = await _chatModel.fetchMessageData();
+    setState(() {
+      _chats = chatData;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadChatData();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,10 +44,21 @@ class _ChattingScreenState extends State<ChattingScreen> {
             ),
         )],
       ),
-      body: ListView.builder(
-        itemCount: chats.length,
-        itemBuilder: (context, index) => (ChatListUi(chatModel: chats[index],)),
-      ),
+      body: _chats.isEmpty ? Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text("대화 목록이 아직 없어요", style: Theme.of(context).textTheme.titleMedium),
+              Text("여행을 위한 소통을 시작해 보세요!", style: Theme.of(context).textTheme.titleMedium!.copyWith(color: pointBlueColor)),
+        ],
+      ))
+          : ListView.builder(
+              itemCount: _chats.length,
+              itemBuilder: (context, index){
+                final chat = _chats[index];
+                return ChatListUi(chatroomId: chat["chatroomId"], sender: chat["userId"].toString(), currentMessage: chat["messageContents"]);
+              }),
+      floatingActionButton: FloatingActionButton(onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (context)=>WebsocketPage()));}, child: Text("눌러"),)
     );
   }
 }
