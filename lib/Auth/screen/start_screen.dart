@@ -46,10 +46,10 @@ class StartScreen extends StatelessWidget {
                           fontWeight: FontWeight.w600, color: Colors.white),
                     ),
                     style: TextButton.styleFrom(
-                      minimumSize: Size(380, 60), // 최소 높이 설정
+                      minimumSize: Size(380, 60),
                       backgroundColor: pointBlueColor,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10), // 둥근 테두리 설정
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
                   ),
