@@ -41,3 +41,7 @@ flutter:
           weight: 600
         - asset: assets/fonts/NotoSansKR-Bold.ttf
           weight: 700
+  plugin:
+    platforms:
+      ios:
+        pluginClass: AppDelegate
