@@ -13,13 +13,18 @@ class StartScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            SizedBox(
+              height: 106,
+            ),
             Image(
               image: AssetImage('assets/logo_with_image.png'),
             ),
             SizedBox(
               height: 30,
             ),
-            Text("현지인이 첨삭해주는 맞춤 여행 가이드 \n지금 내 동네를 인증하고 여행을 계획하세요!",
+            Text("현지인이 첨삭해주는 맞춤 여행 가이드",
+                style: Theme.of(context).textTheme.bodyMedium),
+            Text("지금 내 동네를 인증하고 여행을 계획하세요!",
                 style: Theme.of(context).textTheme.bodyMedium),
             SizedBox(
               height: 200,
