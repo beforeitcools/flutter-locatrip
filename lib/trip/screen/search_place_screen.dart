@@ -16,7 +16,6 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
           children: [Text("title"), Text("date")],
         ),
       ),
-      body: ,
     );
   }
 }
