@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/trip/widget/date_bottom_sheet.dart';
 
+import '../screen/search_place_screen.dart';
+
 class DayWidget extends StatefulWidget {
   final dynamic selectedItem;
   final List<String> dropDownDay;
@@ -176,7 +178,12 @@ class _DayWidgetState extends State<DayWidget> {
             ),
             Expanded(
               child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => SearchPlaceScreen()));
+                  },
                   style: OutlinedButton.styleFrom(
                       side: BorderSide(
                         color: grayColor,
