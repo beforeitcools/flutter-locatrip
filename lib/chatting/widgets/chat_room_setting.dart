@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/chatting/model/chat_model.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
 class ChatRoomSetting extends StatefulWidget {
   String chatRoom;
-  ChatRoomSetting({super.key, required this.chatRoom});
+  final int chatroomId;
+  ChatRoomSetting({super.key, required this.chatRoom, required this.chatroomId});
 
   @override
   State<ChatRoomSetting> createState() => _ChatRoomSettingState();
@@ -11,6 +13,7 @@ class ChatRoomSetting extends StatefulWidget {
 
 class _ChatRoomSettingState extends State<ChatRoomSetting> {
 
+  final ChatModel _chatModel = ChatModel();
   bool _showTextField = false;
   String _buttonText = "";
   TextEditingController _controller = TextEditingController();
@@ -67,7 +70,9 @@ class _ChatRoomSettingState extends State<ChatRoomSetting> {
                                                       hintText: widget.chatRoom
                                                   ),
                                                 )),
-                                                TextButton(onPressed: (){ _toggleTextButton();}, child: Text("저장", style: Theme.of(context).textTheme.labelMedium!.copyWith(color: pointBlueColor)))
+                                                TextButton(onPressed: (){
+                                                  _chatModel.updateChatroomName(widget.chatroomId, _controller.text);
+                                                  _toggleTextButton();}, child: Text("저장", style: Theme.of(context).textTheme.labelMedium!.copyWith(color: pointBlueColor)))
                                                 ])
                                               : Text(widget.chatRoom, style: Theme.of(context).textTheme.bodySmall) ,
                                         )) //TODO 20자 넘어가지 못하게 할 것임
