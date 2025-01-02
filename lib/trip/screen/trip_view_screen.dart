@@ -95,22 +95,6 @@ class _TripViewScreenState extends State<TripViewScreen> {
     }
   }
 
-  // 지도에서 현위치 때 사용
-  // _getGeoData() async {
-  //   Position? position = await getCurrentPosition();
-  //   if (position == null) {
-  //     _showPermissionDialog();
-  //     return;
-  //   }
-  //   setState(() {
-  //     // print('position $position');
-  //     latitude = position.latitude;
-  //     longitude = position.longitude;
-  //     isLoading = false;
-  //   });
-  //   _moveMapToCurrentLocation();
-  // }
-
   void _moveMapToCurrentLocation() {
     if (latitude != null && longitude != null && mapController != null) {
       print("latitude2: $latitude longitude: $longitude");
@@ -118,13 +102,6 @@ class _TripViewScreenState extends State<TripViewScreen> {
         CameraUpdate.newLatLng(LatLng(latitude!, longitude!)),
       );
     }
-  }
-
-  void _showPermissionDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => DeniedPermissionDialog(),
-    );
   }
 
   // 시작/끝 날짜 사이값 구하기
