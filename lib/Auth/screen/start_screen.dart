@@ -70,7 +70,7 @@ class StartScreen extends StatelessWidget {
                               ?.copyWith(color: pointBlueColor),
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
-                              // Navigator.pushReplacementNamed(context, '/signup');
+                              Navigator.pushReplacementNamed(context, '/login');
                             })
                     ],
                   )))
