@@ -34,7 +34,13 @@ class ImagePickWidget extends StatelessWidget {
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: Text("사진 선택"),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            title: Text(
+              "사진 선택",
+              textAlign: TextAlign.center,
+            ),
             actions: [
               TextButton(
                   onPressed: () async {

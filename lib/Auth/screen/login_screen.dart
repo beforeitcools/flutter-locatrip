@@ -1,5 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/Auth/model/auth_model.dart';
+import 'package:flutter_locatrip/Auth/screen/signup_screen.dart';
 import '../../common/widget/color.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -12,6 +14,102 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   TextEditingController _idController = TextEditingController();
   TextEditingController _pwController = TextEditingController();
+  final AuthModel _authModel = AuthModel();
+
+  void _login() async {
+    if (_idController.text.isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("아이디를 입력해주세요.")));
+    } else if (_pwController.text.isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("비밀번호를 입력해주세요.")));
+    } else {
+      Map<String, String> loginData = {
+        'userId': _idController.text,
+        'password': _pwController.text,
+      };
+
+      try {
+        String result = await _authModel.login(loginData);
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(result)));
+        Navigator.pushReplacementNamed(context, "/home");
+      } catch (e) {
+        String errorMessage = e.toString();
+        if (errorMessage.startsWith("Exception: ")) {
+          String cleanMessage = errorMessage.substring(10);
+          showCustomDialog(context, cleanMessage);
+        }
+      }
+    }
+  }
+
+  void showCustomDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // dialog 밖에 눌렀을때 닫힘 방지
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          contentPadding: EdgeInsets.zero,
+          content: Container(
+            width: 280,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        color: pointBlueColor,
+                        size: 50,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        message,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: blackColor),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: pointBlueColor,
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(10),
+                      bottomRight: Radius.circular(10),
+                    ),
+                  ),
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      "확인",
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             child: IntrinsicHeight(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(16, 84, 16, 16),
+                padding: EdgeInsets.fromLTRB(16, 180, 16, 16),
                 child: Center(
                   child: Column(
                     children: [
@@ -126,7 +224,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                 children: [
                                   Expanded(
                                     child: TextField(
-                                      // onChanged: _passwordValidCheck,
                                       controller: _pwController,
                                       obscureText: true,
                                       decoration: InputDecoration(
@@ -166,13 +263,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         height: 16,
                       ),
                       TextButton(
-                        onPressed: () {
-                          // 로그인 요청
-                          /*Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => SignupScreen()));*/
-                        },
+                        onPressed: _login,
                         child: Text(
                           "로그인",
                           style: Theme.of(context)
@@ -207,8 +298,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ?.copyWith(color: pointBlueColor),
                               recognizer: TapGestureRecognizer()
                                 ..onTap = () {
-                                  Navigator.pushReplacementNamed(
-                                      context, '/signup');
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              SignupScreen()));
                                 })
                         ],
                       )))

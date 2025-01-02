@@ -60,11 +60,10 @@ class _SignupScreenState extends State<SignupScreen> {
 
       try {
         String result = await _authModel.signup(signupData, _image);
-
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(result)));
         Navigator.pop(context);
-        // Navigator.pushReplacementNamed(context, "/home");  // 성공시 로그인 screen
+        Navigator.pushReplacementNamed(context, "/login"); // 성공시 로그인 screen
       } catch (e) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('Error : $e')));

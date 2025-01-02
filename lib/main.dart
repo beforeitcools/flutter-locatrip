@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/Auth/screen/login_screen.dart';
 import 'package:flutter_locatrip/Auth/screen/signup_screen.dart';
-import 'package:flutter_locatrip/common/Auth/auth_dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'Auth/screen/start_screen.dart';
 import 'common/screen/error_screen.dart';
