@@ -19,6 +19,7 @@ dependencies:
   google_maps_flutter: ^2.10.0
   geolocator: ^13.0.2
   geocoding: ^3.0.0
+  place_picker_google: ^0.0.14
 
 dev_dependencies:
   flutter_test:
