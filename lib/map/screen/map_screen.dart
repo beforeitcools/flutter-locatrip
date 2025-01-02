@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/map/model/place_api_model.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-import '../../checklist/widget/checklist_widget.dart';
 import '../../common/widget/color.dart';
 import '../../trip/model/current_position_model.dart';
 import '../../trip/widget/denied_permission_dialog.dart';
@@ -15,6 +15,8 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
+  final PlaceApiModel _placeApiModel = PlaceApiModel();
+
   final DraggableScrollableController sheetController =
       DraggableScrollableController();
 
@@ -40,6 +42,10 @@ class _MapScreenState extends State<MapScreen> {
 
     _getGeoData();
 
+    /*Future.delayed(Duration.zero, () {
+      print("placeApi ${_placeApiModel.getApiKey("PLACES_API_KEY")}");
+    });*/
+
     // DraggableScrollableController 의 상태 변화 감지
     sheetController.addListener(() {
       double currentSize = sheetController.size;
@@ -58,10 +64,11 @@ class _MapScreenState extends State<MapScreen> {
   // 지도에서 현위치 때 사용
   _getGeoData() async {
     try {
-      Position position = await Geolocator.getCurrentPosition();
+      Position? position = await getCurrentPosition();
+      print("position $position");
       setState(() {
-        latitude = position.latitude;
-        longitude = position.longitude;
+        latitude = position!.latitude;
+        longitude = position!.longitude;
         isLoading = false;
       });
       _moveMapToCurrentLocation();
@@ -102,6 +109,28 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  void _getNearByPlaces() async {
+    Map<String, dynamic> data = {
+      "locationRestriction": {
+        "circle": {
+          "center": {"latitude": latitude, "longitude": longitude},
+          "radius": 500
+        }
+      },
+      "languageCode": "ko",
+      "regionCode": "KR"
+    };
+
+    try {
+      List<Map<String, String>> nearByPlacesList =
+          await _placeApiModel.getNearByPlaces(data);
+
+      print('nearByPlacesList : $nearByPlacesList');
+    } catch (e) {
+      print("에러메시지 : $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -126,7 +155,7 @@ class _MapScreenState extends State<MapScreen> {
             child: Align(
               alignment: Alignment.topCenter,
               child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: _getNearByPlaces,
                   style: ElevatedButton.styleFrom(
                     minimumSize: Size(150, 40),
                     padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
@@ -185,6 +214,7 @@ class _MapScreenState extends State<MapScreen> {
                             ),
                           ),
                         )),
+
                     Padding(
                       padding: EdgeInsets.fromLTRB(16, 0, 16, 35),
                       child: TextField(

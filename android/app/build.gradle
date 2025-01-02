@@ -6,9 +6,21 @@ plugins {
     id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
 }
 
+def secretsProps = new Properties()
+def secretsFile = rootProject.file('secrets.properties')
+if (secretsFile.exists()) {
+    secretsProps.load(new FileInputStream(secretsFile))
+}
+
+dependencies {
+    // If updating kotlin-bom version number above, also edit project-level build.gradle definition of $kotlin_version variable
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:$kotlin_version"))
+    implementation 'com.google.android.libraries.places:places:3.3.0'
+}
+
 android {
     namespace = "com.beforeitcools.flutter_locatrip"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk 34
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -25,10 +37,12 @@ android {
         applicationId = "com.beforeitcools.flutter_locatrip"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdkVersion 21
-        targetSdk = flutter.targetSdkVersion
+        minSdkVersion 23
+        targetSdk 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        buildConfigField "String", "MAPS_API_KEY", "\"${secretsProps['MAPS_API_KEY']}\""
+        buildConfigField "String", "PLACES_API_KEY", "\"${secretsProps['PLACES_API_KEY']}\""
     }
 
     buildTypes {
@@ -38,6 +52,10 @@ android {
             signingConfig = signingConfigs.debug
         }
     }
+
+    buildFeatures {
+        buildConfig true  // 이 부분 추가
+    }
 }
 
 flutter {
@@ -45,16 +63,9 @@ flutter {
 }
 
 secrets {
-    // Optionally specify a different file name containing your secrets.
-    // The plugin defaults to "local.properties"
     propertiesFileName = "secrets.properties"
-
-    // A properties file containing default secret values. This file can be
-    // checked in version control.
     defaultPropertiesFileName = "local.defaults.properties"
-
-    // Configure which keys should be ignored by the plugin by providing regular expressions.
-    // "sdk.dir" is ignored by default.
-    ignoreList.add("keyToIgnore") // Ignore the key "keyToIgnore"
-    ignoreList.add("sdk.*")       // Ignore all keys matching the regexp "sdk.*"
+    ignoreList.add("keyToIgnore")
+    ignoreList.add("sdk.*")
 }
+
