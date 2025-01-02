@@ -86,6 +86,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
         latitude = locations.first.latitude;
         longitude = locations.first.longitude;
       });
+      print('latitude: $latitude longitude: $longitude');
 
       _moveMapToCurrentLocation();
     } catch (e) {
