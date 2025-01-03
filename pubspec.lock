@@ -688,14 +688,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.1"
-  place_picker_google:
-    dependency: "direct main"
-    description:
-      name: place_picker_google
-      sha256: "42e6a43f231db0809126e325e96fa8709ed02fb52372024a68302c4d7628ba7b"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.14"
   platform:
     dependency: transitive
     description:
