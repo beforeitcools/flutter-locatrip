@@ -18,7 +18,7 @@ class ChatRoomPage extends StatefulWidget {
 }
 
 class _ChatRoomPageState extends State<ChatRoomPage> {
-  late final WebSocketChannel _channel = WebSocketChannel.connect(Uri.parse('ws://localhost:8082/chattingServer/${widget.chatroomId.toString()}'));// 서버 url
+  late final WebSocketChannel _channel = WebSocketChannel.connect(Uri.parse('ws://localhost:8082/chattingServer/${widget.chatroomId}'));// 서버 url
 
   final ChatModel _chatModel = ChatModel();
   final TextEditingController _textController = TextEditingController();
@@ -32,18 +32,22 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     List<dynamic> chatData = await _chatModel.fetchChatRoomData(widget.chatroomId);
     setState(() {
       _chats = chatData;
+      _scrollToBottom();
     });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {_scrollToBottom();});
   }
 
   void _scrollToBottom() {
-    _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+    if(_scrollController.hasClients){
+      _scrollController.animateTo(_scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 100), curve: Curves.easeOut);
+    }
   }
 
   @override
   void initState() {
     super.initState();
     _loadChatsById();
-    _scrollToBottom();
   }
 
   void _sendMessage() async{
@@ -62,7 +66,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           _channel.sink.add(jsonMessage);
           _textController.clear();
         });
-        _scrollToBottom();
+        WidgetsBinding.instance.addPostFrameCallback((_) {_scrollToBottom();});
         await _chatModel.saveMessage(jsonMessage);
       }catch(e){
         print('메세지를 보내는 중 에러가 발생했습니다 : $e');
@@ -98,8 +102,19 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             children: [
               StreamBuilder(stream: _channel.stream, builder: (context, snapshot){
                 if(snapshot.hasData){
-                  final chat = json.decode(snapshot.data);
-                  _chats.add(chat);
+                  print("my snapshot data : ${snapshot.data}  그래서 뭐가 문제란 거임");
+                  try {
+                    final data = json.decode(snapshot.data as String);
+                    if (data["type"] == "chat") {
+                      setState(() {
+                        _chats.add(data);
+                      });
+                    } else if (data["type"] == "status") {
+                      print("Status update: ${data["message"]}");
+                    }
+                  } catch (e) {
+                    print("Error decoding WebSocket message: ${snapshot.data}");
+                  }
                 }
                 return Container(
                   height: MediaQuery.of(context).size.height - 150,
