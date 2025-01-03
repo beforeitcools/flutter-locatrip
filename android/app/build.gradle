@@ -6,6 +6,12 @@ plugins {
     id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
 }
 
+def secretsProps = new Properties()
+def secretsFile = rootProject.file('secrets.properties')
+if (secretsFile.exists()) {
+    secretsProps.load(new FileInputStream(secretsFile))
+}
+
 android {
     namespace = "com.beforeitcools.flutter_locatrip"
     compileSdk = flutter.compileSdkVersion
@@ -29,6 +35,8 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        buildConfigField "String", "MAPS_API_KEY", "\"${secretsProps['MAPS_API_KEY']}\""
+        buildConfigField "String", "PLACES_API_KEY", "\"${secretsProps['PLACES_API_KEY']}\""
     }
 
     buildTypes {
@@ -37,6 +45,9 @@ android {
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.debug
         }
+    }
+    buildFeatures {
+        buildConfig true
     }
 }
 
