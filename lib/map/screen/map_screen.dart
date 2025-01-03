@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../../checklist/widget/checklist_widget.dart';
 import '../../common/widget/color.dart';
 import '../../trip/model/current_position_model.dart';
 import '../../trip/widget/denied_permission_dialog.dart';
