@@ -14,7 +14,7 @@ class ErrorScreen extends StatelessWidget {
               image: AssetImage('assets/logo_with_image.pnf'),
             ),
             Text("에러 발생"),
-            // 돌아가기 버튼 (어디로?? context 로 이전으로??)
+            // 돌아가기 버튼 (어디로?? context 로 이전으로?? home 으로??)
           ],
         ),
       ),

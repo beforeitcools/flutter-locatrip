@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthModel {
   String backUrl = "http://112.221.66.174:1102";
@@ -70,7 +71,7 @@ class AuthModel {
     }
   }
 
-  Future<String> login(Map<String, String> loginData) async {
+  Future<String> login(Map<String, dynamic> loginData) async {
     final dio = Dio();
 
     try {
@@ -106,6 +107,7 @@ class AuthModel {
   Future<String> logout() async {
     final dio = Dio();
     final FlutterSecureStorage _storage = new FlutterSecureStorage();
+    final prefs = await SharedPreferences.getInstance();
 
     final refreshToken = await _storage.read(key: 'REFRESH_TOKEN');
     // 백서버에 refresh 토큰 db에서 delete 요청
@@ -116,8 +118,9 @@ class AuthModel {
       );
 
       if (response.statusCode == 200) {
-        // storage 모두 제거
+        // storage 모두 제거, 자동로그인 off
         await _storage.deleteAll();
+        await prefs.setBool('autoLogin', false);
         return "로그아웃 완료";
       } else {
         return "로그아웃 실패";

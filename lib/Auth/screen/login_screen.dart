@@ -2,6 +2,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/Auth/model/auth_model.dart';
 import 'package:flutter_locatrip/Auth/screen/signup_screen.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../common/widget/color.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -14,7 +16,102 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   TextEditingController _idController = TextEditingController();
   TextEditingController _pwController = TextEditingController();
+  bool saveId = false;
+  bool autoLogin = false;
   final AuthModel _authModel = AuthModel();
+
+  // 아이디 저장 옵션 상태 저장(로그인 성공시)
+  Future<void> savePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final FlutterSecureStorage _storage = new FlutterSecureStorage();
+    await prefs.setBool('saveId', saveId);
+    await prefs.setBool('autoLogin', autoLogin);
+    if (saveId) {
+      await prefs.setString('userId', _idController.text);
+    } else {
+      await prefs.remove('userId');
+    }
+    if (autoLogin) {
+      _storage.write(key: 'user_id', value: _idController.text);
+      _storage.write(key: 'password', value: _pwController.text);
+    }
+  }
+
+  // 아이디 저장 옵션 상태 불러오기(로그인 스크린 시작시)
+  Future<void> getLoginOptions() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      saveId = prefs.getBool('saveId') ?? false;
+      autoLogin = prefs.getBool('autoLogin') ?? false;
+      if (saveId) {
+        _idController.text = prefs.getString('userId')!;
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    getLoginOptions();
+  }
+
+  void _toggleSaveId() {
+    setState(() {
+      saveId = !saveId;
+    });
+  }
+
+  void _toggleAutoLogin() {
+    setState(() {
+      autoLogin = !autoLogin;
+    });
+  }
+
+  Widget _loginOptions() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: _toggleSaveId,
+          child: Row(
+            children: [
+              Icon(
+                saveId ? Icons.check_circle : Icons.radio_button_unchecked,
+                color: saveId ? pointBlueColor : grayColor,
+              ),
+              SizedBox(width: 5),
+              Text(
+                "아이디 저장",
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: blackColor),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(width: 20),
+        GestureDetector(
+          onTap: _toggleAutoLogin,
+          child: Row(
+            children: [
+              Icon(
+                autoLogin ? Icons.check_circle : Icons.radio_button_unchecked,
+                color: autoLogin ? pointBlueColor : grayColor,
+              ),
+              SizedBox(width: 5),
+              Text(
+                "자동로그인",
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: blackColor),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
   void _login() async {
     if (_idController.text.isEmpty) {
@@ -31,6 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       try {
         String result = await _authModel.login(loginData);
+        savePreference;
 
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(result)));
@@ -262,6 +360,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       SizedBox(
                         height: 16,
                       ),
+                      _loginOptions(), // 아이디 저장, 자동로그인 체크버튼
+                      SizedBox(
+                        height: 16,
+                      ),
                       TextButton(
                         onPressed: _login,
                         child: Text(
@@ -276,6 +378,37 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextButton.styleFrom(
                           minimumSize: Size(380, 60),
                           backgroundColor: pointBlueColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 16,
+                      ),
+                      TextButton(
+                        onPressed: _login, // 카카오 로그인 추가
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.asset("assets/kakao_logo.png"),
+                            SizedBox(
+                              width: 16,
+                            ),
+                            Text(
+                              "카카오 로그인",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        style: TextButton.styleFrom(
+                          minimumSize: Size(380, 60),
+                          backgroundColor: kakaoYellow,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),

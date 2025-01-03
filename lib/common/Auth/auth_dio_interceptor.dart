@@ -31,7 +31,7 @@ class AuthInterceptor extends Interceptor {
       options.headers['Authorization'] = accessToken;
       handler.next(options);
     } else {
-      Navigator.pushReplacementNamed(context, '/login');
+      _navigateToLogin;
     }
   }
 
@@ -48,13 +48,13 @@ class AuthInterceptor extends Interceptor {
           // refresh 토큰 header에 담아서 access 토큰 재발급 요청
           final refreshResponse = await _dio.post(
             "$backUrl/auth/refreshAccessToken",
-            options: Options(headers: {'Authorization': refreshToken}),
+            options: Options(headers: {'Refresh_Token': refreshToken}),
           );
 
           if (refreshResponse.statusCode == 200) {
             // final newAccessToken = refreshResponse.data['accessToken'];
             final newAccessToken =
-                refreshResponse.headers['accessToken']?.first;
+                refreshResponse.headers['Authorization']?.first;
             // 재발급된 access 토큰 storage에 담아주기
             await _storage.write(key: 'ACCESS_TOKEN', value: newAccessToken);
 
@@ -77,9 +77,15 @@ class AuthInterceptor extends Interceptor {
       } else {
         // refresh 토큰이 없다면
         await _storage.deleteAll();
-        _navigateToLogin();
+        _navigateToLogin;
         handler.reject(err);
       }
+    }
+    // access 토큰 서명 오류 또는 파싱 오류(잘못된 접근)
+    else if (err.response?.statusCode == 403) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("토큰 서명 오류 또는 토큰 파싱 오류")));
+      _navigateToLogin;
     } else {
       handler.next(err);
     }
