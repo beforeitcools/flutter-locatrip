@@ -1,11 +1,14 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/map/model/place_api_model.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../../checklist/widget/checklist_widget.dart';
 import '../../common/widget/color.dart';
 import '../../trip/model/current_position_model.dart';
 import '../../trip/widget/denied_permission_dialog.dart';
+import '../model/api_key_loader.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -16,6 +19,7 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   final PlaceApiModel _placeApiModel = PlaceApiModel();
+  Set<Marker> _markers = {};
 
   final DraggableScrollableController sheetController =
       DraggableScrollableController();
@@ -31,20 +35,18 @@ class _MapScreenState extends State<MapScreen> {
   GoogleMapController? mapController;
 
   final double maxSize = 0.9;
-  final double minSize = 0.48;
+  final double minSize = 0.47;
   final double tolerance = 0.001;
 
   bool isExpanded = false;
+
+  late List<dynamic> _nearByPlacesList;
 
   @override
   void initState() {
     super.initState();
 
     _getGeoData();
-
-    /*Future.delayed(Duration.zero, () {
-      print("placeApi ${_placeApiModel.getApiKey("PLACES_API_KEY")}");
-    });*/
 
     // DraggableScrollableController 의 상태 변화 감지
     sheetController.addListener(() {
@@ -59,6 +61,12 @@ class _MapScreenState extends State<MapScreen> {
         });
       }
     });
+  }
+
+  void _getPlaceList() async {
+    try {} catch (e) {
+      print("에러메시지 : $e");
+    }
   }
 
   // 지도에서 현위치 때 사용
@@ -79,7 +87,6 @@ class _MapScreenState extends State<MapScreen> {
 
   void _moveMapToCurrentLocation() {
     if (latitude != null && longitude != null && mapController != null) {
-      // print("latitude2: $latitude longitude: $longitude");
       mapController!.animateCamera(
         CameraUpdate.newLatLng(LatLng(latitude!, longitude!)),
       );
@@ -109,30 +116,84 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  void _getNearByPlaces() async {
+  // 근처 장소 검색
+  void _getNearByPlaces(double _latitude, double _longitude) async {
     Map<String, dynamic> data = {
       "locationRestriction": {
         "circle": {
-          "center": {"latitude": latitude, "longitude": longitude},
+          "center": {"latitude": _latitude, "longitude": _longitude},
           "radius": 500
         }
       },
       "languageCode": "ko",
-      "regionCode": "KR"
+      "regionCode": "KR",
+      "includedTypes": [
+        "convenience_store",
+        "grocery_store",
+        "cafe",
+        "coffee_shop",
+        "restaurant",
+        "meal_takeaway",
+        "meal_delivery",
+        "lodging",
+        "hotel",
+        "motel",
+        "guest_house",
+        "hostel",
+        "tourist_attraction",
+        "museum",
+        "park",
+        "zoo",
+        "amusement_park"
+      ]
     };
 
     try {
-      List<Map<String, String>> nearByPlacesList =
+      Map<String, dynamic> nearByPlaces =
           await _placeApiModel.getNearByPlaces(data);
 
-      print('nearByPlacesList : $nearByPlacesList');
+      print('nearByPlaces : $nearByPlaces');
+
+      List<dynamic> nearByPlacesList = nearByPlaces["places"];
+      print('nearByPlacesList $nearByPlacesList');
+
+      Set<Marker> newMarkers = nearByPlacesList.map((place) {
+        final LatLng latLng = LatLng(
+          place['location']['latitude'],
+          place['location']['longitude'],
+        );
+
+        return Marker(
+          markerId: MarkerId(place['id']),
+          position: latLng,
+          /*infoWindow: InfoWindow(
+            title: place['displayName']['text'],
+            // snippet: place['vicinity'],
+          ),*/
+        );
+      }).toSet();
+
+      setState(() {
+        _markers = newMarkers;
+      });
+
+      /*if (latitude != _latitude || _longitude != longitude) {
+        mapController!.animateCamera(
+          CameraUpdate.newLatLng(LatLng(_latitude, _longitude)),
+        );
+      }*/
     } catch (e) {
       print("에러메시지 : $e");
     }
   }
 
+  void _getMarkers() {}
+
   @override
   Widget build(BuildContext context) {
+    LatLng _mapCenter = latitude != null && longitude != null
+        ? LatLng(latitude!, longitude!)
+        : LatLng(37.514575, 127.0495556); // 기본 위치
     return Scaffold(
         body: Stack(
       children: [
@@ -140,12 +201,17 @@ class _MapScreenState extends State<MapScreen> {
             ? Container(
                 height: 460,
                 child: GoogleMap(
-                  initialCameraPosition: CameraPosition(
-                      target: LatLng(latitude!, longitude!), zoom: 15),
+                  initialCameraPosition:
+                      CameraPosition(target: _mapCenter, zoom: 15),
                   myLocationEnabled: true,
                   myLocationButtonEnabled: true,
                   onMapCreated: (GoogleMapController controller) {
                     mapController = controller;
+                  },
+                  markers: _markers,
+                  onCameraMove: (CameraPosition position) {
+                    _mapCenter = position.target;
+                    print('_mapCenter $_mapCenter');
                   },
                 ),
               )
@@ -155,7 +221,9 @@ class _MapScreenState extends State<MapScreen> {
             child: Align(
               alignment: Alignment.topCenter,
               child: ElevatedButton(
-                  onPressed: _getNearByPlaces,
+                  onPressed: () {
+                    _getNearByPlaces(_mapCenter.latitude, _mapCenter.longitude);
+                  },
                   style: ElevatedButton.styleFrom(
                     minimumSize: Size(150, 40),
                     padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
@@ -214,7 +282,6 @@ class _MapScreenState extends State<MapScreen> {
                             ),
                           ),
                         )),
-
                     Padding(
                       padding: EdgeInsets.fromLTRB(16, 0, 16, 35),
                       child: TextField(
