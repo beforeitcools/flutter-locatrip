@@ -1,14 +1,12 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/map/model/place_api_model.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-import '../../checklist/widget/checklist_widget.dart';
 import '../../common/widget/color.dart';
 import '../../trip/model/current_position_model.dart';
 import '../../trip/widget/denied_permission_dialog.dart';
-import '../model/api_key_loader.dart';
+import '../model/place.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -40,7 +38,7 @@ class _MapScreenState extends State<MapScreen> {
 
   bool isExpanded = false;
 
-  late List<dynamic> _nearByPlacesList;
+  List<Place> _nearByPlacesList = [];
 
   @override
   void initState() {
@@ -63,12 +61,6 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
-  void _getPlaceList() async {
-    try {} catch (e) {
-      print("에러메시지 : $e");
-    }
-  }
-
   // 지도에서 현위치 때 사용
   _getGeoData() async {
     try {
@@ -80,6 +72,7 @@ class _MapScreenState extends State<MapScreen> {
         isLoading = false;
       });
       _moveMapToCurrentLocation();
+      _getNearByPlaces(latitude!, longitude!);
     } catch (e) {
       _showPermissionDialog();
     }
@@ -118,6 +111,7 @@ class _MapScreenState extends State<MapScreen> {
 
   // 근처 장소 검색
   void _getNearByPlaces(double _latitude, double _longitude) async {
+    print('_latitude $_latitude _longitude $_longitude');
     Map<String, dynamic> data = {
       "locationRestriction": {
         "circle": {
@@ -157,7 +151,13 @@ class _MapScreenState extends State<MapScreen> {
       List<dynamic> nearByPlacesList = nearByPlaces["places"];
       print('nearByPlacesList $nearByPlacesList');
 
-      Set<Marker> newMarkers = nearByPlacesList.map((place) {
+      // 장소 데이터를 Place 객체로 변환
+      List<Place> places = await _processPlacesData(nearByPlacesList);
+
+      // 마커 추가
+      _addMarkersToMap(places);
+
+      /*Set<Marker> newMarkers = nearByPlacesList.map((place) {
         final LatLng latLng = LatLng(
           place['location']['latitude'],
           place['location']['longitude'],
@@ -166,34 +166,99 @@ class _MapScreenState extends State<MapScreen> {
         return Marker(
           markerId: MarkerId(place['id']),
           position: latLng,
-          /*infoWindow: InfoWindow(
+          */ /*infoWindow: InfoWindow(
             title: place['displayName']['text'],
             // snippet: place['vicinity'],
-          ),*/
+          ),*/ /*
         );
       }).toSet();
 
       setState(() {
         _markers = newMarkers;
       });
-
-      /*if (latitude != _latitude || _longitude != longitude) {
+*/
+      if (latitude != _latitude || _longitude != longitude) {
         mapController!.animateCamera(
           CameraUpdate.newLatLng(LatLng(_latitude, _longitude)),
         );
-      }*/
+      }
     } catch (e) {
       print("에러메시지 : $e");
     }
   }
 
-  void _getMarkers() {}
+  // 장소 데이터를 Place 객체 리스트로 변환
+  Future<List<Place>> _processPlacesData(List<dynamic> nearByPlacesList) async {
+    print('메소드!');
+    List<Place> places = [];
+
+    for (var place in nearByPlacesList) {
+      final location = LatLng(
+        place['location']['latitude'],
+        place['location']['longitude'],
+      );
+
+      // 사진 가져오기
+      List<dynamic>? photoUrl = place['photos'] ?? [];
+      print('photoUrl $photoUrl');
+
+      // 아이콘 가져오기 - 한번더 해보고 / 안되면  이미지로 만들어서 가져오기
+      /*BitmapDescriptor? icon = await _placeApiModel
+              .getMarkerIcon(place['primaryTypeDisplayName']['text']) ??
+          null;
+      print('icon $icon');*/
+
+      List<String> photoUris = photoUrl!
+          .map((photo) => photo["authorAttributions"]?[0]["photoUri"] as String)
+          .toList();
+
+      print(place['id'].runtimeType);
+
+      // Place 객체 생성
+      places.add(
+        Place(
+            id: place['id'],
+            name: place['displayName']['text'] ?? 'Unknown',
+            address: place['shortFormattedAddress'] ?? 'Unknown',
+            category: place['primaryTypeDisplayName']['text'] ?? 'Others',
+            photoUrl: photoUrl,
+            location: location,
+            // icon: icon!,
+            icon: BitmapDescriptor.defaultMarker),
+      );
+      setState(() {
+        _nearByPlacesList.addAll(places);
+      });
+    }
+
+    return places;
+  }
+
+  // 마커 추가
+  void _addMarkersToMap(List<Place> places) {
+    Set<Marker> markers = places.map((place) {
+      print('marker place ${place.name}');
+      return Marker(
+        markerId: MarkerId(place.id),
+        position: place.location,
+        infoWindow: InfoWindow(
+          title: place.name.toString(),
+          snippet: place.address.toString(),
+        ),
+        icon: place.icon,
+      );
+    }).toSet();
+
+    setState(() {
+      _markers = markers;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     LatLng _mapCenter = latitude != null && longitude != null
         ? LatLng(latitude!, longitude!)
-        : LatLng(37.514575, 127.0495556); // 기본 위치
+        : LatLng(37.514575, 127.0495556);
     return Scaffold(
         body: Stack(
       children: [
@@ -211,17 +276,22 @@ class _MapScreenState extends State<MapScreen> {
                   markers: _markers,
                   onCameraMove: (CameraPosition position) {
                     _mapCenter = position.target;
-                    print('_mapCenter $_mapCenter');
+                    print('onCameraMove _mapCenter $_mapCenter');
                   },
                 ),
               )
-            : Center(child: CircularProgressIndicator()),
+            : Center(heightFactor: 12, child: CircularProgressIndicator()),
         Padding(
             padding: EdgeInsets.only(top: 370),
             child: Align(
               alignment: Alignment.topCenter,
               child: ElevatedButton(
                   onPressed: () {
+                    setState(() {
+                      _mapCenter =
+                          LatLng(_mapCenter.latitude, _mapCenter.longitude);
+                    });
+                    print('click _mapCenter $_mapCenter');
                     _getNearByPlaces(_mapCenter.latitude, _mapCenter.longitude);
                   },
                   style: ElevatedButton.styleFrom(
