@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/chatting/screen/chatting_screen.dart';
+import 'package:flutter_locatrip/mypage/screen/mypage_screen.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../main/screen/main_screen.dart';
@@ -21,7 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
     MapScreen(),
     // AdviceScreen(),
     ChattingScreen(),
-    // MypageScreen(),
+    MypageScreen(),
   ];
 
   // 탭 선택 시 호출 함수
@@ -45,8 +46,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Icon(Icons.home_outlined), label: "홈"),
             BottomNavigationBarItem(
                 icon: Icon(Icons.map_outlined), label: "지도"),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.recommend_outlined), label: "여행첨삭소"),
+            /*BottomNavigationBarItem(
+                icon: Icon(Icons.recommend_outlined), label: "여행첨삭소"),*/
             BottomNavigationBarItem(
                 icon: Icon(Icons.sms_outlined), label: "채팅"),
             BottomNavigationBarItem(

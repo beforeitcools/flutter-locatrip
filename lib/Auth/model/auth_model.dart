@@ -12,7 +12,8 @@ class AuthModel {
     final dio = Dio();
 
     try {
-      final response = await dio.get("$backUrl/checkUserId?userId=$userId");
+      final response =
+          await dio.get("$backUrl/auth/checkUserId?userId=$userId");
 
       if (response.statusCode == 200) {
         return response.data['message'];
@@ -30,7 +31,7 @@ class AuthModel {
 
     try {
       final response =
-          await dio.get("$backUrl/checkNickname?nickname=$nickname");
+          await dio.get("$backUrl/auth/checkNickname?nickname=$nickname");
 
       if (response.statusCode == 200) {
         return response.data['message'];
@@ -56,7 +57,7 @@ class AuthModel {
                 filename: image.path.split('/').last,
               ),
       });
-      final response = await dio.post("$backUrl/signup",
+      final response = await dio.post("$backUrl/auth/signup",
           data: formData,
           options: Options(headers: {'Content-Type': 'multipart/form-data'}));
 

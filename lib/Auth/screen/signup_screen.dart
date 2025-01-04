@@ -87,7 +87,6 @@ class _SignupScreenState extends State<SignupScreen> {
         if (result.contains("사용 가능한")) {
           _emailCheck = true;
         }
-        ;
         _emailError = result;
       });
     }

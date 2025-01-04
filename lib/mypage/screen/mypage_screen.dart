@@ -25,6 +25,50 @@ class _MypageScreenState extends State<MypageScreen> {
     LoadingOverlay.hide();*/
   }
 
+  Widget _buildIconOrImage(dynamic icon) {
+    if (icon is String) {
+      return Image.asset(
+        icon,
+        width: 24,
+        height: 24,
+        fit: BoxFit.cover,
+      );
+    } else if (icon is IconData) {
+      return Icon(icon, size: 24, color: blackColor);
+    } else {
+      return Icon(Icons.error_outline, size: 24, color: blackColor);
+    }
+  }
+
+  Widget _materialCreator(dynamic icon, String title /*, String screenName*/) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+          onTap: () {},
+          splashColor: Color.fromARGB(50, 43, 192, 228),
+          highlightColor: Color.fromARGB(30, 43, 192, 228),
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            height: 56,
+            padding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            child: Row(
+              children: [
+                _buildIconOrImage(icon),
+                SizedBox(
+                  width: 16,
+                ),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                Spacer(),
+                Icon(Icons.chevron_right),
+              ],
+            ),
+          )),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,11 +83,12 @@ class _MypageScreenState extends State<MypageScreen> {
                 // 알림창으로 이동
               },
               splashRadius: 24,
-              // splashColor: pointBlueColor,
+              splashColor: Color.fromARGB(70, 43, 192, 228),
+              highlightColor: Color.fromARGB(50, 43, 192, 228),
               icon: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  Icon(Icons.notifications),
+                  Icon(Icons.notifications_outlined),
                   // 새로운 알림 여부 ?
                   Positioned(
                     right: -1,
@@ -56,85 +101,173 @@ class _MypageScreenState extends State<MypageScreen> {
                   )
                 ],
               )),
-          IconButton(onPressed: _logout, icon: Icon(Icons.logout)),
+          IconButton(
+            onPressed: _logout,
+            icon: Icon(Icons.logout),
+            splashRadius: 24,
+            splashColor: Color.fromARGB(70, 43, 192, 228),
+            highlightColor: Color.fromARGB(50, 43, 192, 228),
+          ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: MediaQuery.of(context).size.height,
-          ),
-          child: IntrinsicHeight(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 16),
-              child: Center(
+      body: Padding(
+        padding: EdgeInsets.fromLTRB(16, 16, 16, 16),
+        child: Center(
+          child: Column(
+            children: [
+              Container(
+                height: 148,
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: lightGrayColor,
+                      width: 1.0,
+                    )),
                 child: Column(
                   children: [
-                    Container(
-                      height: 150,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
+                    // 프로필
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {},
+                        splashColor: Color.fromARGB(50, 43, 192, 228),
+                        highlightColor: Color.fromARGB(30, 43, 192, 228),
                         borderRadius: BorderRadius.circular(10),
-                        // 색??
-                      ),
-                      child: Column(
-                        children: [
-                          // 프로필
-                          Container(
-                              height: 92,
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 16),
-                                child: Row(
-                                  children: [
-                                    // 프로필 이미지
-                                    CircleAvatar(
-                                      radius: 30,
-                                      backgroundImage: AssetImage(
-                                              'assets/default_profile_image.png')
-                                          as ImageProvider,
-                                    ),
-                                    SizedBox(
-                                      width: 16,
-                                    ),
-                                    // 닉네임
-                                    Text(
-                                      "namjoon",
-                                      style: TextStyle(
-                                        color: blackColor,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ), // 너무 길면 처리(...)
-                                    SizedBox(
-                                      width: 16,
-                                    ),
-                                    // 베지(있으면)
-                                    Icon(
-                                      Icons.verified_outlined,
-                                      color: pointBlueColor,
-                                    ),
-                                    Spacer(),
-                                    Icon(Icons.chevron_right),
-                                  ],
+                        child: Container(
+                          height: 92,
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 16),
+                            child: Row(
+                              children: [
+                                // 프로필 이미지
+                                CircleAvatar(
+                                  radius: 30,
+                                  backgroundImage: AssetImage(
+                                          'assets/default_profile_image.png')
+                                      as ImageProvider,
                                 ),
-                              )),
-                          // 중간선
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Divider(
-                              color: lightGrayColor,
-                              thickness: 1,
+                                SizedBox(
+                                  width: 16,
+                                ),
+                                // 닉네임
+                                Text(
+                                  "namjoon",
+                                  style: TextStyle(
+                                    color: blackColor,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ), // 너무 길면 처리(...)
+                                SizedBox(
+                                  width: 16,
+                                ),
+                                // 베지(있으면)
+                                Icon(
+                                  Icons.verified_outlined,
+                                  color: pointBlueColor,
+                                ),
+                                Spacer(),
+                                Icon(Icons.chevron_right),
+                              ],
                             ),
                           ),
-                          Container(),
-                        ],
+                        ),
+                      ),
+                    ),
+                    Container(
+                      height: 54,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
+                        child: Container(
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                border: Border(
+                                  top: BorderSide(
+                                    color: lightGrayColor,
+                                    width: 1.0,
+                                  ),
+                                )),
+                            child: Align(
+                              alignment: Alignment.center,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    "assets/icon/editor_choice.png",
+                                    width: 24,
+                                    height: 24,
+                                    fit: BoxFit.cover,
+                                  ),
+                                  SizedBox(
+                                    width: 16,
+                                  ),
+                                  Text(
+                                    "내 첨삭 채택수",
+                                    style:
+                                        Theme.of(context).textTheme.bodyMedium,
+                                  ),
+                                  SizedBox(
+                                    height: 16,
+                                    width: 40,
+                                    child: VerticalDivider(
+                                      color: grayColor,
+                                      thickness: 1.0,
+                                    ),
+                                  ),
+                                  Text("101",
+                                      style: TextStyle(
+                                        color: pointBlueColor,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800,
+                                      )),
+                                ],
+                              ),
+                            )),
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
+              SizedBox(
+                height: 26,
+              ),
+              Container(
+                height: 56,
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: lightGrayColor,
+                      width: 1.0,
+                    )),
+                child: _materialCreator("assets/icon/home_pin.png", "현지인 인증하기"),
+              ),
+              SizedBox(
+                height: 20,
+              ),
+              Container(
+                height: 226,
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: lightGrayColor,
+                      width: 1.0,
+                    )),
+                child: Column(
+                  children: [
+                    _materialCreator("assets/icon/trip.png", "내 여행"),
+                    _materialCreator(Icons.favorite_border_outlined, "내 저장"),
+                    _materialCreator(Icons.article_outlined, "내 포스트"),
+                    _materialCreator("assets/icon/rate_review.png", "내 첨삭"),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
