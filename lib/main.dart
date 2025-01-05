@@ -13,7 +13,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: style.theme,
+      debugShowCheckedModeBanner: false,
       home: HomeScreen(),
+      routes: {
+        "/home": (context) => HomeScreen(),
+      },
     );
   }
 }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/chatting/screen/chatting_screen.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../main/screen/main_screen.dart';
+import '../../map/screen/map_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,9 +19,9 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _pages = [
     MainScreen(),
     MapScreen(),
-    AdviceScreen(),
+    // AdviceScreen(),
     ChattingScreen(),
-    MypageScreen(),
+    // MypageScreen(),
   ];
 
   // 탭 선택 시 호출 함수
