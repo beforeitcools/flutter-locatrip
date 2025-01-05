@@ -37,9 +37,9 @@ class _AdviceScreen extends State<AdviceScreen> {
           width: 65,
           height: 60,
           child: FloatingActionButton(onPressed: (){
-            showDialog(context: context, builder: (context){return ShortageDialog();});
-            // showModalBottomSheet(context: context,
-            //   builder: (context){return PostBottomSheet();});
+            // showDialog(context: context, builder: (context){return ShortageDialog();});
+            showModalBottomSheet(context: context,
+              builder: (context){return PostBottomSheet();});
             },
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

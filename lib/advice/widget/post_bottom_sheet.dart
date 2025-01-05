@@ -85,7 +85,7 @@ class _PostBottomSheetState extends State<PostBottomSheet> {
                 ),
                 backgroundColor: pointBlueColor
             ),
-            onPressed: (){}, child: Text("첨삭받기", style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white))
+            onPressed: (){ /* 글쓰기 페이지 */}, child: Text("첨삭받기", style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white))
           )],
       )),
     );
