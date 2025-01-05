@@ -11,7 +11,7 @@ class PlaceApiModel {
       Map<String, dynamic> data) async {
     final dio = Dio();
     String? apiKey = await ApiKeyLoader.getApiKey('PLACES_API_KEY');
-    print('apiKey1 : $apiKey');
+    // print('apiKey1 : $apiKey');
 
     try {
       final responses = await dio.post(
@@ -36,25 +36,30 @@ class PlaceApiModel {
     }
   }
 
-  Future<List<dynamic>> getPlacePhotos(List<String> photos) async {
+  Future<List<String>> getPlacePhotos(List<String> photos) async {
     final dio = Dio();
     String? apiKey = await ApiKeyLoader.getApiKey('PLACES_API_KEY');
-    List<dynamic> resultList = [];
+    List<String> resultList = [];
 
     for (String photo in photos) {
+      // print('photos.length ${photos.length}');
       try {
         final responses = await dio.get(
-          "https://places.googleapis.com/v1/$photo/media?key=$apiKey&maxWidthPx=800",
+          "https://places.googleapis.com/v1/$photo/media",
+          queryParameters: {
+            'key': apiKey,
+            'maxWidthPx': 800,
+            'skipHttpRedirect': true
+          },
         );
 
         if (responses.statusCode == 200) {
-          // 데이터를 Map<String, String>으로 변환
+          // print('response.data ${responses.data}');
           Map<String, dynamic> responseData =
               responses.data as Map<String, dynamic>;
 
-          resultList.add(responseData["photoUri"]);
-
-          return resultList;
+          resultList.add(responseData["photoUri"].toString());
+          // print('resultList.length ${resultList.length}');
         } else {
           throw Exception("로드 실패");
         }
@@ -64,6 +69,60 @@ class PlaceApiModel {
       }
     }
     return resultList;
+  }
+
+  Future<List<dynamic>> getSearchPlace(Map<String, dynamic> data) async {
+    final dio = Dio();
+    String? apiKey = await ApiKeyLoader.getApiKey('PLACES_API_KEY');
+
+    try {
+      final responses = await dio.post(
+        "https://places.googleapis.com/v1/places:searchText",
+        data: jsonEncode(data),
+        options: Options(headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': apiKey,
+          'X-Goog-FieldMask':
+              "places.id,places.displayName,places.shortFormattedAddress,places.primaryTypeDisplayName,places.location,places.photos",
+        }),
+      );
+
+      if (responses.statusCode == 200) {
+        return responses.data["places"] as List<dynamic>;
+      } else {
+        throw Exception("로드 실패");
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error : $e");
+    }
+  }
+
+  // 나중에...
+  Future<List<Map<String, dynamic>>> getAutoComplete(
+      Map<String, dynamic> data) async {
+    final dio = Dio();
+    String? apiKey = await ApiKeyLoader.getApiKey('PLACES_API_KEY');
+
+    try {
+      final responses = await dio.post(
+        "https://places.googleapis.com/v1/places:autocomplete",
+        data: jsonEncode(data),
+        options: Options(headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': apiKey,
+        }),
+      );
+
+      if (responses.statusCode == 200) {
+        return responses.data["places"] as List<Map<String, dynamic>>;
+      } else {
+        throw Exception("로드 실패");
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error : $e");
+    }
   }
 
   // Google Places API에서 마커 아이콘 가져오기
