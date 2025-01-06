@@ -21,7 +21,7 @@ class _ChattingScreenState extends State<ChattingScreen> {
 
   void _loadChatData() async
   {
-    List<dynamic> chatData = await _chatModel.fetchMessageData();
+    List<dynamic> chatData = await _chatModel.fetchMessageData(1);
     setState(() {
       _chats = chatData;
     });
