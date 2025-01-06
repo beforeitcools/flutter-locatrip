@@ -3,9 +3,11 @@ import 'package:flutter_locatrip/map/model/place_api_model.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../../common/model/navigation_observer.dart';
 import '../../common/widget/color.dart';
 import '../../trip/model/current_position_model.dart';
 import '../../trip/widget/denied_permission_dialog.dart';
+import '../model/app_overlay_controller.dart';
 import '../model/place.dart';
 
 class MapScreen extends StatefulWidget {
@@ -17,6 +19,7 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   final PlaceApiModel _placeApiModel = PlaceApiModel();
+
   Set<Marker> _markers = {};
 
   final DraggableScrollableController sheetController =
@@ -35,6 +38,8 @@ class _MapScreenState extends State<MapScreen> {
   final double maxSize = 0.9;
   final double minSize = 0.47;
   final double tolerance = 0.001;
+  double sheetSize = 0.47;
+  final double buttonOffset = 16;
 
   bool isExpanded = false;
 
@@ -53,6 +58,10 @@ class _MapScreenState extends State<MapScreen> {
   List<String> typeTourist = [];
 
   bool isCategorySelected = false;
+
+  bool _isLoadingMarkers = false;
+
+  String _selectedCategory = '';
 
   @override
   void initState() {
@@ -84,6 +93,7 @@ class _MapScreenState extends State<MapScreen> {
     // DraggableScrollableController 의 상태 변화 감지
     sheetController.addListener(() {
       double currentSize = sheetController.size;
+      sheetSize = sheetController.size;
       if ((currentSize - maxSize).abs() < tolerance) {
         setState(() {
           isExpanded = true;
@@ -149,6 +159,11 @@ class _MapScreenState extends State<MapScreen> {
       String rankPreference, List typeList) async {
     // print('_latitude $_latitude _longitude $_longitude');
 
+    setState(() {
+      _isLoadingMarkers = true;
+      _nearByPlacesList.clear();
+    });
+
     Map<String, dynamic> data = {
       "locationRestriction": {
         "circle": {
@@ -172,11 +187,18 @@ class _MapScreenState extends State<MapScreen> {
       List<dynamic> nearByPlacesList = nearByPlaces["places"];
       print('nearByPlacesList $nearByPlacesList');
 
-      // 장소 데이터를 Place 객체로 변환
-      List<Place> places = await _processPlacesData(nearByPlacesList);
+      // 마커 추가 전 리스트 클리어
+      setState(() {
+        _nearByPlacesList.clear();
+      });
+
+      // 장소 데이터를 비동기로 처리
+      for (var place in nearByPlacesList) {
+        _processAndAddPlace(place);
+      }
 
       // 마커 추가
-      _addMarkersToMap(places);
+      // _addMarkersToMap(places);
 
       /*if (latitude != _latitude || _longitude != longitude) {
         mapController!.animateCamera(
@@ -185,84 +207,160 @@ class _MapScreenState extends State<MapScreen> {
       }*/
     } catch (e) {
       print("에러메시지 : $e");
+    } finally {
+      setState(() {
+        _isLoadingMarkers = false;
+      });
     }
   }
 
-  // 장소 데이터를 Place 객체 리스트로 변환
-  Future<List<Place>> _processPlacesData(List<dynamic> nearByPlacesList) async {
-    List<Place> places = [];
+  // 개별 장소 데이터 처리 및 리스트 추가
+  void _processAndAddPlace(dynamic place) async {
+    final location = LatLng(
+      place['location']['latitude'],
+      place['location']['longitude'],
+    );
 
-    for (var place in nearByPlacesList) {
-      final location = LatLng(
-        place['location']['latitude'],
-        place['location']['longitude'],
-      );
-
-      // 사진 가져오기
-      List<dynamic> photos = place['photos'] ?? [];
-      List<String> photoUrls = [];
-      for (var photo in photos) {
-        String? photoUri = photo['name'];
-        if (photoUri != null) {
-          photoUrls.add(photoUri);
-        }
+    List<dynamic> photos = place['photos'] ?? [];
+    List<String> photoUrls = [];
+    for (var photo in photos) {
+      String? photoUri = photo['name'];
+      if (photoUri != null) {
+        photoUrls.add(photoUri);
       }
+    }
 
-      List<String> photoUris = await _placeApiModel.getPlacePhotos(photoUrls);
-      /*  print('photoUris $photoUris');*/
+    // 병렬로 사진 가져오기
+    List<String> photoUris = await _placeApiModel.getPlacePhotos(photoUrls);
 
-      // 아이콘 가져오기 - 한번더 해보고 / 안되면  이미지로 만들어서 가져오기
-      /*BitmapDescriptor? icon = await _placeApiModel
+    // 아이콘 가져오기 - 한번더 해보고 / 안되면  이미지로 만들어서 가져오기
+    /*BitmapDescriptor? icon = await _placeApiModel
               .getMarkerIcon(place['primaryTypeDisplayName']['text']) ??
           null;
       print('icon $icon');*/
 
-      // print(place['id'].runtimeType);
+    Place newPlace = Place(
+      id: place['id'],
+      name: place['displayName']['text'] ?? 'Unknown',
+      address: place['shortFormattedAddress'] ?? 'Unknown',
+      category: place['primaryTypeDisplayName']['text'] ?? 'Others',
+      photoUrl: photoUris,
+      location: location,
+      icon: BitmapDescriptor.defaultMarker,
+    );
 
-      // Place 객체 생성
-      places.add(
-        Place(
-            id: place['id'],
-            name: place['displayName']['text'] ?? 'Unknown',
-            address: place['shortFormattedAddress'] ?? 'Unknown',
-            category: place['primaryTypeDisplayName']['text'] ?? 'Others',
-            photoUrl: photoUris,
-            location: location,
-            // icon: icon!,
-            icon: BitmapDescriptor.defaultMarker),
-      );
-      setState(() {
-        _nearByPlacesList.clear();
-        _nearByPlacesList.addAll(places);
-      });
-    }
+    _nearByPlacesList.add(newPlace);
 
-    return places;
-  }
-
-  // 마커 추가
-  void _addMarkersToMap(List<Place> places) {
-    Set<Marker> markers = places.map((place) {
-      print('marker place ${place.name}');
-      return Marker(
-        markerId: MarkerId(place.id),
-        position: place.location,
-        infoWindow: InfoWindow(
-          title: place.name.toString(),
-          snippet: place.address.toString(),
-        ),
-        icon: place.icon,
-      );
-    }).toSet();
-
+    // 마커 추가 및 장소 리스트 업데이트
     setState(() {
-      _markers = markers;
+      _markers.add(Marker(
+          markerId: MarkerId(newPlace.id),
+          position: newPlace.location,
+          /*infoWindow: InfoWindow(
+          title: newPlace.name,
+          snippet: newPlace.address,
+        ),*/
+          icon: newPlace.icon,
+          onTap: () {
+            // newPlace.id와 일치하는 장소 찾기
+            Place? selectedPlace = _nearByPlacesList.firstWhere(
+              (place) => place.id == newPlace.id,
+              orElse: () => Place(
+                id: '',
+                name: '정보 없음',
+                address: '',
+                category: '',
+                photoUrl: [],
+                location: LatLng(0, 0),
+                icon: BitmapDescriptor.defaultMarker,
+              ),
+            );
+
+            // 장소 정보 하단 시트로 띄우기
+            if (selectedPlace.id.isNotEmpty) {
+              _showPlaceInfoSheet(selectedPlace);
+            }
+          }));
     });
   }
 
-  void _getSearchResults() async {
-    // 지도에서는 우리나라 제한 검색 / 장소 추가시 해당 지역으로 축소
+  // 장소 정보 하단 시트
+  void _showPlaceInfoSheet(Place place) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      elevation: 3.0,
+      builder: (BuildContext context) {
+        return Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: MediaQuery.of(context).size.width * 0.7,
+                        child: Text(
+                          place.name,
+                          style: Theme.of(context).textTheme.titleMedium,
+                          softWrap: true,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        place.address,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      icon: Icon(Icons.close))
+                ],
+              ),
+              SizedBox(height: 16),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: place.photoUrl!.map((url) {
+                    return Container(
+                      margin: EdgeInsets.only(right: 8),
+                      width: 100,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        image: DecorationImage(
+                          image: NetworkImage(url),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              /*SizedBox(height: 20),*/
+              /*ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('닫기'),
+              ),*/
+            ],
+          ),
+        );
+      },
+    );
+  }
 
+  void _getSearchResults() async {
     print('_searchController ${_searchController.text}');
 
     Map<String, dynamic> data = {
@@ -271,75 +369,565 @@ class _MapScreenState extends State<MapScreen> {
       "languageCode": "ko",
       "regionCode": "KR"
     };
-    try {
-      List<dynamic> _resultList = await _placeApiModel.getSearchPlace(data);
-      // 장소 데이터를 Place 객체로 변환
-      List<Place> places = await _processPlacesData(_resultList);
 
-      // 마커 추가
-      _addMarkersToMap(places);
+    setState(() {
+      _isLoadingMarkers = true;
+      _nearByPlacesList.clear();
+      _markers.clear();
+    });
+
+    try {
+      List<dynamic> resultList = await _placeApiModel.getSearchPlace(data);
+      print('resultList: $resultList');
+
+      // 장소 데이터 비동기 처리 및 마커 추가
+      for (var place in resultList) {
+        _processAndAddPlace(place);
+      }
     } catch (e) {
       print("에러메시지 : $e");
+    } finally {
+      setState(() {
+        _isLoadingMarkers = false;
+      });
     }
   }
 
-  void showAppBarOverlay(BuildContext context) {
-    // 1. overlayEntry 선언
-    OverlayEntry? overlayEntry;
+  // 카테고리 버튼 위젯 빌더
+  Widget _buildCategoryButton(
+      Map<String, dynamic> category, LatLng _mapCenter) {
+    final isSelected = _selectedCategory == category["label"];
 
-    // 2. OverlayEntry 설정
-    overlayEntry = OverlayEntry(
-      builder: (context) {
-        return GestureDetector(
-          // 3. 화면 전체를 터치하면 overlayEntry를 닫음
-          onTap: () {
-            overlayEntry?.remove(); // 앱바 닫기
+    return TextButton(
+      onPressed: () {
+        setState(() {
+          isCategorySelected = true;
+          _selectedCategory = category["label"];
+        });
+
+        AppOverlayController.showAppBarOverlay(
+          context,
+          category["label"],
+          () {
+            setState(() {
+              isCategorySelected = false;
+              _selectedCategory = '';
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _categoryScrollController.animateTo(
+                  _categoryScrollController.position.minScrollExtent,
+                  duration: Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                );
+              });
+              _getNearByPlaces(
+                _mapCenter.latitude,
+                _mapCenter.longitude,
+                "POPULARITY",
+                typeAll,
+              );
+            });
           },
-          child: Material(
-            color: Colors.transparent,
-            child: Stack(
+        );
+
+        _getNearByPlaces(
+          _mapCenter.latitude,
+          _mapCenter.longitude,
+          "POPULARITY",
+          category["type"],
+        );
+
+        // 카테고리에 따라 스크롤 애니메이션 적용
+        if (category["scrollToMin"] == true) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _categoryScrollController.animateTo(
+              _categoryScrollController.position.minScrollExtent,
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          });
+        }
+
+        if (category["scrollToMax"] == true) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _categoryScrollController.animateTo(
+              _categoryScrollController.position.maxScrollExtent,
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          });
+        }
+      },
+      style: TextButton.styleFrom(
+        backgroundColor: isSelected ? pointBlueColor : lightGrayColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(100),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            category["icon"],
+            color: isSelected ? Colors.white : blackColor,
+            size: 18,
+          ),
+          SizedBox(width: 5),
+          Text(
+            category["label"],
+            style: isSelected
+                ? Theme.of(context)
+                    .textTheme
+                    .labelMedium
+                    ?.copyWith(color: Colors.white)
+                : Theme.of(context).textTheme.labelMedium,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _showDragableSheet(LatLng _mapCenter,
+      List<Map<String, dynamic>> categories, List<String> orderByListEn) {
+    return DraggableScrollableSheet(
+      initialChildSize: minSize, // 초기 높이 비율
+      minChildSize: minSize, // 최소 높이 비율
+      maxChildSize: maxSize, // 최대 높이 비율
+      controller: sheetController,
+      snap: true,
+      builder: (BuildContext context, scrollController) {
+        return Container(
+          color: Colors.transparent,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                )
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // GestureDetector로 전체 화면을 감싸서 터치 이벤트 감지
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: Material(
-                    color: Colors.white.withOpacity(0.9), // 앱바 배경 색상
-                    child: AppBar(
-                      title: Text("음식점"),
-                      backgroundColor: Colors.white,
-                      elevation: 4.0,
-                      leading: IconButton(
-                        icon: Icon(Icons.close),
-                        onPressed: () {
-                          overlayEntry?.remove(); // x버튼으로 앱바 닫기
-                        },
+                // 드래그 핸들러
+                GestureDetector(
+                    onTap: _toggleSheetHeight,
+                    child: Center(
+                      child: Container(
+                        width: 32,
+                        height: 4,
+                        margin: EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          color: grayColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
-                    ),
-                  ),
-                ),
+                    )),
+                isCategorySelected
+                    ? SizedBox.shrink()
+                    : Padding(
+                        padding: EdgeInsets.fromLTRB(16, 0, 16, 35),
+                        child: TextField(
+                          controller: _searchController,
+                          /*onChanged: (value) {
+                          _getSearchResults();
+                        },*/
+                          decoration: InputDecoration(
+                            hintText: "장소 검색",
+                            filled: true,
+                            fillColor: lightGrayColor,
+                            contentPadding: EdgeInsets.symmetric(
+                                vertical: 16, horizontal: 16),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: BorderSide.none,
+                            ),
+                            suffixIcon: Padding(
+                              padding: EdgeInsets.only(right: 16),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (_searchController.text.isNotEmpty)
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.cancel,
+                                        color: grayColor,
+                                        size: 20,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          isSearched = false;
+                                        });
+                                        _searchController.clear();
+                                        _getNearByPlaces(
+                                            _mapCenter.latitude,
+                                            _mapCenter.longitude,
+                                            "POPULARITY",
+                                            typeAll);
+                                      },
+                                    ),
+                                  IconButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          isSearched = true;
+                                        });
+                                        sheetController.animateTo(
+                                          maxSize,
+                                          duration: Duration(milliseconds: 300),
+                                          curve: Curves.easeInOut,
+                                        );
+                                        _getSearchResults();
+                                        // if(_searchController.text.isEmpty)
+                                      },
+                                      icon: Icon(Icons.search))
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                isSearched
+                    ? SizedBox.shrink()
+                    : SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        controller: _categoryScrollController,
+                        child: Padding(
+                          padding: EdgeInsets.fromLTRB(16, 0, 16, 20),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              isCategorySelected
+                                  ? SizedBox.shrink()
+                                  : Row(
+                                      children: [
+                                        TextButton(
+                                            onPressed: () {
+                                              showModalBottomSheet(
+                                                context: context,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.vertical(
+                                                          top: Radius.circular(
+                                                              16)),
+                                                ),
+                                                builder:
+                                                    (BuildContext context) {
+                                                  return Padding(
+                                                    padding:
+                                                        EdgeInsets.fromLTRB(
+                                                            16, 0, 16, 16),
+                                                    child: Column(
+                                                      mainAxisSize: MainAxisSize
+                                                          .min, // 컨텐츠 높이에 맞게 조정
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .center,
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        Flexible(
+                                                          child:
+                                                              ListView.builder(
+                                                                  padding:
+                                                                      EdgeInsets
+                                                                          .zero,
+                                                                  shrinkWrap:
+                                                                      true,
+                                                                  itemCount:
+                                                                      orderByList
+                                                                          .length,
+                                                                  itemBuilder:
+                                                                      (context,
+                                                                          index) {
+                                                                    return Container(
+                                                                      decoration:
+                                                                          BoxDecoration(
+                                                                        border:
+                                                                            Border(
+                                                                          bottom:
+                                                                              BorderSide(
+                                                                            color:
+                                                                                lightGrayColor,
+                                                                            width:
+                                                                                1,
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                      child:
+                                                                          ListTile(
+                                                                        onTap:
+                                                                            () {
+                                                                          setState(
+                                                                              () {
+                                                                            // print(orderByList[index]);
+                                                                            orderBy =
+                                                                                orderByList[index];
+                                                                          });
+
+                                                                          _getNearByPlaces(
+                                                                              _mapCenter.latitude,
+                                                                              _mapCenter.longitude,
+                                                                              orderByListEn[index],
+                                                                              typeAll);
+                                                                          Navigator.pop(
+                                                                              context);
+                                                                        },
+                                                                        title:
+                                                                            Text(
+                                                                          orderByList[
+                                                                              index],
+                                                                          textAlign:
+                                                                              TextAlign.center,
+                                                                        ),
+                                                                      ),
+                                                                    );
+                                                                  }),
+                                                        ),
+                                                        TextButton(
+                                                            onPressed: () {
+                                                              Navigator.pop(
+                                                                  context);
+                                                            },
+                                                            child: Text(
+                                                              "닫기",
+                                                              style: TextStyle(
+                                                                color:
+                                                                    Colors.red,
+                                                              ),
+                                                            ))
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
+                                              );
+                                            },
+                                            style: TextButton.styleFrom(
+                                                backgroundColor: lightGrayColor,
+                                                shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            100))),
+                                            child: Row(
+                                              children: [
+                                                Text(
+                                                  orderBy,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .labelMedium,
+                                                ),
+                                                Icon(
+                                                  Icons.keyboard_arrow_down,
+                                                  color: blackColor,
+                                                )
+                                              ],
+                                            )),
+                                        SizedBox(
+                                          width: 10,
+                                        ),
+                                        Container(
+                                          width: 1,
+                                          height: 16,
+                                          color: lightGrayColor,
+                                        ),
+                                        SizedBox(
+                                          width: 10,
+                                        ),
+                                      ],
+                                    ),
+                              Row(
+                                children: categories.map((category) {
+                                  return Row(
+                                    children: [
+                                      _buildCategoryButton(
+                                          category, _mapCenter),
+                                      SizedBox(width: 10),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          ),
+                        )),
+                Expanded(
+                    child: _nearByPlacesList.isNotEmpty
+                        ? ListView.builder(
+                            controller: scrollController,
+                            physics:
+                                BouncingScrollPhysics(), // 리스트 수가 적을 때 스크롤 가능 하도록 !
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,
+                            itemCount: _nearByPlacesList.length,
+                            itemBuilder: (context, index) {
+                              return Container(
+                                padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                                child: GestureDetector(
+                                  onTap: () {},
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Container(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.7,
+                                                child: Text(
+                                                  _nearByPlacesList[index].name,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodySmall
+                                                      ?.copyWith(
+                                                          fontWeight:
+                                                              FontWeight.w600),
+                                                  softWrap: true,
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                height: 5,
+                                              ),
+                                              Row(
+                                                children: [
+                                                  Text(
+                                                    _nearByPlacesList[index]
+                                                        .category,
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .labelSmall
+                                                        ?.copyWith(
+                                                            color: grayColor,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w500),
+                                                  ),
+                                                  Text(
+                                                    " · ${_nearByPlacesList[index].address.split(" ")[0]}",
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .labelSmall
+                                                        ?.copyWith(
+                                                            color: grayColor,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w500),
+                                                  )
+                                                ],
+                                              ),
+                                              SizedBox(
+                                                height: 12,
+                                              ),
+                                            ],
+                                          ),
+                                          IconButton(
+                                              onPressed: () {
+                                                // 장소 테이블 저장
+                                                // 내 장소 저장
+                                                // 클릭된 하트만 색상 채워지기
+                                              },
+                                              padding: EdgeInsets.zero,
+                                              icon: Icon(
+                                                Icons.favorite_outline_outlined,
+                                              ))
+                                        ],
+                                      ),
+                                      SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        child: Row(
+                                          children: _nearByPlacesList[index]
+                                              .photoUrl!
+                                              .map((photo) {
+                                            return Container(
+                                              margin:
+                                                  EdgeInsets.only(right: 16),
+                                              width: 150,
+                                              height: 90,
+                                              decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                image: DecorationImage(
+                                                  fit: BoxFit.cover,
+                                                  image: NetworkImage(photo),
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          )
+                        : Center(
+                            child: CircularProgressIndicator(),
+                          ))
               ],
             ),
           ),
         );
       },
     );
-
-    // 4. OverlayState 얻기
-    OverlayState overlayState = Overlay.of(context)!;
-
-    // 5. Overlay에 앱바 추가
-    overlayState.insert(overlayEntry);
   }
 
   @override
   Widget build(BuildContext context) {
+    double screenHeight = MediaQuery.of(context).size.height;
+
     LatLng _mapCenter = latitude != null && longitude != null
         ? LatLng(latitude!, longitude!)
         : LatLng(37.514575, 127.0495556);
 
     List<String> orderByListEn = ["POPULARITY", "DISTANCE"];
+
+    // 카테고리 정보 리스트
+    final List<Map<String, dynamic>> categories = [
+      {
+        "label": "음식점",
+        "icon": Icons.restaurant,
+        "type": typeRestaurant,
+      },
+      {
+        "label": "카페",
+        "icon": Icons.local_cafe_outlined,
+        "type": typeCafe,
+        "scrollToMin": true,
+      },
+      {
+        "label": "편의점",
+        "icon": Icons.local_convenience_store_outlined,
+        "type": typeConvenience,
+      },
+      {
+        "label": "마트",
+        "icon": Icons.shopping_cart_outlined,
+        "type": typeMart,
+        "scrollToMax": true,
+      },
+      {
+        "label": "숙박시설",
+        "icon": Icons.bed_outlined,
+        "type": typeLodging,
+        "scrollToMax": true,
+      },
+      {
+        "label": "관광지",
+        "icon": Icons.attractions_outlined,
+        "type": typeTourist,
+      }
+    ];
 
     return Scaffold(
         body: Stack(
@@ -364,580 +952,52 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               )
             : Center(heightFactor: 12, child: CircularProgressIndicator()),
-        Padding(
-            padding: EdgeInsets.only(top: 370),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _mapCenter =
-                          LatLng(_mapCenter.latitude, _mapCenter.longitude);
-                    });
-                    // print('click _mapCenter $_mapCenter');
-                    _getNearByPlaces(_mapCenter.latitude, _mapCenter.longitude,
-                        "POPULARITY", typeAll);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: Size(150, 40),
-                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.near_me_outlined,
-                        color: blackColor,
-                      ),
-                      Text(
-                        "이 지역에서 검색",
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelMedium
-                            ?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  )),
-            )),
-        DraggableScrollableSheet(
-          initialChildSize: minSize, // 초기 높이 비율
-          minChildSize: minSize, // 최소 높이 비율
-          maxChildSize: maxSize, // 최대 높이 비율
-          controller: sheetController,
-          snap: true,
-          builder: (BuildContext context, scrollController) {
-            return Container(
-              color: Colors.transparent,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                    )
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 드래그 핸들러
-                    GestureDetector(
-                        onTap: _toggleSheetHeight,
-                        child: Center(
-                          child: Container(
-                            width: 32,
-                            height: 4,
-                            margin: EdgeInsets.symmetric(vertical: 16),
-                            decoration: BoxDecoration(
-                              color: grayColor,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        )),
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(16, 0, 16, 35),
-                      child: TextField(
-                        controller: _searchController,
-                        /*onChanged: (value) {
-                          _getSearchResults();
-                        },*/
-                        decoration: InputDecoration(
-                          hintText: "장소 검색",
-                          filled: true,
-                          fillColor: lightGrayColor,
-                          contentPadding: EdgeInsets.symmetric(
-                              vertical: 16, horizontal: 16),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide.none,
-                          ),
-                          suffixIcon: Padding(
-                            padding: EdgeInsets.only(right: 16),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (_searchController.text.isNotEmpty)
-                                  IconButton(
-                                    icon: Icon(
-                                      Icons.cancel,
-                                      color: grayColor,
-                                      size: 20,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        isSearched = false;
-                                      });
-                                      _searchController.clear();
-                                      _getNearByPlaces(
-                                          _mapCenter.latitude,
-                                          _mapCenter.longitude,
-                                          "POPULARITY",
-                                          typeAll);
-                                    },
-                                  ),
-                                IconButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        isSearched = true;
-                                      });
-                                      sheetController.animateTo(
-                                        maxSize,
-                                        duration: Duration(milliseconds: 300),
-                                        curve: Curves.easeInOut,
-                                      );
-                                      _getSearchResults();
-                                      // if(_searchController.text.isEmpty)
-                                    },
-                                    icon: Icon(Icons.search))
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+        if (_isLoadingMarkers)
+          Center(heightFactor: 12, child: CircularProgressIndicator()),
+        isCategorySelected
+            ? SizedBox.shrink()
+            : // 위치 조정된 버튼
+            AnimatedPositioned(
+                duration: Duration(milliseconds: 200),
+                bottom: (screenHeight * sheetSize - 10),
+                left: MediaQuery.of(context).size.width * 0.3,
+                right: MediaQuery.of(context).size.width * 0.3,
+                child: Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _mapCenter =
+                            LatLng(_mapCenter.latitude, _mapCenter.longitude);
+                        _searchController.clear();
+                      });
+                      _getNearByPlaces(_mapCenter.latitude,
+                          _mapCenter.longitude, "POPULARITY", typeAll);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: Size(150, 40), // 버튼 크기 조정
+                      backgroundColor: Colors.white,
                     ),
-                    isSearched
-                        ? SizedBox.shrink()
-                        : SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            controller: _categoryScrollController,
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                  vertical: 0, horizontal: 16),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  TextButton(
-                                      onPressed: () {
-                                        showModalBottomSheet(
-                                          context: context,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.vertical(
-                                                top: Radius.circular(16)),
-                                          ),
-                                          builder: (BuildContext context) {
-                                            return Padding(
-                                              padding: EdgeInsets.fromLTRB(
-                                                  16, 0, 16, 16),
-                                              child: Column(
-                                                mainAxisSize: MainAxisSize
-                                                    .min, // 컨텐츠 높이에 맞게 조정
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.center,
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Flexible(
-                                                    child: ListView.builder(
-                                                        padding:
-                                                            EdgeInsets.zero,
-                                                        shrinkWrap: true,
-                                                        itemCount:
-                                                            orderByList.length,
-                                                        itemBuilder:
-                                                            (context, index) {
-                                                          return Container(
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              border: Border(
-                                                                bottom:
-                                                                    BorderSide(
-                                                                  color:
-                                                                      lightGrayColor,
-                                                                  width: 1,
-                                                                ),
-                                                              ),
-                                                            ),
-                                                            child: ListTile(
-                                                              onTap: () {
-                                                                setState(() {
-                                                                  print(orderByList[
-                                                                      index]);
-                                                                  orderBy =
-                                                                      orderByList[
-                                                                          index];
-                                                                });
-
-                                                                _getNearByPlaces(
-                                                                    _mapCenter
-                                                                        .latitude,
-                                                                    _mapCenter
-                                                                        .longitude,
-                                                                    orderByListEn[
-                                                                        index],
-                                                                    typeAll);
-                                                                Navigator.pop(
-                                                                    context);
-                                                              },
-                                                              title: Text(
-                                                                orderByList[
-                                                                    index],
-                                                                textAlign:
-                                                                    TextAlign
-                                                                        .center,
-                                                              ),
-                                                            ),
-                                                          );
-                                                        }),
-                                                  ),
-                                                  TextButton(
-                                                      onPressed: () {
-                                                        Navigator.pop(context);
-                                                      },
-                                                      child: Text(
-                                                        "닫기",
-                                                        style: TextStyle(
-                                                          color: Colors.red,
-                                                        ),
-                                                      ))
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                        );
-                                      },
-                                      style: TextButton.styleFrom(
-                                          backgroundColor: lightGrayColor,
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(100))),
-                                      child: Row(
-                                        children: [
-                                          Text(
-                                            orderBy,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .labelMedium,
-                                          ),
-                                          Icon(
-                                            Icons.keyboard_arrow_down,
-                                            color: blackColor,
-                                          )
-                                        ],
-                                      )),
-                                  SizedBox(
-                                    width: 10,
-                                  ),
-                                  Container(
-                                    width: 1,
-                                    height: 16,
-                                    color: lightGrayColor,
-                                  ),
-                                  SizedBox(
-                                    width: 10,
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        isCategorySelected = true;
-                                      });
-
-                                      showAppBarOverlay(context);
-
-                                      _getNearByPlaces(
-                                          _mapCenter.latitude,
-                                          _mapCenter.longitude,
-                                          "POPULARITY",
-                                          typeRestaurant);
-                                    },
-                                    style: TextButton.styleFrom(
-                                        backgroundColor: lightGrayColor,
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(100))),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.restaurant,
-                                          color: blackColor,
-                                          size: 18,
-                                        ),
-                                        SizedBox(
-                                          width: 5,
-                                        ),
-                                        Text(
-                                          "음식점",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .labelMedium,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: 10,
-                                  ),
-                                  TextButton(
-                                    onPressed: () {},
-                                    style: TextButton.styleFrom(
-                                        backgroundColor: lightGrayColor,
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(100))),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.local_cafe_outlined,
-                                          color: blackColor,
-                                          size: 18,
-                                        ),
-                                        SizedBox(
-                                          width: 5,
-                                        ),
-                                        Text(
-                                          "카페",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .labelMedium,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: 10,
-                                  ),
-                                  TextButton(
-                                    onPressed: () {},
-                                    style: TextButton.styleFrom(
-                                        backgroundColor: lightGrayColor,
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(100))),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons
-                                              .local_convenience_store_outlined,
-                                          color: blackColor,
-                                          size: 18,
-                                        ),
-                                        SizedBox(
-                                          width: 5,
-                                        ),
-                                        Text(
-                                          "편의점",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .labelMedium,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: 10,
-                                  ),
-                                  TextButton(
-                                    onPressed: () {},
-                                    style: TextButton.styleFrom(
-                                        backgroundColor: lightGrayColor,
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(100))),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.shopping_cart_outlined,
-                                          color: blackColor,
-                                          size: 18,
-                                        ),
-                                        SizedBox(
-                                          width: 5,
-                                        ),
-                                        Text(
-                                          "마트",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .labelMedium,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: 10,
-                                  ),
-                                  TextButton(
-                                    onPressed: () {},
-                                    style: TextButton.styleFrom(
-                                        backgroundColor: lightGrayColor,
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(100))),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.bed_outlined,
-                                          color: blackColor,
-                                          size: 18,
-                                        ),
-                                        SizedBox(
-                                          width: 5,
-                                        ),
-                                        Text(
-                                          "숙박시설",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .labelMedium,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: 10,
-                                  ),
-                                  TextButton(
-                                    onPressed: () {},
-                                    style: TextButton.styleFrom(
-                                        backgroundColor: lightGrayColor,
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(100))),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.attractions_outlined,
-                                          color: blackColor,
-                                          size: 18,
-                                        ),
-                                        SizedBox(
-                                          width: 5,
-                                        ),
-                                        Text(
-                                          "관광지",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .labelMedium,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )),
-                    Expanded(
-                        child: _nearByPlacesList.isNotEmpty
-                            ? ListView.builder(
-                                controller: scrollController,
-                                physics:
-                                    BouncingScrollPhysics(), // 리스트 수가 적을 때 스크롤 가능 하도록 !
-                                itemCount: _nearByPlacesList.length,
-                                itemBuilder: (context, index) {
-                                  return Container(
-                                    padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
-                                    child: GestureDetector(
-                                      onTap: () {},
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    _nearByPlacesList[index]
-                                                        .name,
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .bodySmall
-                                                        ?.copyWith(
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .w600),
-                                                  ),
-                                                  SizedBox(
-                                                    height: 5,
-                                                  ),
-                                                  Row(
-                                                    children: [
-                                                      Text(
-                                                        _nearByPlacesList[index]
-                                                            .category,
-                                                        style: Theme.of(context)
-                                                            .textTheme
-                                                            .labelSmall
-                                                            ?.copyWith(
-                                                                color:
-                                                                    grayColor,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w500),
-                                                      ),
-                                                      Text(
-                                                        " · ${_nearByPlacesList[index].address.split(" ")[0]}",
-                                                        style: Theme.of(context)
-                                                            .textTheme
-                                                            .labelSmall
-                                                            ?.copyWith(
-                                                                color:
-                                                                    grayColor,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w500),
-                                                      )
-                                                    ],
-                                                  ),
-                                                  SizedBox(
-                                                    height: 12,
-                                                  ),
-                                                ],
-                                              ),
-                                              IconButton(
-                                                  onPressed: () {},
-                                                  padding: EdgeInsets.zero,
-                                                  icon: Icon(
-                                                    Icons
-                                                        .favorite_outline_outlined,
-                                                  ))
-                                            ],
-                                          ),
-                                          SingleChildScrollView(
-                                            scrollDirection: Axis.horizontal,
-                                            child: Row(
-                                              children: _nearByPlacesList[index]
-                                                  .photoUrl!
-                                                  .map((photo) {
-                                                return Container(
-                                                  margin: EdgeInsets.only(
-                                                      right: 16),
-                                                  width: 150,
-                                                  height: 90,
-                                                  decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            6),
-                                                    image: DecorationImage(
-                                                      fit: BoxFit.cover,
-                                                      image:
-                                                          NetworkImage(photo),
-                                                    ),
-                                                  ),
-                                                );
-                                              }).toList(),
-                                            ),
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              )
-                            : Center(
-                                child: CircularProgressIndicator(),
-                              ))
-                  ],
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.near_me_outlined,
+                          color: blackColor,
+                        ),
+                        Text(
+                          "이 지역에서 검색",
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            );
-          },
-        )
+        _showDragableSheet(_mapCenter, categories, orderByListEn),
+        // 드래그 시트 위에 버튼 고정
       ],
     ));
   }
