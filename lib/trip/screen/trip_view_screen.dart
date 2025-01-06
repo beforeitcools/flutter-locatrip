@@ -28,7 +28,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
 
   double? latitude;
   double? longitude;
-  late GoogleMapController mapController;
+  GoogleMapController? mapController;
 
   String address = "";
 
@@ -82,11 +82,12 @@ class _TripViewScreenState extends State<TripViewScreen> {
   _getCoordinatesFromAddress() async {
     try {
       List<Location> locations = await locationFromAddress(address);
+      print("locations $locations");
       setState(() {
         latitude = locations.first.latitude;
         longitude = locations.first.longitude;
+        print("latitude: $latitude longitude: $longitude");
       });
-      print('latitude: $latitude longitude: $longitude');
 
       _moveMapToCurrentLocation();
     } catch (e) {
@@ -94,35 +95,13 @@ class _TripViewScreenState extends State<TripViewScreen> {
     }
   }
 
-  // 지도에서 현위치 때 사용
-  _getGeoData() async {
-    Position? position = await getCurrentPosition();
-    if (position == null) {
-      _showPermissionDialog();
-      return;
-    }
-    setState(() {
-      // print('position $position');
-      latitude = position.latitude;
-      longitude = position.longitude;
-      isLoading = false;
-    });
-    _moveMapToCurrentLocation();
-  }
-
   void _moveMapToCurrentLocation() {
     if (latitude != null && longitude != null && mapController != null) {
-      mapController.animateCamera(
+      print("latitude2: $latitude longitude: $longitude");
+      mapController!.animateCamera(
         CameraUpdate.newLatLng(LatLng(latitude!, longitude!)),
       );
     }
-  }
-
-  void _showPermissionDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => DeniedPermissionDialog(),
-    );
   }
 
   // 시작/끝 날짜 사이값 구하기
@@ -399,10 +378,11 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                 initialCameraPosition: CameraPosition(
                                     target: LatLng(latitude!, longitude!),
                                     zoom: 9),
-                                myLocationEnabled: true,
-                                myLocationButtonEnabled: true,
+                                // myLocationEnabled: true,
+                                // myLocationButtonEnabled: true,
                                 onMapCreated: (GoogleMapController controller) {
                                   mapController = controller; // 지도 컨트롤러 초기화
+                                  print("Map Controller Initialized");
                                 },
                               ),
                             )

@@ -21,12 +21,11 @@ dependencies:
   geocoding: ^3.0.0
   place_picker_google: ^0.0.14
   flutter_local_notifications: ^18.0.1
-
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
-
 
 
 flutter:
@@ -44,7 +43,3 @@ flutter:
           weight: 600
         - asset: assets/fonts/NotoSansKR-Bold.ttf
           weight: 700
-  plugin:
-    platforms:
-      ios:
-        pluginClass: AppDelegate
