@@ -4,6 +4,7 @@ import 'package:flutter_locatrip/chatting/screen/chatting_screen.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../main/screen/main_screen.dart';
+import '../../map/model/app_overlay_controller.dart';
 import '../../map/screen/map_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -29,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _onTapped(int index) {
     setState(() {
       _selectedIndex = index;
+      AppOverlayController.removeOverlay();
     });
   }
 

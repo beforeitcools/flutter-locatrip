@@ -7,8 +7,8 @@ class TripModel {
     final dio = Dio();
 
     try {
-      // final responses = await dio.post("http://192.168.45.71:8082/trip/insert",
-          final responses = await dio.post("http://112.221.66.174:1234/trip/insert",
+      // final responses = await dio.post("http://192.168.45.79:8082/trip/insert",
+      final responses = await dio.post("http://112.221.66.174:1234/trip/insert",
           data: tripData);
       if (responses.statusCode == 200) {
         return responses.data as Map<String, dynamic>;
@@ -26,7 +26,7 @@ class TripModel {
     final dio = Dio();
     try {
       final responses = await dio.get(
-        // "http://192.168.45.71:8082/trip/select/$tripId",
+        // "http://192.168.45.79:8082/trip/select/$tripId",
         "http://112.221.66.174:1234/trip/select/$tripId",
       );
       if (responses.statusCode == 200) {
