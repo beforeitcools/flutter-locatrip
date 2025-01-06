@@ -1,9 +1,11 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
 class LinkModel{
   final linkRegex = RegExp(r'(https?:\/\/[^\s]+)');
 
-  void detextAndPreviewLink(String message){
+  void detectAndPreviewLink(String message){
     final matches = linkRegex.allMatches(message);
     for(var match in matches){
       final link = match.group(0);
@@ -17,9 +19,11 @@ class LinkModel{
     final dio = Dio();
 
     try{
-      final response = await dio.get("uri");
+      final response = await dio.post('http://localhost:8082/link-preview');
       if(response.statusCode == 200){
-        return response.data;
+        final previewData = jsonDecode(response.data);
+        // 링크 미리보기 데이터 표시 로직 추가
+        print(previewData);
       }
     }catch(e){
       print('Error: $e');

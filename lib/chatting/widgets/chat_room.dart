@@ -18,10 +18,11 @@ class ChatRoomPage extends StatefulWidget {
 }
 
 class _ChatRoomPageState extends State<ChatRoomPage> {
-  late final WebSocketChannel _channel = WebSocketChannel.connect(Uri.parse('ws://localhost:8082/chattingServer/${widget.chatroomId.toString()}'));// 서버 url
+  late final WebSocketChannel _channel = WebSocketChannel.connect(Uri.parse('ws://localhost:8082/chattingServer/${widget.chatroomId}'));// 서버 url
 
   final ChatModel _chatModel = ChatModel();
   final TextEditingController _textController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   List<dynamic> _chats = [];
   dynamic _selectedChat;
 
@@ -31,7 +32,16 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     List<dynamic> chatData = await _chatModel.fetchChatRoomData(widget.chatroomId);
     setState(() {
       _chats = chatData;
+      _scrollToBottom();
     });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {_scrollToBottom();});
+  }
+
+  void _scrollToBottom() {
+    if(_scrollController.hasClients){
+      _scrollController.animateTo(_scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 100), curve: Curves.easeOut);
+    }
   }
 
   @override
@@ -56,6 +66,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           _channel.sink.add(jsonMessage);
           _textController.clear();
         });
+        WidgetsBinding.instance.addPostFrameCallback((_) {_scrollToBottom();});
         await _chatModel.saveMessage(jsonMessage);
       }catch(e){
         print('메세지를 보내는 중 에러가 발생했습니다 : $e');
@@ -82,7 +93,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         title: Text(widget.sender),
         actions: [
           IconButton(onPressed: (){}, icon: Icon(Icons.search), color: grayColor),
-          IconButton(onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (context)=>ChatRoomSetting(chatRoom: widget.sender)));}, icon: Icon(Icons.settings_outlined), color: grayColor)
+          IconButton(onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (context)=>ChatRoomSetting(chatRoom: widget.sender, chatroomId: widget.chatroomId,)));}, icon: Icon(Icons.settings_outlined), color: grayColor)
         ],),
         body: Container(
           height: MediaQuery.of(context).size.height,
@@ -91,17 +102,28 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             children: [
               StreamBuilder(stream: _channel.stream, builder: (context, snapshot){
                 if(snapshot.hasData){
-                  final chat = json.decode(snapshot.data);
-                  _chats.add(chat);
+                  print("my snapshot data : ${snapshot.data}");
+                  try {
+                    final data = json.decode(snapshot.data as String);
+                    if (data["type"] == "chat") {
+                      setState(() {
+                        _chats.add(data);
+                      });
+                    } else if (data["type"] == "status") {
+                      print("Status update: ${data["message"]}");
+                    }
+                  } catch (e) {
+                    print("Error decoding WebSocket message: ${snapshot.data}");
+                  }
                 }
                 return Container(
-                  height: MediaQuery.of(context).size.height - 130,
+                  height: MediaQuery.of(context).size.height - 150,
                   child: ListView.builder(
+                    controller: _scrollController,
                     shrinkWrap: true, // 리스트뷰의 크기를 현재 표시되는 아이템들의 크기에 맞게 자동으로 조절
                     itemCount: _chats.length,
                     itemBuilder: (context, index){
                       final chat = _chats[index];
-                      print("내 채 팅   ======>   $chat");
                       return chat["userId"] == myUserId ? OwnMessageUi(text: chat["messageContents"], time: chat["sendTime"]) : ReplyMessageUi(text: chat["messageContents"], time: chat["sendTime"]); //TODO: userId 확인해서 "나"면 Own, 외에는 Reply
                     },
                   ),
