@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/map/model/location_model.dart';
 import 'package:flutter_locatrip/map/model/place_api_model.dart';
+import 'package:flutter_locatrip/map/screen/location_detail_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -21,6 +22,7 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   final PlaceApiModel _placeApiModel = PlaceApiModel();
   final LocationModel _locationModel = LocationModel();
+  final FocusNode _focusNode = FocusNode();
 
   Set<Marker> _markers = {};
 
@@ -38,7 +40,8 @@ class _MapScreenState extends State<MapScreen> {
   GoogleMapController? mapController;
 
   final double maxSize = 0.9;
-  final double minSize = 0.47;
+  // final double minSize = 0.47;
+  final double minSize = 0.32;
   final double tolerance = 0.001;
   double sheetSize = 0.47;
   final double buttonOffset = 16;
@@ -108,6 +111,32 @@ class _MapScreenState extends State<MapScreen> {
         });
       }
     });
+
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus) {
+        // TextField에 커서가 놓일 때 실행할 동작
+        print("TextField is focused");
+        sheetController.animateTo(
+          maxSize,
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      } else {
+        // TextField에서 포커스가 벗어날 때 실행할 동작
+        print("TextField lost focus");
+        sheetController.animateTo(
+          minSize,
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
   }
 
   // 지도에서 현위치 때 사용
@@ -260,10 +289,10 @@ class _MapScreenState extends State<MapScreen> {
       _markers.add(Marker(
           markerId: MarkerId(newPlace.id),
           position: newPlace.location,
-          /*infoWindow: InfoWindow(
-          title: newPlace.name,
-          snippet: newPlace.address,
-        ),*/
+          infoWindow: InfoWindow(
+            title: newPlace.name,
+            // snippet: newPlace.address,
+          ),
           icon: newPlace.icon,
           onTap: () {
             // newPlace.id와 일치하는 장소 찾기
@@ -319,9 +348,13 @@ class _MapScreenState extends State<MapScreen> {
                         ),
                       ),
                       SizedBox(height: 8),
-                      Text(
-                        place.address,
-                        style: Theme.of(context).textTheme.bodySmall,
+                      Container(
+                        width: MediaQuery.of(context).size.width * 0.7,
+                        child: Text(
+                          place.address,
+                          style: Theme.of(context).textTheme.bodySmall,
+                          softWrap: true,
+                        ),
                       ),
                     ],
                   ),
@@ -487,7 +520,7 @@ class _MapScreenState extends State<MapScreen> {
   Widget _showDragableSheet(LatLng _mapCenter,
       List<Map<String, dynamic>> categories, List<String> orderByListEn) {
     return DraggableScrollableSheet(
-      initialChildSize: minSize, // 초기 높이 비율
+      initialChildSize: 0.47, // 초기 높이 비율
       minChildSize: minSize, // 최소 높이 비율
       maxChildSize: maxSize, // 최대 높이 비율
       controller: sheetController,
@@ -526,12 +559,19 @@ class _MapScreenState extends State<MapScreen> {
                 isCategorySelected
                     ? SizedBox.shrink()
                     : Padding(
-                        padding: EdgeInsets.fromLTRB(16, 0, 16, 35),
+                        padding: EdgeInsets.fromLTRB(16, 0, 16, 20),
                         child: TextField(
                           controller: _searchController,
-                          /*onChanged: (value) {
-                          _getSearchResults();
-                        },*/
+                          focusNode: _focusNode,
+                          onChanged: (value) {
+                            setState(() {
+                              sheetController.animateTo(
+                                maxSize,
+                                duration: Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            });
+                          },
                           decoration: InputDecoration(
                             hintText: "장소 검색",
                             filled: true,
@@ -539,7 +579,7 @@ class _MapScreenState extends State<MapScreen> {
                             contentPadding: EdgeInsets.symmetric(
                                 vertical: 16, horizontal: 16),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
+                              borderRadius: BorderRadius.circular(99),
                               borderSide: BorderSide.none,
                             ),
                             suffixIcon: Padding(
@@ -766,7 +806,14 @@ class _MapScreenState extends State<MapScreen> {
                               return Container(
                                 padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
                                 child: GestureDetector(
-                                  onTap: () {},
+                                  onTap: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                LocationDetailScreen(
+                                                    place: place)));
+                                  },
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -834,12 +881,13 @@ class _MapScreenState extends State<MapScreen> {
                                           ),
                                           IconButton(
                                               onPressed: () {
-                                                // 장소 테이블 저장
-                                                isFavorite
-                                                    ? _removeFavorite(place)
-                                                    : _insertLocation(place);
-
-                                                // 클릭된 하트만 색상 채워지기
+                                                if (isFavorite) {
+                                                  _removeFavorite(
+                                                      place); // 즐겨찾기 제거
+                                                } else {
+                                                  _insertLocation(
+                                                      place); // 즐겨찾기 추가
+                                                }
                                               },
                                               padding: EdgeInsets.zero,
                                               icon: Icon(
@@ -893,7 +941,7 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  void _insertLocation(Place place) {
+  void _insertLocation(Place place) async {
     Map<String, dynamic> placeData = {
       "name": place.name,
       "address": place.address,
@@ -906,7 +954,7 @@ class _MapScreenState extends State<MapScreen> {
 
     try {
       Map<String, dynamic> result =
-          _locationModel.insertLocation(placeData) as Map<String, dynamic>;
+          await _locationModel.insertLocation(placeData);
 
       if (result['status'] == 'success') {
         setState(() {
@@ -949,11 +997,14 @@ class _MapScreenState extends State<MapScreen> {
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("장소 삭제에 실패했습니다.")),
+          SnackBar(content: Text(result['message'] ?? "장소 삭제에 실패했습니다.")),
         );
       }
     } catch (e) {
       print('에러메세지 : $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("오류가 발생했습니다: $e")),
+      );
     }
   }
 
@@ -1009,10 +1060,12 @@ class _MapScreenState extends State<MapScreen> {
       children: [
         latitude != null && longitude != null
             ? Container(
-                height: 460,
+                // height: 460,
                 child: GoogleMap(
-                  initialCameraPosition:
-                      CameraPosition(target: _mapCenter, zoom: 15),
+                  initialCameraPosition: CameraPosition(
+                      target: LatLng(
+                          _mapCenter.latitude - 0.005, _mapCenter.longitude),
+                      zoom: 15),
                   myLocationEnabled: true,
                   myLocationButtonEnabled: true,
                   onMapCreated: (GoogleMapController controller) {
@@ -1034,9 +1087,10 @@ class _MapScreenState extends State<MapScreen> {
             : // 위치 조정된 버튼
             AnimatedPositioned(
                 duration: Duration(milliseconds: 200),
-                bottom: (screenHeight * sheetSize - 10),
-                left: MediaQuery.of(context).size.width * 0.3,
-                right: MediaQuery.of(context).size.width * 0.3,
+                bottom: screenHeight * sheetSize - 16,
+                left: MediaQuery.of(context).size.width * 0.5 - 75,
+                /*left: MediaQuery.of(context).size.width * 0.3,
+                right: MediaQuery.of(context).size.width * 0.3,*/
                 child: Center(
                   child: ElevatedButton(
                     onPressed: () {
@@ -1051,6 +1105,7 @@ class _MapScreenState extends State<MapScreen> {
                     style: ElevatedButton.styleFrom(
                       minimumSize: Size(150, 40), // 버튼 크기 조정
                       backgroundColor: Colors.white,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,

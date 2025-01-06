@@ -2,14 +2,15 @@ import 'package:dio/dio.dart';
 
 // 일정 관련
 class TripModel {
+  String backUrl = "http://192.168.45.56:8082"; // 집
+  // String backUrl = "http://112.221.66.174:1234"; // 학원
+
   // 일정 생성
   Future<dynamic> insertTrip(Map<String, dynamic> tripData) async {
     final dio = Dio();
 
     try {
-      // final responses = await dio.post("http://192.168.45.79:8082/trip/insert",
-      final responses = await dio.post("http://112.221.66.174:1234/trip/insert",
-          data: tripData);
+      final responses = await dio.post("$backUrl/trip/insert", data: tripData);
       if (responses.statusCode == 200) {
         return responses.data as Map<String, dynamic>;
       } else {
@@ -26,8 +27,7 @@ class TripModel {
     final dio = Dio();
     try {
       final responses = await dio.get(
-        // "http://192.168.45.79:8082/trip/select/$tripId",
-        "http://112.221.66.174:1234/trip/select/$tripId",
+        "$backUrl/trip/select/$tripId",
       );
       if (responses.statusCode == 200) {
         return responses.data as Map<String, dynamic>;
