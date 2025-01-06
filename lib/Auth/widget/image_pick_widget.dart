@@ -37,24 +37,98 @@ class ImagePickWidget extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
-            title: Text(
-              "사진 선택",
-              textAlign: TextAlign.center,
+            contentPadding: EdgeInsets.zero,
+            content: Container(
+              width: 300,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Text(
+                      "사진 선택",
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(color: blackColor),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () async {
+                            await _pickImageFromGallery();
+                            Navigator.pop(context);
+                          },
+                          splashColor: Color.fromARGB(50, 43, 192, 228),
+                          highlightColor: Color.fromARGB(30, 43, 192, 228),
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(10),
+                          ),
+                          child: Container(
+                            alignment: Alignment.center,
+                            width: 150,
+                            height: 48,
+                            decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: lightGrayColor,
+                                  width: 1.0,
+                                ),
+                                borderRadius: BorderRadius.only(
+                                  bottomLeft: Radius.circular(10),
+                                )),
+                            child: Text(
+                              "갤러리에서 선택",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(color: blackColor),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () async {
+                            await _pickImageFromCamera();
+                            Navigator.pop(context);
+                          },
+                          splashColor: Color.fromARGB(50, 43, 192, 228),
+                          highlightColor: Color.fromARGB(30, 43, 192, 228),
+                          borderRadius: BorderRadius.only(
+                            bottomRight: Radius.circular(10),
+                          ),
+                          child: Container(
+                            alignment: Alignment.center,
+                            width: 150,
+                            height: 48,
+                            decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: lightGrayColor,
+                                  width: 1.0,
+                                ),
+                                borderRadius: BorderRadius.only(
+                                  bottomRight: Radius.circular(10),
+                                )),
+                            child: Text(
+                              "사진 촬영",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(color: blackColor),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                ],
+              ),
             ),
-            actions: [
-              TextButton(
-                  onPressed: () async {
-                    await _pickImageFromGallery();
-                    Navigator.pop(context);
-                  },
-                  child: Text("갤러리에서 선택")),
-              TextButton(
-                  onPressed: () async {
-                    await _pickImageFromCamera();
-                    Navigator.pop(context);
-                  },
-                  child: Text("사진 촬영")),
-            ],
           );
         });
   }

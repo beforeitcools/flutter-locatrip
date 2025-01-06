@@ -80,7 +80,7 @@ class AuthModel {
 
       // 로그인 성공시 Access 토큰, Refresh 토큰 스토리지에 추가
       if (response.statusCode == 200) {
-        final FlutterSecureStorage _storage = new FlutterSecureStorage();
+        final FlutterSecureStorage _storage = FlutterSecureStorage();
         final accessToken = response.headers['Authorization']?.first;
         final refreshToken = response.headers['Refresh_Token']?.first;
         await _storage.write(key: 'ACCESS_TOKEN', value: accessToken);
@@ -107,28 +107,38 @@ class AuthModel {
 
   Future<String> logout() async {
     final dio = Dio();
-    final FlutterSecureStorage _storage = new FlutterSecureStorage();
+    final FlutterSecureStorage _storage = FlutterSecureStorage();
     final prefs = await SharedPreferences.getInstance();
 
     final refreshToken = await _storage.read(key: 'REFRESH_TOKEN');
     // 백서버에 refresh 토큰 db에서 delete 요청
     try {
+      print(refreshToken);
       final response = await dio.post(
         '$backUrl/auth/logout',
-        options: Options(headers: {'Authorization': refreshToken}),
+        options: Options(headers: {'Refresh_Token': refreshToken}),
       );
 
+      // storage 모두 제거, 자동로그인 off
+      await _storage.deleteAll();
+      await prefs.setBool('autoLogin', false);
+
       if (response.statusCode == 200) {
-        // storage 모두 제거, 자동로그인 off
-        await _storage.deleteAll();
-        await prefs.setBool('autoLogin', false);
-        return "로그아웃 완료";
+        print(response.data);
+        return response.data['message'];
       } else {
-        return "로그아웃 실패";
+        throw Exception(response.data['message']);
       }
     } catch (e) {
-      print(e);
-      throw Exception("Error: $e");
+      if (e is DioException) {
+        final errorMessage = e.response?.data['message'] ?? '알 수 없는 오류 발생';
+        await _storage.deleteAll();
+        await prefs.setBool('autoLogin', false);
+        print("Error: $errorMessage");
+        throw Exception(errorMessage);
+      } else {
+        throw Exception("네트워크 오류 발생");
+      }
     }
   }
 }

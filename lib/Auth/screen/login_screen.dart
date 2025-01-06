@@ -23,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   // 아이디 저장 옵션 상태 저장(로그인 성공시)
   Future<void> savePreference() async {
     final prefs = await SharedPreferences.getInstance();
-    final FlutterSecureStorage _storage = new FlutterSecureStorage();
+    final FlutterSecureStorage _storage = FlutterSecureStorage();
     await prefs.setBool('saveId', saveId);
     await prefs.setBool('autoLogin', autoLogin);
     if (saveId) {
@@ -44,14 +44,15 @@ class _LoginScreenState extends State<LoginScreen> {
       saveId = prefs.getBool('saveId') ?? false;
       autoLogin = prefs.getBool('autoLogin') ?? false;
       if (saveId) {
-        _idController.text = prefs.getString('userId')!;
+        _idController.text = prefs.getString('userId') ?? '';
       }
     });
   }
 
   @override
   void initState() {
-    getLoginOptions;
+    super.initState();
+    getLoginOptions();
   }
 
   void _toggleSaveId() {
@@ -128,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       try {
         String result = await _authModel.login(loginData);
-        savePreference;
+        await savePreference();
 
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(result)));
@@ -366,14 +367,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       TextButton(
                         onPressed: _login,
-                        child: Text(
-                          "로그인",
-                          style: Theme.of(context)
-                              .textTheme
-                              .labelLarge
-                              ?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "로그인",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelLarge
+                                  ?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white),
+                            ),
+                          ],
                         ),
                         style: TextButton.styleFrom(
                           minimumSize: Size(380, 60),

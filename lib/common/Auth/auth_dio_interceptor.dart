@@ -5,7 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthInterceptor extends Interceptor {
   final Dio _dio;
-  final FlutterSecureStorage _storage = new FlutterSecureStorage();
+  final FlutterSecureStorage _storage = FlutterSecureStorage();
   final BuildContext context;
   String backUrl = "http://112.221.66.174:1102";
   final AuthModel _authModel = AuthModel();

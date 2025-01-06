@@ -331,14 +331,19 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                           TextButton(
                             onPressed: _signup,
-                            child: Text(
-                              "회원가입",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelLarge
-                                  ?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "회원가입",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelLarge
+                                      ?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white),
+                                ),
+                              ],
                             ),
                             style: TextButton.styleFrom(
                               minimumSize: Size(380, 60),
