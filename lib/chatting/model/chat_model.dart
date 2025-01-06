@@ -43,7 +43,7 @@ class ChatModel{
     
     try{
       final response = await dio.post(
-          "http://10.0.2.2:8082/sendMessage",
+          "http://localhost:8082/sendMessage",
           data: message,
           options: Options(
               headers: {"Content-Type": "application/json"})

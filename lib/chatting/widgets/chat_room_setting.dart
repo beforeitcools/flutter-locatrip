@@ -67,6 +67,7 @@ class _ChatRoomSettingState extends State<ChatRoomSetting> {
                                                 Expanded(child:  TextFormField(
                                                   controller: _controller,
                                                   decoration: InputDecoration(
+                                                    enabledBorder: InputBorder.none,
                                                       hintText: widget.chatRoom
                                                   ),
                                                 )),

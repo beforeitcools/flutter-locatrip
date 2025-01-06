@@ -102,7 +102,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             children: [
               StreamBuilder(stream: _channel.stream, builder: (context, snapshot){
                 if(snapshot.hasData){
-                  print("my snapshot data : ${snapshot.data}  그래서 뭐가 문제란 거임");
+                  print("my snapshot data : ${snapshot.data}");
                   try {
                     final data = json.decode(snapshot.data as String);
                     if (data["type"] == "chat") {
