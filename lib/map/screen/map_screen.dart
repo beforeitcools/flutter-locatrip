@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/map/model/location_model.dart';
 import 'package:flutter_locatrip/map/model/place_api_model.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -19,6 +20,7 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   final PlaceApiModel _placeApiModel = PlaceApiModel();
+  final LocationModel _locationModel = LocationModel();
 
   Set<Marker> _markers = {};
 
@@ -348,11 +350,6 @@ class _MapScreenState extends State<MapScreen> {
                   }).toList(),
                 ),
               ),
-              /*SizedBox(height: 20),*/
-              /*ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('닫기'),
-              ),*/
             ],
           ),
         );
@@ -833,6 +830,8 @@ class _MapScreenState extends State<MapScreen> {
                                           IconButton(
                                               onPressed: () {
                                                 // 장소 테이블 저장
+                                                _insertLocation(
+                                                    _nearByPlacesList[index]);
                                                 // 내 장소 저장
                                                 // 클릭된 하트만 색상 채워지기
                                               },
@@ -880,6 +879,33 @@ class _MapScreenState extends State<MapScreen> {
         );
       },
     );
+  }
+
+  void _insertLocation(Place place) {
+    Map<String, dynamic> placeData = {
+      "name": place.name,
+      "address": place.address,
+      "latitude": place.location.latitude,
+      "longitude": place.location.longitude,
+      "category": place.category,
+      // 유저 아이디 임의로 넣기
+      "userId": 1,
+    };
+
+    try {
+      Map<String, dynamic> result =
+          _locationModel.insertLocation(placeData) as Map<String, dynamic>;
+
+      if (result == "장소 저장에 실패했습니다.") {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(result as String)));
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("장소 저장 성공!")));
+      }
+    } catch (e) {
+      print('에러메세지 : $e');
+    }
   }
 
   @override
