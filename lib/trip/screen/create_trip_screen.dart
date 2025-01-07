@@ -31,7 +31,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   DateRangeModel _dateRangeModel = DateRangeModel();
   bool isCreated = false;
 
-  TripModel _tripModel = TripModel();
+  final TripModel _tripModel = TripModel();
 
   void _openDatePicker() async {
     DateRangeModel? newRange =
@@ -69,8 +69,6 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
     //     : "";
 
     Map<String, dynamic> tripData = {
-      // 임시데이터 - 유저아이디 실제로 받아와야함!!
-      "userId": 1,
       "title": _titleInputController.text.toString(),
       "startDate":
           _dateRangeModel.startDate?.toIso8601String() ?? "", // null 그대로 전달
@@ -79,7 +77,9 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
     };
 
     try {
-      Map<String, dynamic> result = await _tripModel.insertTrip(tripData);
+      Map<String, dynamic> result =
+          await _tripModel.insertTrip(tripData, context);
+      print('result $result');
 
       int tripId = result["id"] ?? -1;
       if (tripId == -1) {

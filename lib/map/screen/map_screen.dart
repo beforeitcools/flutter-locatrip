@@ -69,6 +69,7 @@ class _MapScreenState extends State<MapScreen> {
   String _selectedCategory = '';
 
   Map<String, bool> _favoriteStatus = {};
+  List<Map<String, bool>> _favoriteStatusList = [];
 
   @override
   void initState() {
@@ -218,7 +219,7 @@ class _MapScreenState extends State<MapScreen> {
       /*print('nearByPlaces : $nearByPlaces');*/
 
       List<dynamic> nearByPlacesList = nearByPlaces["places"];
-      print('nearByPlacesList $nearByPlacesList');
+      /*print('nearByPlacesList $nearByPlacesList');*/
 
       // 마커 추가 전 리스트 클리어
       setState(() {
@@ -283,6 +284,7 @@ class _MapScreenState extends State<MapScreen> {
     );
 
     _nearByPlacesList.add(newPlace);
+    _syncFavoriteStatus();
 
     // 마커 추가 및 장소 리스트 업데이트
     setState(() {
@@ -802,7 +804,7 @@ class _MapScreenState extends State<MapScreen> {
                             itemBuilder: (context, index) {
                               Place place = _nearByPlacesList[index];
                               bool isFavorite =
-                                  _favoriteStatus[place.id] ?? false;
+                                  _favoriteStatus[place.name] ?? false;
                               return Container(
                                 padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
                                 child: GestureDetector(
@@ -881,13 +883,7 @@ class _MapScreenState extends State<MapScreen> {
                                           ),
                                           IconButton(
                                               onPressed: () {
-                                                if (isFavorite) {
-                                                  _removeFavorite(
-                                                      place); // 즐겨찾기 제거
-                                                } else {
-                                                  _insertLocation(
-                                                      place); // 즐겨찾기 추가
-                                                }
+                                                _toggleFavoriteStatus(place);
                                               },
                                               padding: EdgeInsets.zero,
                                               icon: Icon(
@@ -947,27 +943,27 @@ class _MapScreenState extends State<MapScreen> {
       "address": place.address,
       "latitude": place.location.latitude,
       "longitude": place.location.longitude,
-      "category": place.category,
-      // 유저 아이디 임의로 넣기
-      "userId": 1,
+      "category": place.category
     };
 
     try {
       Map<String, dynamic> result =
-          await _locationModel.insertLocation(placeData);
+          await _locationModel.insertLocation(placeData, context);
+      print('result $result');
 
-      if (result['status'] == 'success') {
+      if ((result != null && result is Map<String, dynamic>)) {
         setState(() {
-          _favoriteStatus[place.id] = true;
+          _favoriteStatus[place.name] = true;
+          _favoriteStatusList.add(_favoriteStatus);
         });
-        ScaffoldMessenger.of(context).showSnackBar(
+        /* ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("장소 저장 성공!")),
-        );
-      } else {
+        );*/
+      } /*else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("장소 저장에 실패했습니다.")),
         );
-      }
+      }*/
     } catch (e) {
       print('에러메세지 : $e');
     }
@@ -977,27 +973,25 @@ class _MapScreenState extends State<MapScreen> {
   void _removeFavorite(Place place) async {
     Map<String, dynamic> placeData = {
       "name": place.name,
-      "address": place.address,
-      // 유저 아이디 임의로 넣기
-      "userId": 1,
+      "address": place.address
     };
 
     try {
       // 장소 삭제 API 호출
-      Map<String, dynamic> result = await _locationModel
-          .deleteFavorite(placeData) as Map<String, dynamic>;
+      String result = await _locationModel.deleteFavorite(placeData, context);
 
-      if (result['status'] == 'success') {
+      if (result != null) {
         // 즐겨찾기 상태 업데이트
         setState(() {
-          _favoriteStatus[place.id] = false;
+          _favoriteStatus[place.name] = false;
+          _favoriteStatusList.remove(_favoriteStatus);
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("장소 삭제 성공!")),
+          SnackBar(content: Text(result)),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['message'] ?? "장소 삭제에 실패했습니다.")),
+          SnackBar(content: Text(result)),
         );
       }
     } catch (e) {
@@ -1005,6 +999,44 @@ class _MapScreenState extends State<MapScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("오류가 발생했습니다: $e")),
       );
+    }
+  }
+
+  void _toggleFavoriteStatus(Place place) {
+    setState(() {
+      bool isFavorite = _favoriteStatus[place.name] ?? false;
+      print('_favoriteStatus $_favoriteStatus');
+
+      if (isFavorite) {
+        _removeFavorite(place);
+        _favoriteStatus[place.name] = false;
+        _favoriteStatusList.remove(_favoriteStatus);
+      } else {
+        _insertLocation(place);
+        _favoriteStatus[place.name] = true;
+        _favoriteStatusList.add(_favoriteStatus);
+      }
+    });
+  }
+
+  void _syncFavoriteStatus() async {
+    List<String> locationNameList =
+        _nearByPlacesList.map((place) => place.name).toList();
+
+    // 서버에서 즐겨찾기 상태 동기화
+    List<Map<String, bool>>? fetchedStatusList = await _locationModel
+        .fetchFavoriteStatusFromServer(locationNameList, context);
+
+    // print('fetchedStatusList $fetchedStatusList');
+
+    if (fetchedStatusList != null) {
+      setState(() {
+        for (Map<String, bool> fetchedStatus in fetchedStatusList) {
+          fetchedStatus.forEach((id, isFavorite) {
+            _favoriteStatus[id] = isFavorite;
+          });
+        }
+      });
     }
   }
 
@@ -1089,8 +1121,6 @@ class _MapScreenState extends State<MapScreen> {
                 duration: Duration(milliseconds: 200),
                 bottom: screenHeight * sheetSize - 16,
                 left: MediaQuery.of(context).size.width * 0.5 - 75,
-                /*left: MediaQuery.of(context).size.width * 0.3,
-                right: MediaQuery.of(context).size.width * 0.3,*/
                 child: Center(
                   child: ElevatedButton(
                     onPressed: () {
@@ -1103,7 +1133,7 @@ class _MapScreenState extends State<MapScreen> {
                           _mapCenter.longitude, "POPULARITY", typeAll);
                     },
                     style: ElevatedButton.styleFrom(
-                      minimumSize: Size(150, 40), // 버튼 크기 조정
+                      minimumSize: Size(150, 40),
                       backgroundColor: Colors.white,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
