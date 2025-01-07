@@ -291,10 +291,10 @@ class _MapScreenState extends State<MapScreen> {
       _markers.add(Marker(
           markerId: MarkerId(newPlace.id),
           position: newPlace.location,
-          infoWindow: InfoWindow(
+          /*infoWindow: InfoWindow(
             title: newPlace.name,
-            // snippet: newPlace.address,
-          ),
+            snippet: newPlace.address,
+          ),*/
           icon: newPlace.icon,
           onTap: () {
             // newPlace.id와 일치하는 장소 찾기
@@ -331,64 +331,79 @@ class _MapScreenState extends State<MapScreen> {
         return Padding(
           padding: EdgeInsets.all(16),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: MediaQuery.of(context).size.width * 0.7,
-                        child: Text(
-                          place.name,
-                          style: Theme.of(context).textTheme.titleMedium,
-                          softWrap: true,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  LocationDetailScreen(place: place)));
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: MediaQuery.of(context).size.width * 0.7,
+                              child: Text(
+                                place.name,
+                                style: Theme.of(context).textTheme.titleMedium,
+                                softWrap: true,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Container(
+                              width: MediaQuery.of(context).size.width * 0.7,
+                              child: Text(
+                                place.address,
+                                style: Theme.of(context).textTheme.bodySmall,
+                                softWrap: true,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      SizedBox(height: 8),
-                      Container(
-                        width: MediaQuery.of(context).size.width * 0.7,
-                        child: Text(
-                          place.address,
-                          style: Theme.of(context).textTheme.bodySmall,
-                          softWrap: true,
-                        ),
-                      ),
-                    ],
+                        IconButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            icon: Icon(Icons.close))
+                      ],
+                    )),
+                SizedBox(height: 16),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: place.photoUrl!.map((url) {
+                      return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        LocationDetailScreen(place: place)));
+                          },
+                          child: Container(
+                            margin: EdgeInsets.only(right: 8),
+                            width: 100,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              image: DecorationImage(
+                                image: NetworkImage(url),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ));
+                    }).toList(),
                   ),
-                  IconButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      icon: Icon(Icons.close))
-                ],
-              ),
-              SizedBox(height: 16),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: place.photoUrl!.map((url) {
-                    return Container(
-                      margin: EdgeInsets.only(right: 8),
-                      width: 100,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        image: DecorationImage(
-                          image: NetworkImage(url),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    );
-                  }).toList(),
                 ),
-              ),
-            ],
-          ),
+              ]),
         );
       },
     );
@@ -427,6 +442,79 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  void _toggleCategoryClick(Map<String, dynamic> category, LatLng _mapCenter) {
+    if (isCategorySelected) {
+      setState(() {
+        AppOverlayController.removeOverlay();
+        isCategorySelected = false;
+        _selectedCategory = '';
+        _getNearByPlaces(
+          _mapCenter.latitude,
+          _mapCenter.longitude,
+          "POPULARITY",
+          typeAll,
+        );
+      });
+    } else {
+      setState(() {
+        isCategorySelected = true;
+        _selectedCategory = category["label"];
+      });
+
+      AppOverlayController.showAppBarOverlay(
+        context,
+        category["label"],
+        () {
+          setState(() {
+            isCategorySelected = false;
+            _selectedCategory = '';
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _categoryScrollController.animateTo(
+                _categoryScrollController.position.minScrollExtent,
+                duration: Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              );
+            });
+            _getNearByPlaces(
+              _mapCenter.latitude,
+              _mapCenter.longitude,
+              "POPULARITY",
+              typeAll,
+            );
+          });
+        },
+      );
+
+      _getNearByPlaces(
+        _mapCenter.latitude,
+        _mapCenter.longitude,
+        "POPULARITY",
+        category["type"],
+      );
+
+      // 카테고리에 따라 스크롤 애니메이션 적용
+      if (category["scrollToMin"] == true) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _categoryScrollController.animateTo(
+            _categoryScrollController.position.minScrollExtent,
+            duration: Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        });
+      }
+
+      if (category["scrollToMax"] == true) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _categoryScrollController.animateTo(
+            _categoryScrollController.position.maxScrollExtent,
+            duration: Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        });
+      }
+    }
+  }
+
   // 카테고리 버튼 위젯 빌더
   Widget _buildCategoryButton(
       Map<String, dynamic> category, LatLng _mapCenter) {
@@ -434,62 +522,7 @@ class _MapScreenState extends State<MapScreen> {
 
     return TextButton(
       onPressed: () {
-        setState(() {
-          isCategorySelected = true;
-          _selectedCategory = category["label"];
-        });
-
-        AppOverlayController.showAppBarOverlay(
-          context,
-          category["label"],
-          () {
-            setState(() {
-              isCategorySelected = false;
-              _selectedCategory = '';
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _categoryScrollController.animateTo(
-                  _categoryScrollController.position.minScrollExtent,
-                  duration: Duration(milliseconds: 300),
-                  curve: Curves.easeOut,
-                );
-              });
-              _getNearByPlaces(
-                _mapCenter.latitude,
-                _mapCenter.longitude,
-                "POPULARITY",
-                typeAll,
-              );
-            });
-          },
-        );
-
-        _getNearByPlaces(
-          _mapCenter.latitude,
-          _mapCenter.longitude,
-          "POPULARITY",
-          category["type"],
-        );
-
-        // 카테고리에 따라 스크롤 애니메이션 적용
-        if (category["scrollToMin"] == true) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _categoryScrollController.animateTo(
-              _categoryScrollController.position.minScrollExtent,
-              duration: Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-            );
-          });
-        }
-
-        if (category["scrollToMax"] == true) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _categoryScrollController.animateTo(
-              _categoryScrollController.position.maxScrollExtent,
-              duration: Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-            );
-          });
-        }
+        _toggleCategoryClick(category, _mapCenter);
       },
       style: TextButton.styleFrom(
         backgroundColor: isSelected ? pointBlueColor : lightGrayColor,
@@ -986,13 +1019,13 @@ class _MapScreenState extends State<MapScreen> {
           _favoriteStatus[place.name] = false;
           _favoriteStatusList.remove(_favoriteStatus);
         });
-        ScaffoldMessenger.of(context).showSnackBar(
+        /*ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result)),
-        );
+        );*/
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
+        /*ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result)),
-        );
+        );*/
       }
     } catch (e) {
       print('에러메세지 : $e');
@@ -1093,6 +1126,7 @@ class _MapScreenState extends State<MapScreen> {
         latitude != null && longitude != null
             ? Container(
                 // height: 460,
+                height: MediaQuery.of(context).size.height - 80,
                 child: GoogleMap(
                   initialCameraPosition: CameraPosition(
                       target: LatLng(
