@@ -8,11 +8,11 @@ class ChatModel{
   // ChatModel({
   //   required this.name, required this.isGroup, required this.time, required this.currentMessage});
 
-  Future<List<dynamic>> fetchMessageData() async{
+  Future<List<dynamic>> fetchMessageData(int userId) async{
     final dio = Dio();
     
     try{
-      final response = await dio.get("http://localhost:8082/api/chat/recent");
+      final response = await dio.get("http://localhost:8082/api/chat/recent/$userId");
       if(response.statusCode == 200){
         return response.data as List<dynamic>;
       }else{
