@@ -39,7 +39,7 @@ class ImagePickWidget extends StatelessWidget {
             ),
             contentPadding: EdgeInsets.zero,
             content: Container(
-              width: 300,
+              width: MediaQuery.of(context).size.width - 50,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -56,70 +56,76 @@ class ImagePickWidget extends StatelessWidget {
                   ),
                   Row(
                     children: [
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () async {
-                            await _pickImageFromGallery();
-                            Navigator.pop(context);
-                          },
-                          splashColor: Color.fromARGB(50, 43, 192, 228),
-                          highlightColor: Color.fromARGB(30, 43, 192, 228),
-                          borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(10),
-                          ),
-                          child: Container(
-                            alignment: Alignment.center,
-                            width: 150,
-                            height: 48,
-                            decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: lightGrayColor,
-                                  width: 1.0,
-                                ),
-                                borderRadius: BorderRadius.only(
-                                  bottomLeft: Radius.circular(10),
-                                )),
-                            child: Text(
-                              "갤러리에서 선택",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(color: blackColor),
+                      Expanded(
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () async {
+                              await _pickImageFromGallery();
+                              Navigator.pop(context);
+                            },
+                            splashColor: Color.fromARGB(50, 43, 192, 228),
+                            highlightColor: Color.fromARGB(30, 43, 192, 228),
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(10),
+                            ),
+                            child: Container(
+                              alignment: Alignment.center,
+                              width:
+                                  (MediaQuery.of(context).size.width - 50) / 2,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: lightGrayColor,
+                                    width: 1.0,
+                                  ),
+                                  borderRadius: BorderRadius.only(
+                                    bottomLeft: Radius.circular(10),
+                                  )),
+                              child: Text(
+                                "갤러리에서 선택",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(color: blackColor),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () async {
-                            await _pickImageFromCamera();
-                            Navigator.pop(context);
-                          },
-                          splashColor: Color.fromARGB(50, 43, 192, 228),
-                          highlightColor: Color.fromARGB(30, 43, 192, 228),
-                          borderRadius: BorderRadius.only(
-                            bottomRight: Radius.circular(10),
-                          ),
-                          child: Container(
-                            alignment: Alignment.center,
-                            width: 150,
-                            height: 48,
-                            decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: lightGrayColor,
-                                  width: 1.0,
-                                ),
-                                borderRadius: BorderRadius.only(
-                                  bottomRight: Radius.circular(10),
-                                )),
-                            child: Text(
-                              "사진 촬영",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(color: blackColor),
+                      Expanded(
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () async {
+                              await _pickImageFromCamera();
+                              Navigator.pop(context);
+                            },
+                            splashColor: Color.fromARGB(50, 43, 192, 228),
+                            highlightColor: Color.fromARGB(30, 43, 192, 228),
+                            borderRadius: BorderRadius.only(
+                              bottomRight: Radius.circular(10),
+                            ),
+                            child: Container(
+                              alignment: Alignment.center,
+                              width:
+                                  (MediaQuery.of(context).size.width - 50) / 2,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: lightGrayColor,
+                                    width: 1.0,
+                                  ),
+                                  borderRadius: BorderRadius.only(
+                                    bottomRight: Radius.circular(10),
+                                  )),
+                              child: Text(
+                                "사진 촬영",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(color: blackColor),
+                              ),
                             ),
                           ),
                         ),
