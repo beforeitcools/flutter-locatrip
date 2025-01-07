@@ -1,13 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/Auth/model/auth_model.dart';
+import 'package:flutter_locatrip/common/widget/url.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthInterceptor extends Interceptor {
   final Dio _dio;
   final FlutterSecureStorage _storage = FlutterSecureStorage();
   final BuildContext context;
-  String backUrl = "http://112.221.66.174:1102";
   final AuthModel _authModel = AuthModel();
 
   AuthInterceptor(this._dio, this.context);
