@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/checklist/screen/checklist_screen.dart';
+import 'package:flutter_locatrip/expense/screen/expense_screen.dart';
 
 import '../../trip/screen/trip_screen.dart';
 
@@ -39,6 +40,20 @@ class _MainScreenState extends State<MainScreen> {
                 style: TextStyle(color: Colors.black),
               ),
             ),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ExpenseScreen(tripId: 1),
+                  ),
+                );
+              },
+              child: Text(
+                '가계부',
+                style: TextStyle(color: Colors.black),
+              )
+            )
           ],
         ),
       ),
