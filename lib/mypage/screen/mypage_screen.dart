@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/Auth/model/auth_model.dart';
 import 'package:flutter_locatrip/Auth/screen/login_screen.dart';
@@ -16,7 +17,11 @@ class MypageScreen extends StatefulWidget {
 class _MypageScreenState extends State<MypageScreen> {
   final AuthModel _authModel = AuthModel();
   final MypageModel _mypageModel = MypageModel();
-  dynamic? userData;
+  dynamic _userData;
+  String? _profileImage;
+  String? _nickname;
+  int? _ownBadge;
+  int? _selectedCount;
 
   void _logout() async {
     try {
@@ -42,9 +47,32 @@ class _MypageScreenState extends State<MypageScreen> {
   void _loadMypageData() async {
     Map<String, dynamic> result = await _mypageModel.getMyPageData(context);
     setState(() {
-      userData = result['user'];
-      print(userData);
+      _userData = result['user'];
+      _profileImage = _userData['profilePic'];
+      _nickname = _userData['nickname'];
+      _ownBadge = _userData['ownBadge'];
+      print(_profileImage);
+      print(_nickname);
+      print(_ownBadge);
     });
+  }
+
+  // 디바이스 사이즈에 맞춰서 텍스트 정리(...처리)
+  String _truncateWithEllipsis(String text, int maxLength) {
+    return (text.length > maxLength)
+        ? '${text.substring(0, maxLength)}...'
+        : text;
+  }
+
+  int _getMaxLength(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    if (screenWidth > 600) {
+      // Tablet - wider screen
+      return 20;
+    } else {
+      // Mobile - narrower screen
+      return 12;
+    }
   }
 
   @override
@@ -181,30 +209,55 @@ class _MypageScreenState extends State<MypageScreen> {
                                       // 프로필 이미지
                                       CircleAvatar(
                                         radius: 30,
-                                        backgroundImage: AssetImage(
-                                                'assets/default_profile_image.png')
-                                            as ImageProvider,
+                                        child: _profileImage != null
+                                            ? ClipOval(
+                                                child: CachedNetworkImage(
+                                                  imageUrl: _profileImage!,
+                                                  placeholder: (context, url) =>
+                                                      CircularProgressIndicator(),
+                                                  errorWidget:
+                                                      (context, url, error) =>
+                                                          Icon(
+                                                    Icons.error_outline,
+                                                    size: 48,
+                                                  ),
+                                                  fit: BoxFit.cover,
+                                                  width: 60,
+                                                  height: 60,
+                                                ),
+                                              )
+                                            : CircleAvatar(
+                                                radius: 30,
+                                                backgroundImage: AssetImage(
+                                                        'assets/default_profile_image.png')
+                                                    as ImageProvider),
                                       ),
                                       SizedBox(
                                         width: 16,
                                       ),
                                       // 닉네임
                                       Text(
-                                        "namjoon",
+                                        _nickname != null
+                                            ? _truncateWithEllipsis(
+                                                _nickname!, // 너무 길면 처리(...)
+                                                _getMaxLength(context))
+                                            : '아무개',
                                         style: TextStyle(
                                           color: blackColor,
                                           fontSize: 20,
                                           fontWeight: FontWeight.w600,
                                         ),
-                                      ), // 너무 길면 처리(...)
+                                      ),
                                       SizedBox(
                                         width: 16,
                                       ),
                                       // 베지(있으면)
-                                      Icon(
-                                        Icons.verified_outlined,
-                                        color: pointBlueColor,
-                                      ),
+                                      _ownBadge == 1
+                                          ? Icon(
+                                              Icons.verified_outlined,
+                                              color: pointBlueColor,
+                                            )
+                                          : SizedBox(),
                                       Spacer(),
                                       Icon(Icons.chevron_right),
                                     ],

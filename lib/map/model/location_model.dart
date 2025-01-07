@@ -1,13 +1,17 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
-import 'package:flutter_locatrip/map/model/place.dart';
+import 'package:flutter/material.dart';
+
+import '../../common/Auth/auth_dio_interceptor.dart';
+import '../../common/widget/url.dart';
 
 class LocationModel {
-  String backUrl = "http://192.168.45.56:8082"; // 집
-  // String backUrl = "http://112.221.66.174:1234"; // 학원
-
-  Future<dynamic> insertLocation(Map<String, dynamic> place) async {
+  Future<dynamic> insertLocation(
+      Map<String, dynamic> place, BuildContext context) async {
     final dio = Dio();
-    print('insert!!');
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
     try {
       final responses = await dio.post("$backUrl/location/insert", data: place);
       if (responses.statusCode == 200) {
@@ -21,20 +25,43 @@ class LocationModel {
     }
   }
 
-  Future<dynamic> deleteFavorite(Map<String, dynamic> place) async {
+  Future<String> deleteFavorite(
+      Map<String, dynamic> place, BuildContext context) async {
     final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
       final responses =
           await dio.post("$backUrl/location/deleteFavorite", data: place);
       if (responses.statusCode == 200) {
-        return responses.data as Map<String, dynamic>;
+        return responses.data as String;
       } else {
-        return {"status": "fail", "message": "내 장소 삭제에 실패했습니다."};
+        return "내 장소 삭제에 실패했습니다.";
       }
     } catch (e) {
       throw Exception("Error : $e");
-      return {"status": "fail", "message": "서버와의 연결 중 오류가 발생했습니다."};
+    }
+  }
+
+  Future<List<Map<String, bool>>?> fetchFavoriteStatusFromServer(
+      List<String> locationNameList, BuildContext context) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+    try {
+      final response = await dio.get("$backUrl/location/favorites",
+          data: jsonEncode(locationNameList));
+      if (response.statusCode == 200) {
+        List<dynamic> rawData = response.data as List<dynamic>;
+
+        // 데이터를 Map<String, bool>로 변환
+        List<Map<String, bool>> result = rawData.map((item) {
+          return Map<String, bool>.from(item as Map<String, dynamic>);
+        }).toList();
+
+        return result;
+      }
+    } catch (e) {
+      print('Error fetching favorites: $e');
     }
   }
 }

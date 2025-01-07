@@ -7,6 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'Auth/screen/start_screen.dart';
 import 'common/screen/error_screen.dart';
+import 'package:flutter/services.dart';
 
 import 'common/model/navigation_observer.dart';
 import 'common/screen/home_screen.dart';
@@ -24,6 +25,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     return FutureBuilder(
         future: /*Init.instance.initialize(context),*/ _initFuture,
         builder: (context, AsyncSnapshot snapshot) {

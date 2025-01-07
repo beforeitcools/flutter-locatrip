@@ -1,13 +1,16 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+
+import '../../common/Auth/auth_dio_interceptor.dart';
+import '../../common/widget/url.dart';
 
 // 일정 관련
 class TripModel {
-  String backUrl = "http://192.168.45.56:8082"; // 집
-  // String backUrl = "http://112.221.66.174:1234"; // 학원
-
   // 일정 생성
-  Future<dynamic> insertTrip(Map<String, dynamic> tripData) async {
+  Future<dynamic> insertTrip(
+      Map<String, dynamic> tripData, BuildContext context) async {
     final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
       final responses = await dio.post("$backUrl/trip/insert", data: tripData);
@@ -23,13 +26,16 @@ class TripModel {
   }
 
   // 일정 조회
-  Future<Map<String, dynamic>> selectTrip(int tripId) async {
+  Future<Map<String, dynamic>> selectTrip(
+      int tripId, BuildContext context) async {
     final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
     try {
       final responses = await dio.get(
         "$backUrl/trip/select/$tripId",
       );
       if (responses.statusCode == 200) {
+        print('responses.data ${responses.data}');
         return responses.data as Map<String, dynamic>;
       } else {
         throw Exception("로드 실패");

@@ -2,12 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/common/widget/url.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthModel {
-  String backUrl = "http://112.221.66.174:1102";
-
   Future<String> checkUserId(String userId) async {
     final dio = Dio();
 
