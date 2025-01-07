@@ -1,4 +1,7 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_locatrip/common/Auth/auth_dio_interceptor.dart';
+import 'package:flutter_locatrip/common/widget/url.dart';
 
 class ChatModel{
   // String name;
@@ -8,11 +11,12 @@ class ChatModel{
   // ChatModel({
   //   required this.name, required this.isGroup, required this.time, required this.currentMessage});
 
-  Future<List<dynamic>> fetchMessageData(int userId) async{
+  Future<List<dynamic>> fetchMessageData(int userId, BuildContext context) async{
     final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
     
     try{
-      final response = await dio.get("http://localhost:8082/api/chat/recent/$userId");
+      final response = await dio.get("$backUrl/api/chat/recent");
       if(response.statusCode == 200){
         return response.data as List<dynamic>;
       }else{
@@ -23,11 +27,12 @@ class ChatModel{
     }
   }
 
-  Future<List<dynamic>> fetchChatRoomData(int chatroomId) async{
+  Future<List<dynamic>> fetchChatRoomData(int chatroomId, BuildContext context) async{
     final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
 
     try{
-      final response = await dio.get("http://localhost:8082/api/chat/$chatroomId");
+      final response = await dio.get("$backUrl/api/chat/$chatroomId");
       if(response.statusCode == 200){
         return response.data as List<dynamic>;
       }else{
@@ -38,12 +43,13 @@ class ChatModel{
     }
   }
   
-  Future<void> saveMessage(dynamic message) async{
+  Future<void> saveMessage(dynamic message, BuildContext context) async{
     final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
     
     try{
       final response = await dio.post(
-          "http://localhost:8082/sendMessage",
+          "$backUrl/sendMessage",
           data: message,
           options: Options(
               headers: {"Content-Type": "application/json"})
@@ -67,7 +73,7 @@ class ChatModel{
     print('$chatroomId 는 나의 채팅방 아이디, $chatroomName 는 내가 바꿀 이름');
     try {
       final response = await dio.post(
-          "http://localhost:8082/updateRoom/$chatroomId",
+          "$backUrl/updateRoom/$chatroomId",
           data: chatroomName);
 
       if (response.statusCode == 200 || response.statusCode == 201) {

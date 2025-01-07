@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter_locatrip/common/widget/url.dart';
 
 class LinkModel{
   final linkRegex = RegExp(r'(https?:\/\/[^\s]+)');
@@ -19,7 +20,7 @@ class LinkModel{
     final dio = Dio();
 
     try{
-      final response = await dio.post('http://localhost:8082/link-preview');
+      final response = await dio.post('$backUrl/link-preview');
       if(response.statusCode == 200){
         final previewData = jsonDecode(response.data);
         // 링크 미리보기 데이터 표시 로직 추가

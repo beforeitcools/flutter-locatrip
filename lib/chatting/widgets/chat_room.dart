@@ -9,8 +9,8 @@ import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ChatRoomPage extends StatefulWidget {
-  const ChatRoomPage({super.key, required this.chatroomId, required this.sender});
-  final String sender;
+  const ChatRoomPage({super.key, required this.chatroomId, required this.chatroomName});
+  final String chatroomName;
   final int chatroomId;
 
   @override
@@ -29,7 +29,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   int myUserId = 1; // 현재 유저 아이디
 
   void _loadChatsById() async {
-    List<dynamic> chatData = await _chatModel.fetchChatRoomData(widget.chatroomId);
+    List<dynamic> chatData = await _chatModel.fetchChatRoomData(widget.chatroomId, context);
     setState(() {
       _chats = chatData;
       _scrollToBottom();
@@ -55,7 +55,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       try{
         final message = {
           "chatroomId": widget.chatroomId,
-          "userId": myUserId,
           "messageContents": _textController.text,
           "sendTime": DateTime.now().toIso8601String(),
           "readCount": 0};
@@ -67,7 +66,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           _textController.clear();
         });
         WidgetsBinding.instance.addPostFrameCallback((_) {_scrollToBottom();});
-        await _chatModel.saveMessage(jsonMessage);
+        await _chatModel.saveMessage(jsonMessage, context);
       }catch(e){
         print('메세지를 보내는 중 에러가 발생했습니다 : $e');
       }
@@ -90,10 +89,10 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           onTap: (){Navigator.pop(context);},
           child:  Icon(Icons.arrow_back),
         ),
-        title: Text(widget.sender),
+        title: Text(widget.chatroomName),
         actions: [
           IconButton(onPressed: (){}, icon: Icon(Icons.search), color: grayColor),
-          IconButton(onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (context)=>ChatRoomSetting(chatRoom: widget.sender, chatroomId: widget.chatroomId,)));}, icon: Icon(Icons.settings_outlined), color: grayColor)
+          IconButton(onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (context)=>ChatRoomSetting(chatRoom: widget.chatroomName, chatroomId: widget.chatroomId,)));}, icon: Icon(Icons.settings_outlined), color: grayColor)
         ],),
         body: Container(
           height: MediaQuery.of(context).size.height,
@@ -124,7 +123,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                     itemCount: _chats.length,
                     itemBuilder: (context, index){
                       final chat = _chats[index];
-                      return chat["userId"] == myUserId ? OwnMessageUi(text: chat["messageContents"], time: chat["sendTime"]) : ReplyMessageUi(text: chat["messageContents"], time: chat["sendTime"]); //TODO: userId 확인해서 "나"면 Own, 외에는 Reply
+                      print('$chat'); // myuserId 가져와야돼
+                          return chat["userId"] == myUserId ? OwnMessageUi(text: chat["messageContents"], time: chat["sendTime"].toString()) : ReplyMessageUi(text: chat["messageContents"], time: chat["sendTime"].toString()); //TODO: userId 확인해서 "나"면 Own, 외에는 Reply
                     },
                   ),
                 );
