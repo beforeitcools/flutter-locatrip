@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/checklist/screen/add_item_screen.dart';
-
 import '../../common/widget/color.dart';
 
-// const grayColor = Color(0xffaaaaaa);
-// const pointBlueColor = Color(0xff2BC0E4);
 
 class ChecklistWidget extends StatelessWidget {
   final Map<String, dynamic> category;
