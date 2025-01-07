@@ -65,6 +65,8 @@ class _MapScreenState extends State<MapScreen> {
 
   String _selectedCategory = '';
 
+  Map<String, bool> _favoriteStatus = {};
+
   @override
   void initState() {
     super.initState();
@@ -758,6 +760,9 @@ class _MapScreenState extends State<MapScreen> {
                             shrinkWrap: true,
                             itemCount: _nearByPlacesList.length,
                             itemBuilder: (context, index) {
+                              Place place = _nearByPlacesList[index];
+                              bool isFavorite =
+                                  _favoriteStatus[place.id] ?? false;
                               return Container(
                                 padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
                                 child: GestureDetector(
@@ -830,15 +835,22 @@ class _MapScreenState extends State<MapScreen> {
                                           IconButton(
                                               onPressed: () {
                                                 // 장소 테이블 저장
-                                                _insertLocation(
-                                                    _nearByPlacesList[index]);
-                                                // 내 장소 저장
+                                                isFavorite
+                                                    ? _removeFavorite(place)
+                                                    : _insertLocation(place);
+
                                                 // 클릭된 하트만 색상 채워지기
                                               },
                                               padding: EdgeInsets.zero,
                                               icon: Icon(
-                                                Icons.favorite_outline_outlined,
-                                              ))
+                                                isFavorite
+                                                    ? Icons.favorite
+                                                    : Icons
+                                                        .favorite_outline_outlined,
+                                                color: isFavorite
+                                                    ? Colors.red
+                                                    : null,
+                                              )),
                                         ],
                                       ),
                                       SingleChildScrollView(
@@ -896,12 +908,49 @@ class _MapScreenState extends State<MapScreen> {
       Map<String, dynamic> result =
           _locationModel.insertLocation(placeData) as Map<String, dynamic>;
 
-      if (result == "장소 저장에 실패했습니다.") {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(result as String)));
+      if (result['status'] == 'success') {
+        setState(() {
+          _favoriteStatus[place.id] = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("장소 저장 성공!")),
+        );
       } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("장소 저장 성공!")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("장소 저장에 실패했습니다.")),
+        );
+      }
+    } catch (e) {
+      print('에러메세지 : $e');
+    }
+  }
+
+  // 내 장소 삭제 메서드
+  void _removeFavorite(Place place) async {
+    Map<String, dynamic> placeData = {
+      "name": place.name,
+      "address": place.address,
+      // 유저 아이디 임의로 넣기
+      "userId": 1,
+    };
+
+    try {
+      // 장소 삭제 API 호출
+      Map<String, dynamic> result = await _locationModel
+          .deleteFavorite(placeData) as Map<String, dynamic>;
+
+      if (result['status'] == 'success') {
+        // 즐겨찾기 상태 업데이트
+        setState(() {
+          _favoriteStatus[place.id] = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("장소 삭제 성공!")),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("장소 삭제에 실패했습니다.")),
+        );
       }
     } catch (e) {
       print('에러메세지 : $e');
