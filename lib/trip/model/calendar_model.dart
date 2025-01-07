@@ -18,6 +18,7 @@ class CalendarPickerModal {
       config: CalendarDatePicker2WithActionButtonsConfig(
         calendarType: CalendarDatePicker2Type.range,
         selectedDayHighlightColor: pointBlueColor,
+        selectedDayTextStyle: TextStyle(color: Colors.white),
         firstDate: today,
         lastDate: DateTime(currentYear + 5),
         rangeBidirectional: true,

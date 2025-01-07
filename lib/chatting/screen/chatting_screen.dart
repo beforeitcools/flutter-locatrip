@@ -11,11 +11,37 @@ class ChattingScreen extends StatefulWidget {
 }
 
 class _ChattingScreenState extends State<ChattingScreen> {
-  List<ChatModel> chats = [
-    ChatModel(name: "민주", isGroup: false, time: "16:04", currentMessage: "민주주의 만세"),
-    ChatModel(name: "현지", isGroup: false, time: "11:13", currentMessage: "탄핵하라"),
-    ChatModel(name: "회먹음이연합", isGroup: true, time: "11:13", currentMessage: "탄핵하라")
-  ];
+  final ChatModel _chatModel = ChatModel();
+  List<dynamic> _chats = [];
+  dynamic _selectedChat;
+
+  bool _showTextfield = false;
+  String _searchButtonText = "";
+  TextEditingController _controller = TextEditingController();
+
+  void _loadChatData() async
+  {
+    List<dynamic> chatData = await _chatModel.fetchMessageData();
+    setState(() {
+      _chats = chatData;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadChatData();
+  }
+
+  void _toggleSearchButton()
+  {
+    setState(() {
+      _showTextfield = !_showTextfield;
+      if(!_showTextfield){
+        _searchButtonText = _controller.text;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,17 +50,72 @@ class _ChattingScreenState extends State<ChattingScreen> {
         title: Text("채팅", style: Theme.of(context).textTheme.headlineLarge),
         actions: [
           InkWell(
-            onTap: (){},
+            onTap: (){/*search*/_toggleSearchButton();},
             child: Container(
               padding: EdgeInsets.all(10),
-              child: Icon(Icons.search, color: grayColor),
+              child: Icon(Icons.search, color: grayColor)
             ),
         )],
       ),
-      body: ListView.builder(
-        itemCount: chats.length,
-        itemBuilder: (context, index) => (ChatListUi(chatModel: chats[index],)),
+      body: _showTextfield ? searchPage() :
+      _chats.isEmpty ? Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text("대화 목록이 아직 없어요", style: Theme.of(context).textTheme.titleMedium),
+              Text("여행을 위한 소통을 시작해 보세요!", style: Theme.of(context).textTheme.titleMedium!.copyWith(color: pointBlueColor)),
+        ],
+      ))
+          : ListView.builder(
+              itemCount: _chats.length,
+              itemBuilder: (context, index){
+                final chat = _chats[index];
+                return ChatListUi(chatroomId: chat["chatroomId"], sender: chat["userId"].toString(), currentMessage: chat["messageContents"]);
+              })
+    );
+  }
+}
+
+class searchPage extends StatefulWidget {
+  const searchPage({super.key});
+
+  @override
+  State<searchPage> createState() => _searchPageState();
+}
+
+class _searchPageState extends State<searchPage> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.height,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    decoration: const InputDecoration(
+                      hintText: "검색어를 입력하세용",
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {},
+                  icon: const Icon(Icons.search, color: Colors.grey),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16), // Add some spacing
+            const Text("히힛"),
+          ],
+        ),
       ),
     );
+
   }
 }

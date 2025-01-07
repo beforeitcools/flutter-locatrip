@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/trip/screen/first_trip_screen.dart';
 import 'package:flutter_locatrip/checklist/screen/checklist_screen.dart';
 import 'package:flutter_locatrip/expense/screen/expense_screen.dart';
-
-import '../../trip/screen/trip_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
