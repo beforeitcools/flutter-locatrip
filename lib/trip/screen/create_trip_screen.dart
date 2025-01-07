@@ -60,28 +60,31 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
       selectedRegionList.add(item["name"].toString());
     }
 
-    String startDateString = _dateRangeModel.startDate != null
-        ? _dateRangeModel.startDate!.toIso8601String()
-        : "";
-
-    String endDateString = _dateRangeModel.endDate != null
-        ? _dateRangeModel.endDate!.toIso8601String()
-        : "";
+    // String startDateString = _dateRangeModel.startDate != null
+    //     ? _dateRangeModel.startDate!.toIso8601String()
+    //     : "";
+    //
+    // String endDateString = _dateRangeModel.endDate != null
+    //     ? _dateRangeModel.endDate!.toIso8601String()
+    //     : "";
 
     Map<String, dynamic> tripData = {
       // 임시데이터 - 유저아이디 실제로 받아와야함!!
       "userId": 1,
       "title": _titleInputController.text.toString(),
-      "startDate": startDateString,
-      "endDate": endDateString,
+      "startDate":
+          _dateRangeModel.startDate?.toIso8601String() ?? "", // null 그대로 전달
+      "endDate": _dateRangeModel.endDate?.toIso8601String() ?? "",
       "regions": selectedRegionList
     };
 
     try {
       Map<String, dynamic> result = await _tripModel.insertTrip(tripData);
 
-      int tripId = result["id"]; //
-
+      int tripId = result["id"] ?? -1;
+      if (tripId == -1) {
+        throw Exception("유효하지 않은 일정 ID입니다.");
+      }
       return tripId;
     } catch (e) {
       print("에러메시지 : $e");
@@ -100,6 +103,10 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
     });
   }
 
+  String formatDate(DateTime date) {
+    return "${date.year}년 ${date.month}월 ${date.day}일";
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('yyyy-MM-dd');
@@ -107,8 +114,10 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
     String dateRangeText = _dateRangeModel.startDate == null
         ? '날짜를 선택해주세요'
         : _dateRangeModel.startDate == _dateRangeModel.endDate
-            ? dateFormat.format(_dateRangeModel.startDate!)
-            : '${dateFormat.format(_dateRangeModel.startDate!)} ~ ${dateFormat.format(_dateRangeModel.endDate!)}';
+            ? formatDate(_dateRangeModel.startDate!)
+            : '${formatDate(_dateRangeModel.startDate!)} ~ ${formatDate(_dateRangeModel.endDate!)}';
+    /*? dateFormat.format(_dateRangeModel.startDate!)
+            : '${dateFormat.format(_dateRangeModel.startDate!)} ~ ${dateFormat.format(_dateRangeModel.endDate!)}';*/
 
     return Scaffold(
         backgroundColor: lightGrayColor,
@@ -252,18 +261,20 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                         ? () async {
                             int? newTripId = await _insertTrip();
                             if (newTripId != null) {
-                              // TripViewScreen(
-                              //   tripId: newTripId,
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => TripViewScreen(
+                                          tripId: newTripId ?? 0)));
+                              // Navigator.pushAndRemoveUntil(
+                              //   context,
+                              //   MaterialPageRoute(
+                              //       builder: (context) =>
+                              //           TripViewScreen(tripId: newTripId)),
+                              //
+                              //   (Route<dynamic> route) =>
+                              //       false, // 이전 페이지 들을 모두 제거
                               // );
-                              Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        TripViewScreen(tripId: newTripId)),
-
-                                (Route<dynamic> route) =>
-                                    false, // 이전 페이지들을 모두 제거
-                              );
                             }
                           }
                         : null,
@@ -272,7 +283,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                       backgroundColor:
                           !isCreated ? lightGrayColor : pointBlueColor,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6), // 둥근 테두리 설정
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       side: BorderSide(
                         color: isCreated ? Colors.transparent : Colors.white,

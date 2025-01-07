@@ -18,6 +18,9 @@ tasks.register("clean", Delete) {
 }
 
 buildscript {
+    ext {
+        kotlin_version = '1.8.22'  // 여기에 Kotlin 버전 추가
+    }
     repositories {
         google()
         mavenCentral()

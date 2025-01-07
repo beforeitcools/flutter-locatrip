@@ -6,12 +6,19 @@ plugins {
     id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
 }
 
+def secretsProps = new Properties()
+def secretsFile = rootProject.file('secrets.properties')
+if (secretsFile.exists()) {
+    secretsProps.load(new FileInputStream(secretsFile))
+}
+
 android {
     namespace = "com.beforeitcools.flutter_locatrip"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        coreLibraryDesugaringEnabled true
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
@@ -29,6 +36,8 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        buildConfigField "String", "MAPS_API_KEY", "\"${secretsProps['MAPS_API_KEY']}\""
+        buildConfigField "String", "PLACES_API_KEY", "\"${secretsProps['PLACES_API_KEY']}\""
     }
 
     buildTypes {
@@ -37,6 +46,9 @@ android {
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.debug
         }
+    }
+    buildFeatures {
+        buildConfig true
     }
 }
 
@@ -57,4 +69,8 @@ secrets {
     // "sdk.dir" is ignored by default.
     ignoreList.add("keyToIgnore") // Ignore the key "keyToIgnore"
     ignoreList.add("sdk.*")       // Ignore all keys matching the regexp "sdk.*"
+}
+
+dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'  // Desugaring 라이브러리 추가
 }

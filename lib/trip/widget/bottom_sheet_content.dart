@@ -106,7 +106,6 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
       // 초기 화면에서 추천 지역 표시
       _displayedRegions = _recommendedRegions;
       isLoading = false;
-      print(isLoading);
     });
   }
 
@@ -478,7 +477,7 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                         backgroundColor:
                             isAbled ? pointBlueColor : lightGrayColor,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6), // 둥근 테두리 설정
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                       child: Text(
