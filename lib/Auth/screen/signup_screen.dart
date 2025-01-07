@@ -106,14 +106,14 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   void _nicknameValidCheckSetState(String nicknameInput) {
-    const nicknamePattern = r'^[가-힣A-Za-z0-9]{1,20}$';
-    RegExp regex = RegExp(nicknamePattern);
     setState(() {
       _nicknameCheck = false;
-      if (!regex.hasMatch(nicknameInput)) {
-        _nicknameError = "한글 1~10자, 영문 2~20자 이내, 특수문자 불가";
-      } else {
+
+      if (RegExp(r'^[가-힣]{1,10}$').hasMatch(nicknameInput) ||
+          RegExp(r'^[A-Za-z0-9]{2,20}$').hasMatch(nicknameInput)) {
         _nicknameError = null;
+      } else {
+        _nicknameError = "한글 1~10자, 영문 2~20자 이내, 특수문자 불가";
       }
     });
   }
@@ -125,7 +125,7 @@ class _SignupScreenState extends State<SignupScreen> {
       });
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("닉네임 형식에 맞아야 중복 확인 가능합니다.")));
-    } else if (_nicknameError != null && _nicknameError!.contains("형식")) {
+    } else if (_nicknameError != null && _nicknameError!.contains("불가")) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("닉네임 형식에 맞아야 중복 확인 가능합니다.")));
     } else {
