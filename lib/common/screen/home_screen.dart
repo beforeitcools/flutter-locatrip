@@ -49,8 +49,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Icon(Icons.home_outlined), label: "홈"),
             BottomNavigationBarItem(
                 icon: Icon(Icons.map_outlined), label: "지도"),
-            /*BottomNavigationBarItem(
-                icon: Icon(Icons.recommend_outlined), label: "여행첨삭소"),*/
+            BottomNavigationBarItem(
+                icon: Icon(Icons.recommend_outlined), label: "여행첨삭소"),
             BottomNavigationBarItem(
                 icon: Icon(Icons.sms_outlined), label: "채팅"),
             BottomNavigationBarItem(
