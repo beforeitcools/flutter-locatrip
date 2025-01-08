@@ -56,9 +56,12 @@ class AuthModel {
                 filename: image.path.split('/').last,
               ),
       });
+      print(formData);
+      print(formData.fields);
       final response = await dio.post("$backUrl/auth/signup",
           data: formData,
-          options: Options(headers: {'Content-Type': 'multipart/form-data'}));
+          options: Options(
+              headers: {'Content-Type': 'multipart/form-data; charset=UTF-8'}));
 
       if (response.statusCode == 200) {
         return "회원 가입 완료";
@@ -134,7 +137,7 @@ class AuthModel {
         await _storage.deleteAll();
         await prefs.setBool('autoLogin', false);
         print("Error: $errorMessage");
-        throw Exception(errorMessage);
+        return errorMessage;
       } else {
         throw Exception("네트워크 오류 발생");
       }

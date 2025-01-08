@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/map/model/location_model.dart';
 import 'package:flutter_locatrip/map/model/place_api_model.dart';
+import 'package:flutter_locatrip/map/screen/location_detail_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -21,6 +22,7 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   final PlaceApiModel _placeApiModel = PlaceApiModel();
   final LocationModel _locationModel = LocationModel();
+  final FocusNode _focusNode = FocusNode();
 
   Set<Marker> _markers = {};
 
@@ -38,7 +40,8 @@ class _MapScreenState extends State<MapScreen> {
   GoogleMapController? mapController;
 
   final double maxSize = 0.9;
-  final double minSize = 0.47;
+  // final double minSize = 0.47;
+  final double minSize = 0.32;
   final double tolerance = 0.001;
   double sheetSize = 0.47;
   final double buttonOffset = 16;
@@ -66,6 +69,7 @@ class _MapScreenState extends State<MapScreen> {
   String _selectedCategory = '';
 
   Map<String, bool> _favoriteStatus = {};
+  List<Map<String, bool>> _favoriteStatusList = [];
 
   @override
   void initState() {
@@ -108,6 +112,32 @@ class _MapScreenState extends State<MapScreen> {
         });
       }
     });
+
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus) {
+        // TextField에 커서가 놓일 때 실행할 동작
+        print("TextField is focused");
+        sheetController.animateTo(
+          maxSize,
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      } else {
+        // TextField에서 포커스가 벗어날 때 실행할 동작
+        print("TextField lost focus");
+        sheetController.animateTo(
+          minSize,
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
   }
 
   // 지도에서 현위치 때 사용
@@ -189,7 +219,7 @@ class _MapScreenState extends State<MapScreen> {
       /*print('nearByPlaces : $nearByPlaces');*/
 
       List<dynamic> nearByPlacesList = nearByPlaces["places"];
-      print('nearByPlacesList $nearByPlacesList');
+      /*print('nearByPlacesList $nearByPlacesList');*/
 
       // 마커 추가 전 리스트 클리어
       setState(() {
@@ -254,16 +284,17 @@ class _MapScreenState extends State<MapScreen> {
     );
 
     _nearByPlacesList.add(newPlace);
+    _syncFavoriteStatus();
 
     // 마커 추가 및 장소 리스트 업데이트
     setState(() {
       _markers.add(Marker(
           markerId: MarkerId(newPlace.id),
           position: newPlace.location,
-          /*infoWindow: InfoWindow(
-          title: newPlace.name,
-          snippet: newPlace.address,
-        ),*/
+          infoWindow: InfoWindow(
+            title: newPlace.name,
+            // snippet: newPlace.address,
+          ),
           icon: newPlace.icon,
           onTap: () {
             // newPlace.id와 일치하는 장소 찾기
@@ -319,9 +350,13 @@ class _MapScreenState extends State<MapScreen> {
                         ),
                       ),
                       SizedBox(height: 8),
-                      Text(
-                        place.address,
-                        style: Theme.of(context).textTheme.bodySmall,
+                      Container(
+                        width: MediaQuery.of(context).size.width * 0.7,
+                        child: Text(
+                          place.address,
+                          style: Theme.of(context).textTheme.bodySmall,
+                          softWrap: true,
+                        ),
                       ),
                     ],
                   ),
@@ -487,7 +522,7 @@ class _MapScreenState extends State<MapScreen> {
   Widget _showDragableSheet(LatLng _mapCenter,
       List<Map<String, dynamic>> categories, List<String> orderByListEn) {
     return DraggableScrollableSheet(
-      initialChildSize: minSize, // 초기 높이 비율
+      initialChildSize: 0.47, // 초기 높이 비율
       minChildSize: minSize, // 최소 높이 비율
       maxChildSize: maxSize, // 최대 높이 비율
       controller: sheetController,
@@ -526,12 +561,19 @@ class _MapScreenState extends State<MapScreen> {
                 isCategorySelected
                     ? SizedBox.shrink()
                     : Padding(
-                        padding: EdgeInsets.fromLTRB(16, 0, 16, 35),
+                        padding: EdgeInsets.fromLTRB(16, 0, 16, 20),
                         child: TextField(
                           controller: _searchController,
-                          /*onChanged: (value) {
-                          _getSearchResults();
-                        },*/
+                          focusNode: _focusNode,
+                          onChanged: (value) {
+                            setState(() {
+                              sheetController.animateTo(
+                                maxSize,
+                                duration: Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            });
+                          },
                           decoration: InputDecoration(
                             hintText: "장소 검색",
                             filled: true,
@@ -539,7 +581,7 @@ class _MapScreenState extends State<MapScreen> {
                             contentPadding: EdgeInsets.symmetric(
                                 vertical: 16, horizontal: 16),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
+                              borderRadius: BorderRadius.circular(99),
                               borderSide: BorderSide.none,
                             ),
                             suffixIcon: Padding(
@@ -762,11 +804,18 @@ class _MapScreenState extends State<MapScreen> {
                             itemBuilder: (context, index) {
                               Place place = _nearByPlacesList[index];
                               bool isFavorite =
-                                  _favoriteStatus[place.id] ?? false;
+                                  _favoriteStatus[place.name] ?? false;
                               return Container(
                                 padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
                                 child: GestureDetector(
-                                  onTap: () {},
+                                  onTap: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                LocationDetailScreen(
+                                                    place: place)));
+                                  },
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -834,12 +883,7 @@ class _MapScreenState extends State<MapScreen> {
                                           ),
                                           IconButton(
                                               onPressed: () {
-                                                // 장소 테이블 저장
-                                                isFavorite
-                                                    ? _removeFavorite(place)
-                                                    : _insertLocation(place);
-
-                                                // 클릭된 하트만 색상 채워지기
+                                                _toggleFavoriteStatus(place);
                                               },
                                               padding: EdgeInsets.zero,
                                               icon: Icon(
@@ -893,33 +937,33 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  void _insertLocation(Place place) {
+  void _insertLocation(Place place) async {
     Map<String, dynamic> placeData = {
       "name": place.name,
       "address": place.address,
       "latitude": place.location.latitude,
       "longitude": place.location.longitude,
-      "category": place.category,
-      // 유저 아이디 임의로 넣기
-      "userId": 1,
+      "category": place.category
     };
 
     try {
       Map<String, dynamic> result =
-          _locationModel.insertLocation(placeData) as Map<String, dynamic>;
+          await _locationModel.insertLocation(placeData, context);
+      print('result $result');
 
-      if (result['status'] == 'success') {
+      if ((result != null && result is Map<String, dynamic>)) {
         setState(() {
-          _favoriteStatus[place.id] = true;
+          _favoriteStatus[place.name] = true;
+          _favoriteStatusList.add(_favoriteStatus);
         });
-        ScaffoldMessenger.of(context).showSnackBar(
+        /* ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("장소 저장 성공!")),
-        );
-      } else {
+        );*/
+      } /*else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("장소 저장에 실패했습니다.")),
         );
-      }
+      }*/
     } catch (e) {
       print('에러메세지 : $e');
     }
@@ -929,31 +973,70 @@ class _MapScreenState extends State<MapScreen> {
   void _removeFavorite(Place place) async {
     Map<String, dynamic> placeData = {
       "name": place.name,
-      "address": place.address,
-      // 유저 아이디 임의로 넣기
-      "userId": 1,
+      "address": place.address
     };
 
     try {
       // 장소 삭제 API 호출
-      Map<String, dynamic> result = await _locationModel
-          .deleteFavorite(placeData) as Map<String, dynamic>;
+      String result = await _locationModel.deleteFavorite(placeData, context);
 
-      if (result['status'] == 'success') {
+      if (result != null) {
         // 즐겨찾기 상태 업데이트
         setState(() {
-          _favoriteStatus[place.id] = false;
+          _favoriteStatus[place.name] = false;
+          _favoriteStatusList.remove(_favoriteStatus);
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("장소 삭제 성공!")),
+          SnackBar(content: Text(result)),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("장소 삭제에 실패했습니다.")),
+          SnackBar(content: Text(result)),
         );
       }
     } catch (e) {
       print('에러메세지 : $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("오류가 발생했습니다: $e")),
+      );
+    }
+  }
+
+  void _toggleFavoriteStatus(Place place) {
+    setState(() {
+      bool isFavorite = _favoriteStatus[place.name] ?? false;
+      print('_favoriteStatus $_favoriteStatus');
+
+      if (isFavorite) {
+        _removeFavorite(place);
+        _favoriteStatus[place.name] = false;
+        _favoriteStatusList.remove(_favoriteStatus);
+      } else {
+        _insertLocation(place);
+        _favoriteStatus[place.name] = true;
+        _favoriteStatusList.add(_favoriteStatus);
+      }
+    });
+  }
+
+  void _syncFavoriteStatus() async {
+    List<String> locationNameList =
+        _nearByPlacesList.map((place) => place.name).toList();
+
+    // 서버에서 즐겨찾기 상태 동기화
+    List<Map<String, bool>>? fetchedStatusList = await _locationModel
+        .fetchFavoriteStatusFromServer(locationNameList, context);
+
+    // print('fetchedStatusList $fetchedStatusList');
+
+    if (fetchedStatusList != null) {
+      setState(() {
+        for (Map<String, bool> fetchedStatus in fetchedStatusList) {
+          fetchedStatus.forEach((id, isFavorite) {
+            _favoriteStatus[id] = isFavorite;
+          });
+        }
+      });
     }
   }
 
@@ -1009,10 +1092,12 @@ class _MapScreenState extends State<MapScreen> {
       children: [
         latitude != null && longitude != null
             ? Container(
-                height: 460,
+                // height: 460,
                 child: GoogleMap(
-                  initialCameraPosition:
-                      CameraPosition(target: _mapCenter, zoom: 15),
+                  initialCameraPosition: CameraPosition(
+                      target: LatLng(
+                          _mapCenter.latitude - 0.005, _mapCenter.longitude),
+                      zoom: 15),
                   myLocationEnabled: true,
                   myLocationButtonEnabled: true,
                   onMapCreated: (GoogleMapController controller) {
@@ -1034,9 +1119,8 @@ class _MapScreenState extends State<MapScreen> {
             : // 위치 조정된 버튼
             AnimatedPositioned(
                 duration: Duration(milliseconds: 200),
-                bottom: (screenHeight * sheetSize - 10),
-                left: MediaQuery.of(context).size.width * 0.3,
-                right: MediaQuery.of(context).size.width * 0.3,
+                bottom: screenHeight * sheetSize - 16,
+                left: MediaQuery.of(context).size.width * 0.5 - 75,
                 child: Center(
                   child: ElevatedButton(
                     onPressed: () {
@@ -1049,8 +1133,9 @@ class _MapScreenState extends State<MapScreen> {
                           _mapCenter.longitude, "POPULARITY", typeAll);
                     },
                     style: ElevatedButton.styleFrom(
-                      minimumSize: Size(150, 40), // 버튼 크기 조정
+                      minimumSize: Size(150, 40),
                       backgroundColor: Colors.white,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
