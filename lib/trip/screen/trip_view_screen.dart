@@ -50,13 +50,13 @@ class _TripViewScreenState extends State<TripViewScreen> {
       isLoading = true;
     });
     try {
-      Map<String, dynamic> result = await _tripModel.selectTrip(widget.tripId);
+      Map<String, dynamic> result =
+          await _tripModel.selectTrip(widget.tripId, context);
       if (result.isNotEmpty) {
         setState(() {
           tripInfo.addAll(result);
-
-          print(tripInfo);
           address = tripInfo['selectedRegions'][0]['region'];
+
           isLoading = false;
 
           // 여행 정보가 로드된 이후 드롭다운 목록 업데이트

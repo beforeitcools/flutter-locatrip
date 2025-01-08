@@ -18,7 +18,7 @@ class ExpenseExtracostScreen extends StatefulWidget {
 
   @override
   State<ExpenseExtracostScreen> createState() => _ExpenseExtracostScreenState();
-}
+  }
 
 class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
   final TextEditingController _amountController = TextEditingController();
@@ -40,17 +40,12 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
   ];
   // 날짜 옵션
 
-
-  List<Map<String, dynamic>> _participants = [
-    {'id': 1, 'userId': '1', 'isChecked': true, 'isPaid': false},
-    {'id': 2, 'userId': '2', 'isChecked': false, 'isPaid': false},
-    {'id': 3, 'userId': '3', 'isChecked': false, 'isPaid': false},
-  ];
+  List<Map<String, dynamic>> _participants = [];
 
   @override
   void initState() {
     super.initState();
-
+    _fetchParticipants();
     if (widget.selectedDate == 'preparation') {
       _selectedDate = '여행 준비';
     } else if (widget.groupedExpenses.containsKey(widget.selectedDate)) {
@@ -62,7 +57,23 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
 
   }
 
-
+  Future<void> _fetchParticipants() async {
+    try {
+      final users = await ExpenseModel().getUsersByTripId(widget.tripId, context);
+      setState(() {
+        _participants = users.map((user) {
+          return {
+            'id': user['id'],
+            'nickname': user['nickname'],
+            'isChecked': false,
+            'isPaid': false,
+          };
+        }).toList();
+      });
+    } catch (e) {
+      print('Error fetching participants: $e');
+    }
+  }
 
   String get formattedDate {
     if (_selectedDate == 'preparation') {
@@ -202,7 +213,7 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
 
     try {
       final expenseModel = ExpenseModel();
-      await expenseModel.createExpense(expenseData);
+      await expenseModel.createExpense(expenseData, context);
       print('Expense saved successfully');
       Navigator.pop(context, true); // 이전 화면으로 돌아가기
     } catch (e) {
@@ -211,9 +222,6 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
 
     print('Expense data sent: $expenseData');
   }
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -305,7 +313,7 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
             ),
             const SizedBox(height: 16),
 
-// 카테고리 아이콘을 Wrap 레이아웃으로 정렬
+            // 카테고리 아이콘을 Wrap 레이아웃으로 정렬
             Wrap(
               alignment: WrapAlignment.start,
               spacing: 130.0, // 가로 간격
@@ -361,13 +369,14 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
 
             Column(
               children: _participants.map((user) {
+                print(user);
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     // 사용자 ID 표시
                     Expanded(
                       child: Text(
-                        user['userId'], // userId를 UI에 표시
+                        user['nickname'], // userId를 UI에 표시
                         style: const TextStyle(fontSize: 14),
                       ),
                     ),
@@ -420,3 +429,4 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
     );
   }
 }
+
