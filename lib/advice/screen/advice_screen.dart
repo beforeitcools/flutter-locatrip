@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/advice/screen/advice_post_screen.dart';
+import 'package:flutter_locatrip/advice/screen/advice_view_screen.dart';
 import 'package:flutter_locatrip/advice/widget/post_bottom_sheet.dart';
 import 'package:flutter_locatrip/advice/widget/post_filter.dart';
 import 'package:flutter_locatrip/advice/widget/post_list.dart';
@@ -26,7 +28,32 @@ class _AdviceScreen extends State<AdviceScreen> {
                 padding: EdgeInsets.all(10),
                 child: Icon(Icons.notifications_outlined, color: blackColor),
               ),
-            )],
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AdviceViewScreen()),
+                );
+              },
+              child: Text(
+                '첨삭보기 (임시)',
+                style: TextStyle(color: blackColor),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AdvicePostScreen()),
+                );
+              },
+              child: Text(
+                '첨삭글 (임시)',
+                style: TextStyle(color: blackColor),
+              ),
+            ),
+          ],
         ),
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
