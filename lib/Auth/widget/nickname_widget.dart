@@ -24,8 +24,6 @@ class NicknameWidget extends StatefulWidget {
 }
 
 class _NicknameWidgetState extends State<NicknameWidget> {
-  final AuthModel _authModel = AuthModel();
-
   void _nicknameValidCheck(String nicknameInput) {
     widget.nicknameValidCheckSetState(nicknameInput);
   }

@@ -1,14 +1,19 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
-import 'package:flutter_locatrip/map/model/place.dart';
+import 'package:flutter/material.dart';
+
+import '../../common/Auth/auth_dio_interceptor.dart';
+import '../../common/widget/url.dart';
 
 class LocationModel {
-  Future<dynamic> insertLocation(Map<String, dynamic> place) async {
+  Future<dynamic> insertLocation(
+      Map<String, dynamic> place, BuildContext context) async {
     final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
-      // final responses = await dio.post("http://192.168.45.79:8082/location/insert",
-      final responses = await dio
-          .post("http://112.221.66.174:1234/location/insert", data: place);
+      final responses = await dio.post("$backUrl/location/insert", data: place);
       if (responses.statusCode == 200) {
         return responses.data as Map<String, dynamic>;
       } else {
@@ -20,22 +25,43 @@ class LocationModel {
     }
   }
 
-  Future<dynamic> deleteFavorite(Map<String, dynamic> place) async {
+  Future<String> deleteFavorite(
+      Map<String, dynamic> place, BuildContext context) async {
     final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
-      // final responses = await dio.post("http://192.168.45.79:8082/location/deleteFavorite",
-      final responses = await dio.post(
-          "http://112.221.66.174:1234/location/deleteFavorite",
-          data: place);
+      final responses =
+          await dio.post("$backUrl/location/deleteFavorite", data: place);
       if (responses.statusCode == 200) {
-        return responses.data as Map<String, dynamic>;
+        return responses.data as String;
       } else {
         return "내 장소 삭제에 실패했습니다.";
       }
     } catch (e) {
-      print(e);
       throw Exception("Error : $e");
+    }
+  }
+
+  Future<List<Map<String, bool>>?> fetchFavoriteStatusFromServer(
+      List<String> locationNameList, BuildContext context) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+    try {
+      final response = await dio.get("$backUrl/location/favorites",
+          data: jsonEncode(locationNameList));
+      if (response.statusCode == 200) {
+        List<dynamic> rawData = response.data as List<dynamic>;
+
+        // 데이터를 Map<String, bool>로 변환
+        List<Map<String, bool>> result = rawData.map((item) {
+          return Map<String, bool>.from(item as Map<String, dynamic>);
+        }).toList();
+
+        return result;
+      }
+    } catch (e) {
+      print('Error fetching favorites: $e');
     }
   }
 }

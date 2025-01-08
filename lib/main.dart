@@ -7,6 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'Auth/screen/start_screen.dart';
 import 'common/screen/error_screen.dart';
+import 'package:flutter/services.dart';
 
 import 'common/model/navigation_observer.dart';
 import 'common/screen/home_screen.dart';
@@ -15,53 +16,41 @@ import 'common/widget/style.dart' as style;
 
 final AppOverlayObserver appOverlayObserver = AppOverlayObserver();
 void main() {
-  runApp(/*const*/ MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
   final Future<Widget?> _initFuture = Init.instance.initialize();
-  /*const MyApp({super.key});*/
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     return FutureBuilder(
-        future: /*Init.instance.initialize(context),*/ _initFuture,
-        builder: (context, AsyncSnapshot snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return MaterialApp(home: SplashScreen());
-          } else if (snapshot.hasError) {
-            return MaterialApp(home: ErrorScreen());
-          } else {
-            {
-              return MaterialApp(
-                theme: style.theme,
-                debugShowCheckedModeBanner: false,
-                home: snapshot.data, // 로딩 완료시 HomeScreen()
-                routes: {
-                  "/home": (context) => HomeScreen(),
-                  "/start": (context) => StartScreen(),
-                  "/login": (context) => LoginScreen(),
-                  "/signup": (context) => SignupScreen(),
-                },
-                navigatorObservers: [appOverlayObserver],
-              );
-            }
+      future: _initFuture,
+      builder: (context, AsyncSnapshot snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return MaterialApp(home: SplashScreen());
+        } else if (snapshot.hasError) {
+          return MaterialApp(home: ErrorScreen());
+        } else {
+          {
+            return MaterialApp(
+              theme: style.theme,
+              debugShowCheckedModeBanner: false,
+              home: snapshot.data, // 로딩 완료시 HomeScreen()
+              routes: {
+                "/home": (context) => HomeScreen(),
+                "/start": (context) => StartScreen(),
+                "/login": (context) => LoginScreen(),
+                "/signup": (context) => SignupScreen(),
+              },
+              navigatorObservers: [appOverlayObserver],
+            );
           }
-        });
-  }
-
-  /*@override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: style.theme,
-      debugShowCheckedModeBanner: false,
-      home: HomeScreen(),
-      routes: {
-        "/home": (context) => HomeScreen(),
+        }
       },
-      navigatorObservers: [appOverlayObserver],
     );
-  }*/
+  }
 }
 
 class Init {

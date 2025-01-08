@@ -224,7 +224,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             child: IntrinsicHeight(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(16, 180, 16, 16),
+                padding: EdgeInsets.fromLTRB(16, 180, 16, 30),
                 child: Center(
                   child: Column(
                     children: [

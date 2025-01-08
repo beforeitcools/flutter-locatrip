@@ -5,6 +5,9 @@ import 'package:flutter_locatrip/Auth/screen/login_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/common/widget/splash_screen_for_loading.dart';
 import 'package:flutter_locatrip/mypage/model/mypage_model.dart';
+import 'package:flutter_locatrip/mypage/screen/local_area_auth_screen.dart';
+import 'package:flutter_locatrip/mypage/screen/mytrip_screen.dart';
+import 'package:flutter_locatrip/mypage/screen/profile_update_screen.dart';
 import 'package:flutter_locatrip/mypage/widget/cusotom_dialog.dart';
 
 class MypageScreen extends StatefulWidget {
@@ -51,10 +54,41 @@ class _MypageScreenState extends State<MypageScreen> {
       _profileImage = _userData['profilePic'];
       _nickname = _userData['nickname'];
       _ownBadge = _userData['ownBadge'];
-      print(_profileImage);
-      print(_nickname);
-      print(_ownBadge);
     });
+  }
+
+  Future<void> _navigateToProfileUpdatePage() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ProfileUpdateScreen()),
+    );
+
+    // 기다리다가 프로필 수정 후 돌아오면 트리거
+    if (result == true) {
+      _loadMypageData();
+    }
+  }
+
+  Future<void> _navigateToLocalAreaAuthPage() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => LocalAreaAuthScreen()),
+    );
+
+    if (result == true) {
+      _loadMypageData();
+    }
+  }
+
+  Future<void> _navigateToMyTripPage() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MytripScreen()),
+    );
+
+    if (result == true) {
+      _loadMypageData();
+    }
   }
 
   // 디바이스 사이즈에 맞춰서 텍스트 정리(...처리)
@@ -68,10 +102,10 @@ class _MypageScreenState extends State<MypageScreen> {
     double screenWidth = MediaQuery.of(context).size.width;
     if (screenWidth > 600) {
       // Tablet - wider screen
-      return 20;
+      return 14;
     } else {
       // Mobile - narrower screen
-      return 12;
+      return 7;
     }
   }
 
@@ -99,11 +133,11 @@ class _MypageScreenState extends State<MypageScreen> {
     }
   }
 
-  Widget _materialCreator(dynamic icon, String title /*, String screenName*/) {
+  Widget _materialCreator(dynamic icon, String title, Future navigateTo()) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-          onTap: () {},
+          onTap: navigateTo,
           splashColor: Color.fromARGB(50, 43, 192, 228),
           highlightColor: Color.fromARGB(30, 43, 192, 228),
           borderRadius: BorderRadius.circular(10),
@@ -172,7 +206,7 @@ class _MypageScreenState extends State<MypageScreen> {
       body: SingleChildScrollView(
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            minHeight: MediaQuery.of(context).size.height - 116,
+            minHeight: MediaQuery.of(context).size.height - 165,
           ),
           child: IntrinsicHeight(
             child: Padding(
@@ -195,7 +229,7 @@ class _MypageScreenState extends State<MypageScreen> {
                           Material(
                             color: Colors.transparent,
                             child: InkWell(
-                              onTap: () {},
+                              onTap: _navigateToProfileUpdatePage,
                               splashColor: Color.fromARGB(50, 43, 192, 228),
                               highlightColor: Color.fromARGB(30, 43, 192, 228),
                               borderRadius: BorderRadius.circular(10),
@@ -214,7 +248,14 @@ class _MypageScreenState extends State<MypageScreen> {
                                                 child: CachedNetworkImage(
                                                   imageUrl: _profileImage!,
                                                   placeholder: (context, url) =>
-                                                      CircularProgressIndicator(),
+                                                      SizedBox(
+                                                    width: 30,
+                                                    height: 30,
+                                                    child: Center(
+                                                      child:
+                                                          CircularProgressIndicator(),
+                                                    ),
+                                                  ),
                                                   errorWidget:
                                                       (context, url, error) =>
                                                           Icon(
@@ -336,8 +377,8 @@ class _MypageScreenState extends State<MypageScreen> {
                             color: lightGrayColor,
                             width: 1.0,
                           )),
-                      child: _materialCreator(
-                          "assets/icon/home_pin.png", "현지인 인증하기"),
+                      child: _materialCreator("assets/icon/home_pin.png",
+                          "현지인 인증하기", _navigateToLocalAreaAuthPage),
                     ),
                     SizedBox(
                       height: 20,
@@ -353,15 +394,33 @@ class _MypageScreenState extends State<MypageScreen> {
                           )),
                       child: Column(
                         children: [
-                          _materialCreator("assets/icon/trip.png", "내 여행"),
-                          _materialCreator(
+                          _materialCreator("assets/icon/trip.png", "내 여행",
+                              _navigateToMyTripPage),
+                          /*_materialCreator(
                               Icons.favorite_border_outlined, "내 저장"),
                           _materialCreator(Icons.article_outlined, "내 포스트"),
                           _materialCreator(
-                              "assets/icon/rate_review.png", "내 첨삭"),
+                              "assets/icon/rate_review.png", "내 첨삭"),*/
                         ],
                       ),
                     ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    Row(
+                      children: [
+                        Spacer(),
+                        TextButton(
+                            onPressed: () {},
+                            child: Text(
+                              "탈퇴하기",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(color: lightGrayColor),
+                            ))
+                      ],
+                    )
                   ],
                 ),
               ),

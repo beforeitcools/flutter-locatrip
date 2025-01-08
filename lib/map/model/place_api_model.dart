@@ -1,10 +1,8 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import 'api_key_loader.dart';
-import 'custom_icon.dart';
 
 class PlaceApiModel {
   Future<Map<String, dynamic>> getNearByPlaces(
@@ -98,24 +96,25 @@ class PlaceApiModel {
     }
   }
 
-  // 나중에...
-  Future<List<Map<String, dynamic>>> getAutoComplete(
-      Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> getPlaceDetail(String id) async {
     final dio = Dio();
     String? apiKey = await ApiKeyLoader.getApiKey('PLACES_API_KEY');
+    print('id $id / apiKey $apiKey');
 
     try {
-      final responses = await dio.post(
-        "https://places.googleapis.com/v1/places:autocomplete",
-        data: jsonEncode(data),
+      final responses = await dio.get(
+        "https://places.googleapis.com/v1/places/$id",
         options: Options(headers: {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': apiKey,
+          'X-Goog-FieldMask':
+              "internationalPhoneNumber,rating,reviews,googleMapsUri",
         }),
       );
 
       if (responses.statusCode == 200) {
-        return responses.data["places"] as List<Map<String, dynamic>>;
+        print('responses ${responses.data}');
+        return responses.data as Map<String, dynamic>;
       } else {
         throw Exception("로드 실패");
       }
@@ -124,9 +123,10 @@ class PlaceApiModel {
       throw Exception("Error : $e");
     }
   }
+}
 
-  // Google Places API에서 마커 아이콘 가져오기
-  /* Future<BitmapDescriptor> getMarkerIcon(String category) async {
+// Google Places API에서 마커 아이콘 가져오기
+/* Future<BitmapDescriptor> getMarkerIcon(String category) async {
     final dio = Dio();
     String? apiKey = await ApiKeyLoader.getApiKey('PLACES_API_KEY');
 
@@ -168,4 +168,30 @@ class PlaceApiModel {
       return BitmapDescriptor.defaultMarker;
     }
   }*/
-}
+
+// 나중에... 자동완성
+/*Future<List<Map<String, dynamic>>> getAutoComplete(
+      Map<String, dynamic> data) async {
+    final dio = Dio();
+    String? apiKey = await ApiKeyLoader.getApiKey('PLACES_API_KEY');
+
+    try {
+      final responses = await dio.post(
+        "https://places.googleapis.com/v1/places:autocomplete",
+        data: jsonEncode(data),
+        options: Options(headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': apiKey,
+        }),
+      );
+
+      if (responses.statusCode == 200) {
+        return responses.data["places"] as List<Map<String, dynamic>>;
+      } else {
+        throw Exception("로드 실패");
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error : $e");
+    }
+  }*/
