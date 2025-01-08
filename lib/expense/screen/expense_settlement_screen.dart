@@ -30,6 +30,7 @@ class _ExpenseSettlementScreenState extends State<ExpenseSettlementScreen> {
         List<Map<String, dynamic>>.from(settlementData['transactions']);
         userExpenses =
         List<Map<String, dynamic>>.from(settlementData['userExpenses']);
+
         isLoading = false;
       });
     } catch (e) {
