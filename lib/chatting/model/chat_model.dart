@@ -68,8 +68,9 @@ class ChatModel{
     }
   }
 
-  Future<void> updateChatroomName(int chatroomId, String chatroomName) async {
+  Future<void> updateChatroomName(int chatroomId, String chatroomName, BuildContext context) async {
     final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
 
     print('$chatroomId 는 나의 채팅방 아이디, $chatroomName 는 내가 바꿀 이름');
     try {

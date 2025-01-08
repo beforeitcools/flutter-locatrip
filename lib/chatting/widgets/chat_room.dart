@@ -54,7 +54,10 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     if(_textController.text.isNotEmpty){
       try{
         final message = {
-          "chatroomId": widget.chatroomId,
+          "chatRoom":{
+            "id": widget.chatroomId,
+            "chatroomName": widget.chatroomName
+          },
           "messageContents": _textController.text,
           "sendTime": DateTime.now().toIso8601String(),
           "read": false};
