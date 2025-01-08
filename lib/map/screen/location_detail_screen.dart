@@ -3,8 +3,10 @@ import 'package:easy_image_viewer/easy_image_viewer.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
+import 'package:flutter_locatrip/map/model/location_model.dart';
 import 'package:flutter_locatrip/map/model/place_api_model.dart';
 import 'package:flutter_locatrip/map/model/place_detail.dart';
+import 'package:flutter_locatrip/map/model/toggle_favorite.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../model/app_overlay_controller.dart';
@@ -13,7 +15,15 @@ import '../model/product_image_provider.dart';
 
 class LocationDetailScreen extends StatefulWidget {
   final Place place;
-  const LocationDetailScreen({super.key, required this.place});
+  final Map<String, bool> favoriteStatus;
+  // final List<Map<String, bool>> favoriteStatusList;
+
+  const LocationDetailScreen({
+    super.key,
+    required this.place,
+    required this.favoriteStatus,
+    // required this.favoriteStatusList
+  });
 
   @override
   State<LocationDetailScreen> createState() => _LocationDetailScreenState();
@@ -21,6 +31,8 @@ class LocationDetailScreen extends StatefulWidget {
 
 class _LocationDetailScreenState extends State<LocationDetailScreen> {
   final PlaceApiModel _placeApiModel = PlaceApiModel();
+  final LocationModel _locationModel = LocationModel();
+  final ToggleFavorite _toggleFavorite = ToggleFavorite();
 
   int _currentIndex = 0;
   final CarouselSliderController carouselController =
@@ -28,8 +40,12 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
 
   PlaceDetail? _placeDetail;
   bool _isLoading = false;
+  // bool _isFavorite = false;
 
   bool _isExpanded = false;
+
+  Map<String, bool> _favoriteStatus = {};
+  // List<Map<String, bool>> _favoriteStatusList = [];
 
   void _handlePageChange(int newIndex) {
     setState(() {
@@ -70,11 +86,12 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
   void initState() {
     super.initState();
 
-    print('widget.place ${widget.place}');
-    print('id : ${widget.place.id}');
     _loadDetail(widget.place.id);
     setState(() {
       AppOverlayController.removeOverlay();
+      // _favoriteStatusList = widget.favoriteStatusList;
+      _favoriteStatus = widget.favoriteStatus;
+      print('_favoriteStatus $_favoriteStatus');
     });
   }
 
@@ -97,16 +114,17 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
           );
           _isLoading = false;
         });
+        _syncFavoriteStatus(widget.place.name);
       } else {
         setState(() {
           _isLoading = false;
         });
       }
     } catch (e) {
-      print("에러메시지 : $e");
       setState(() {
         _isLoading = false;
       });
+      print("에러메시지 : $e");
     }
   }
 
@@ -116,6 +134,29 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
     } else {
       throw 'Could not launch $googleMapsUrl';
     }
+  }
+
+  void _syncFavoriteStatus(String locationName) async {
+    try {
+      Map<String, bool>? result = await _locationModel
+          .fetchSpecificFavoriteStatusFromServer(locationName, context);
+      print('result $result');
+      if (result != null) {
+        setState(() {
+          _favoriteStatus[locationName] = result[locationName]!;
+        });
+      }
+    } catch (e) {
+      print('에러메시지 $e');
+    }
+  }
+
+  void _updateFavoriteStatus(bool isFavorite, Place place) {
+    // print('누른 후 isFavorite $isFavorite');
+    setState(() {
+      _favoriteStatus[place.name] = isFavorite;
+      // print('_favoriteStatus[place.name] ${_favoriteStatus[place.name]}');
+    });
   }
 
   @override
@@ -139,93 +180,128 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
                           BorderRadius.vertical(top: Radius.circular(16)),
                     ),
                     builder: (BuildContext context) {
-                      return Padding(
-                          padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
-                          child: Column(
-                              mainAxisSize: MainAxisSize.min, // 컨텐츠 높이에 맞게 조정
-
-                              children: [
-                                TextButton(
-                                  onPressed: () {},
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.favorite_outline_outlined,
-                                        // color: Colors.red,
-                                        color: blackColor,
-                                        size: 20,
-                                      ),
-                                      SizedBox(width: 15),
-                                      Text("장소 저장",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .labelLarge),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  width: double.infinity,
-                                  height: 1,
-                                  color: lightGrayColor,
-                                ),
-                                TextButton(
-                                  onPressed: () {},
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.calendar_today_outlined,
-                                        size: 20,
-                                        color: blackColor,
-                                      ),
-                                      SizedBox(width: 15),
-                                      Text("일정 추가",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .labelLarge),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  width: double.infinity,
-                                  height: 1,
-                                  color: lightGrayColor,
-                                ),
-                                TextButton(
-                                  onPressed: () {},
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.ios_share,
-                                        size: 20,
-                                        color: blackColor,
-                                      ),
-                                      SizedBox(width: 15),
-                                      Text("장소 공유",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .labelLarge),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  width: double.infinity,
-                                  height: 1,
-                                  color: lightGrayColor,
-                                ),
-                                TextButton(
+                      return StatefulBuilder(builder:
+                          (BuildContext context, StateSetter setStateModal) {
+                        bool isFavorite =
+                            _favoriteStatus[_placeDetail?.place.name] ?? false;
+                        return Padding(
+                            padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+                            child: Column(
+                                mainAxisSize: MainAxisSize.min, // 컨텐츠 높이에 맞게 조정
+                                children: [
+                                  TextButton(
                                     onPressed: () {
-                                      Navigator.pop(context);
+                                      // _toggleFavoriteStatus(_placeDetail!.place);
+                                      _toggleFavorite.toggleFavoriteStatus(
+                                          _placeDetail!.place,
+                                          _favoriteStatus,
+                                          // _favoriteStatusList,
+                                          context, () {
+                                        _updateFavoriteStatus(
+                                            !(_favoriteStatus[
+                                                _placeDetail?.place.name]!),
+                                            _placeDetail!.place);
+
+                                        // Modal 내부 setState 호출
+                                        setStateModal(() {
+                                          isFavorite = !isFavorite;
+                                        });
+                                        // 부모 위젯의 상태도 업데이트
+                                        setState(() {
+                                          _favoriteStatus[_placeDetail!
+                                              .place.name] = isFavorite;
+                                        });
+                                      });
+                                      // _toggleFavoriteStatus(_placeDetail!.place);
                                     },
-                                    child: Text(
-                                      "닫기",
-                                      style: TextStyle(
-                                        color: Colors.red,
-                                      ),
-                                    ))
-                              ]));
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        isFavorite
+                                            ? Icon(
+                                                Icons.favorite,
+                                                color: Colors.red,
+                                                size: 20,
+                                              )
+                                            : Icon(
+                                                Icons.favorite_outline_outlined,
+                                                color: blackColor,
+                                                size: 20,
+                                              ),
+                                        SizedBox(width: 15),
+                                        Text(isFavorite ? "저장 취소" : "장소 저장",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .labelLarge),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    width: double.infinity,
+                                    height: 1,
+                                    color: lightGrayColor,
+                                  ),
+                                  TextButton(
+                                    onPressed: () {},
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.calendar_today_outlined,
+                                          size: 20,
+                                          color: blackColor,
+                                        ),
+                                        SizedBox(width: 15),
+                                        Text("일정 추가",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .labelLarge),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    width: double.infinity,
+                                    height: 1,
+                                    color: lightGrayColor,
+                                  ),
+                                  TextButton(
+                                    onPressed: () {},
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.ios_share,
+                                          size: 20,
+                                          color: blackColor,
+                                        ),
+                                        SizedBox(width: 15),
+                                        Text("장소 공유",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .labelLarge),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    width: double.infinity,
+                                    height: 1,
+                                    color: lightGrayColor,
+                                  ),
+                                  TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: Text(
+                                        "닫기",
+                                        style: TextStyle(
+                                          color: Colors.red,
+                                        ),
+                                      ))
+                                ]));
+                      });
                     });
               },
               icon: Icon(Icons.more_vert))

@@ -64,4 +64,30 @@ class LocationModel {
       print('Error fetching favorites: $e');
     }
   }
+
+  Future<Map<String, bool>?> fetchSpecificFavoriteStatusFromServer(
+      String locationName, BuildContext context) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    try {
+      final response =
+          await dio.get("$backUrl/location/specificFavorites/$locationName");
+      if (response.statusCode == 200) {
+        Map<String, dynamic> rawData = response.data;
+        Map<String, bool> boolData = rawData.map((key, value) {
+          return MapEntry(
+              key,
+              value is bool
+                  ? value
+                  : value == null
+                      ? false
+                      : false);
+        });
+        return boolData;
+      }
+    } catch (e) {
+      print('Error fetching favorites: $e');
+    }
+  }
 }
