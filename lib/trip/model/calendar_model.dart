@@ -13,6 +13,7 @@ class CalendarPickerModal {
     required BuildContext context,
     required DateRangeModel initialRange,
   }) async {
+    double calendarWidth = MediaQuery.of(context).size.width - 32;
     List<DateTime?>? results = await showCalendarDatePicker2Dialog(
       context: context,
       config: CalendarDatePicker2WithActionButtonsConfig(
@@ -33,7 +34,7 @@ class CalendarPickerModal {
           style: TextStyle(color: pointBlueColor, fontWeight: FontWeight.w600),
         ),
       ),
-      dialogSize: const Size(325, 400),
+      dialogSize: Size(calendarWidth, 400),
       borderRadius: BorderRadius.circular(16),
       value: [initialRange.startDate, initialRange.endDate],
       dialogBackgroundColor: Colors.white,
