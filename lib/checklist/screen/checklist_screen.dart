@@ -26,10 +26,10 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
 
   void _loadCategories() async {
     try {
-      var categories = await _checklistModel.getCategories();
+      var categories = await _checklistModel.getCategories(context);
 
       for (var category in categories) {
-        var items = await _checklistModel.getItemsByCategory(category['id']);
+        var items = await _checklistModel.getItemsByCategory(category['id'], context);
         category['items'] = items;
       }
       setState(() {
@@ -63,7 +63,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                   ElevatedButton(
                     onPressed: () async {
                       try {
-                        await _checklistModel.deleteCategory(categoryId);
+                        await _checklistModel.deleteCategory(categoryId, context);
                         Navigator.pop(context); // 하단 시트 닫기
                         _loadCategories(); // 카테고리 재로딩
                       } catch (e) {
@@ -104,7 +104,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                   ElevatedButton(
                     onPressed: () async {
                       try {
-                        await _checklistModel.deleteItems([itemId]);
+                        await _checklistModel.deleteItems([itemId], context);
                         Navigator.pop(context);
                         _loadCategories();
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -138,7 +138,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
     }
 
     try {
-      await _checklistModel.deleteItems(_selectedItemIds);
+      await _checklistModel.deleteItems(_selectedItemIds, context);
       _selectedItemIds.clear();
       _loadCategories();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -165,7 +165,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
 
   void _updateItemCheckedStatus(int itemId, bool isChecked) async {
     try {
-      await _checklistModel.updateItemCheckedStatus(itemId, isChecked);
+      await _checklistModel.updateItemCheckedStatus(itemId, isChecked, context);
     } catch (e) {
       print("체크 상태 업데이트 중 오류 발생: $e");
     }
