@@ -17,6 +17,7 @@ class ChatModel{
     
     try{
       final response = await dio.get("$backUrl/api/chat/recent");
+
       if(response.statusCode == 200){
         return response.data as List<dynamic>;
       }else{

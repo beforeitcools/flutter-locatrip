@@ -57,7 +57,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           "chatroomId": widget.chatroomId,
           "messageContents": _textController.text,
           "sendTime": DateTime.now().toIso8601String(),
-          "readCount": 0};
+          "read": false};
 
        final jsonMessage =  json.encode(message);
         setState(() {
