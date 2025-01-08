@@ -9,7 +9,9 @@ class OwnMessageUi extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String onlyTime = '${time.split('T')[1].split(':')[0]}:${time.split(':')[1]}';
+    String onlyTime = time.split(" ")[1].isNotEmpty
+        ? '${time.split(' ')[1].split(':')[0]}:${time.split(':')[1]}'
+        : '${time.split('T')[1].split(':')[0]}:${time.split(':')[1]}';
 
     return Align(alignment: Alignment.centerRight,
       child: Container(
