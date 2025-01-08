@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/advice/widget/post_bottom_sheet.dart';
+import 'package:flutter_locatrip/advice/widget/post_filter.dart';
 import 'package:flutter_locatrip/advice/widget/post_list.dart';
 import 'package:flutter_locatrip/advice/widget/recommendations.dart';
 import 'package:flutter_locatrip/advice/widget/shortage_dialog.dart';
@@ -31,6 +32,7 @@ class _AdviceScreen extends State<AdviceScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Recommendations(),
+            PostFilter(),
             PostList()
           ]),
         floatingActionButton: Container(
