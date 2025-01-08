@@ -26,11 +26,9 @@ class StartScreen extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyMedium),
             Text("지금 내 동네를 인증하고 여행을 계획하세요!",
                 style: Theme.of(context).textTheme.bodyMedium),
-            SizedBox(
-              height: 190,
-            ),
+            Spacer(),
             Container(
-              padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 30),
               child: Column(
                 children: [
                   TextButton(
