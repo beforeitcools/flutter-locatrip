@@ -137,7 +137,10 @@ class _LoginScreenState extends State<LoginScreen> {
       } catch (e) {
         String errorMessage = e.toString();
         if (errorMessage.startsWith("Exception: ")) {
-          String cleanMessage = errorMessage.substring(10);
+          String cleanMessage = errorMessage.substring(10).trim();
+          if (cleanMessage.startsWith("Error")) {
+            cleanMessage = "서버에러! 다시 로그인 해주세요.";
+          }
           showCustomDialog(context, cleanMessage);
         }
       }

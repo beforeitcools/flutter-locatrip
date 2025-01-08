@@ -101,8 +101,11 @@ class AuthModel {
           throw Exception(e.response?.data['failType'] ?? "사용자 없음");
         } else if (e.response?.statusCode == 403) {
           throw Exception(e.response?.data['failType'] ?? "접근 금지");
+        } else if (e.response?.statusCode == 500) {
+          throw Exception("Exception: 서버에러! 다시 로그인 해주세요.");
         }
       }
+      print(e);
       throw Exception("Error: $e");
     }
   }
