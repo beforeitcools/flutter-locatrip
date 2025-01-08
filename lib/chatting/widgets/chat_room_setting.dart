@@ -72,7 +72,10 @@ class _ChatRoomSettingState extends State<ChatRoomSetting> {
                                                   ),
                                                 )),
                                                 TextButton(onPressed: (){
-                                                  _chatModel.updateChatroomName(widget.chatroomId, _controller.text);
+                                                  _chatModel.updateChatroomName(widget.chatroomId, _controller.text, context);
+                                                  setState(() {
+                                                    widget.chatRoom = _controller.text;
+                                                  });
                                                   _toggleTextButton();}, child: Text("저장", style: Theme.of(context).textTheme.labelMedium!.copyWith(color: pointBlueColor)))
                                                 ])
                                               : Text(widget.chatRoom, style: Theme.of(context).textTheme.bodySmall) ,

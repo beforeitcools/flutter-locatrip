@@ -5,7 +5,13 @@ import 'day_widget.dart';
 
 class DragBottomSheet extends StatefulWidget {
   final List<String> dropDownDay;
-  const DragBottomSheet({super.key, required this.dropDownDay});
+  final Map<String, dynamic> tripInfo;
+
+  const DragBottomSheet({
+    super.key,
+    required this.dropDownDay,
+    required this.tripInfo,
+  });
 
   @override
   State<DragBottomSheet> createState() => _DragBottomSheetState();
@@ -19,10 +25,11 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
   final Map<int, GlobalKey> _itemKeys = {}; // 각 DayWidget의 key 저장
 
   late List<String> _dropDownDay;
+  late Map<String, dynamic> _tripInfo;
 
   dynamic _selectedItem;
 
-  bool isExpanded = false; // 현재 상태 추적 (최대 or 최소)
+  bool isExpanded = false;
 
   final double maxSize = 0.8;
   final double minSize = 0.45;
@@ -32,6 +39,7 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
   void initState() {
     super.initState();
     _dropDownDay = widget.dropDownDay;
+    _tripInfo = widget.tripInfo;
 
     // 각 아이템에 GlobalKey 부여
     for (int i = 0; i < _dropDownDay.length; i++) {
@@ -41,6 +49,7 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
     // DraggableScrollableController 의 상태 변화 감지
     sheetController.addListener(() {
       double currentSize = sheetController.size;
+      print('currentSize $currentSize');
       if ((currentSize - maxSize).abs() < tolerance) {
         setState(() {
           isExpanded = true;
@@ -51,6 +60,16 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
         });
       }
     });
+  }
+
+  void _onDraggableSheetReady() {
+    if (sheetController.isAttached) {
+      sheetController.animateTo(
+        minSize,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   // 날짜 선택 시 해당 위치로 스크롤
@@ -72,20 +91,17 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
     );
   }
 
-  // 최대/최소 높이 토글
   void _toggleSheetHeight() {
-    if (isExpanded) {
+    if (sheetController.isAttached) {
+      final targetSize = isExpanded ? minSize : maxSize;
       sheetController.animateTo(
-        minSize,
+        targetSize,
         duration: Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
+      isExpanded = !isExpanded;
     } else {
-      sheetController.animateTo(
-        maxSize,
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      print("DraggableScrollableController is not attached yet.");
     }
   }
 
@@ -116,6 +132,7 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
                 // 드래그 핸들러
                 GestureDetector(
                   onTap: _toggleSheetHeight,
+                  behavior: HitTestBehavior.translucent,
                   child: Container(
                     width: 32,
                     height: 4,
@@ -141,6 +158,7 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
                           dropDownDay: _dropDownDay,
                           index: index,
                           onDateSelected: _scrollToSelectedItem,
+                          tripInfo: _tripInfo,
                         ),
                       );
                     },

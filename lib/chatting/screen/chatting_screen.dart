@@ -21,7 +21,7 @@ class _ChattingScreenState extends State<ChattingScreen> {
 
   void _loadChatData() async
   {
-    List<dynamic> chatData = await _chatModel.fetchMessageData(1);
+    List<dynamic> chatData = await _chatModel.fetchMessageData(1, context);
     setState(() {
       _chats = chatData;
     });
@@ -70,7 +70,7 @@ class _ChattingScreenState extends State<ChattingScreen> {
               itemCount: _chats.length,
               itemBuilder: (context, index){
                 final chat = _chats[index];
-                return ChatListUi(chatroomId: chat["chatroomId"], sender: chat["userId"].toString(), currentMessage: chat["messageContents"]);
+                return ChatListUi(chatroomId: chat["chatroomId"], chatroomName: chat["chatroomName"], currentMessage: chat["currentMessage"]);
               })
     );
   }

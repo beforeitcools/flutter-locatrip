@@ -103,7 +103,7 @@ class PlaceApiModel {
 
     try {
       final responses = await dio.get(
-        "https://places.googleapis.com/v1/places/$id",
+        "https://places.googleapis.com/v1/places/$id?languageCode=ko",
         options: Options(headers: {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': apiKey,
