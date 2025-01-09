@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/Auth/model/auth_model.dart';
 import 'package:flutter_locatrip/Auth/screen/login_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
-import 'package:flutter_locatrip/common/widget/splash_screen_for_loading.dart';
+import 'package:flutter_locatrip/common/widget/loading_screen.dart';
 import 'package:flutter_locatrip/mypage/model/mypage_model.dart';
 import 'package:flutter_locatrip/mypage/screen/local_area_auth_screen.dart';
 import 'package:flutter_locatrip/mypage/screen/mytrip_screen.dart';
@@ -22,9 +22,10 @@ class _MypageScreenState extends State<MypageScreen> {
   final MypageModel _mypageModel = MypageModel();
   dynamic _userData;
   String? _profileImage;
-  String? _nickname;
-  int? _ownBadge;
-  int? _selectedCount;
+  late String _nickname;
+  late int _ownBadge;
+  late String _selectedAdviceCount;
+  bool _isLoading = true;
 
   void _logout() async {
     try {
@@ -48,13 +49,23 @@ class _MypageScreenState extends State<MypageScreen> {
   }
 
   void _loadMypageData() async {
-    Map<String, dynamic> result = await _mypageModel.getMyPageData(context);
-    setState(() {
-      _userData = result['user'];
-      _profileImage = _userData['profilePic'];
-      _nickname = _userData['nickname'];
-      _ownBadge = _userData['ownBadge'];
-    });
+    try {
+      LoadingOverlay.show(context);
+      Map<String, dynamic> result = await _mypageModel.getMyPageData(context);
+      setState(() {
+        _userData = result['user'];
+        _selectedAdviceCount = result['selectedAdviceCount'].toString();
+        _profileImage = _userData['profilePic'];
+        _nickname = _userData['nickname'] ?? '닉네임 없음';
+        _nickname = _truncateWithEllipsis(_nickname, _getMaxLength(context));
+        _ownBadge = _userData['ownBadge'];
+        _isLoading = false;
+      });
+    } catch (e) {
+      print("!!!!!!!!!!!!!!!!!!로드 중 에러 발생 : $e");
+    } finally {
+      LoadingOverlay.hide();
+    }
   }
 
   Future<void> _navigateToProfileUpdatePage() async {
@@ -112,10 +123,7 @@ class _MypageScreenState extends State<MypageScreen> {
   @override
   void initState() {
     super.initState();
-    // 로딩동안 splash screen 띄우기
-    LoadingOverlay.show();
     _loadMypageData();
-    LoadingOverlay.hide();
   }
 
   Widget _buildIconOrImage(dynamic icon) {
@@ -164,6 +172,15 @@ class _MypageScreenState extends State<MypageScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      // Show loading screen while data is fetching
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -278,15 +295,12 @@ class _MypageScreenState extends State<MypageScreen> {
                                       ),
                                       // 닉네임
                                       Text(
-                                        _nickname != null
-                                            ? _truncateWithEllipsis(
-                                                _nickname!, // 너무 길면 처리(...)
-                                                _getMaxLength(context))
-                                            : '아무개',
+                                        _nickname,
                                         style: TextStyle(
                                           color: blackColor,
                                           fontSize: 20,
                                           fontWeight: FontWeight.w600,
+                                          fontFamily: 'NotoSansKR',
                                         ),
                                       ),
                                       SizedBox(
@@ -351,7 +365,7 @@ class _MypageScreenState extends State<MypageScreen> {
                                             thickness: 1.0,
                                           ),
                                         ),
-                                        Text("101",
+                                        Text(_selectedAdviceCount,
                                             style: TextStyle(
                                               color: pointBlueColor,
                                               fontSize: 16,
