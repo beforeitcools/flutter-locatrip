@@ -5,7 +5,6 @@ import 'package:flutter_locatrip/advice/widget/post_bottom_sheet.dart';
 import 'package:flutter_locatrip/advice/widget/post_filter.dart';
 import 'package:flutter_locatrip/advice/widget/post_list.dart';
 import 'package:flutter_locatrip/advice/widget/recommendations.dart';
-import 'package:flutter_locatrip/advice/widget/shortage_dialog.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
 class AdviceScreen extends StatefulWidget {
@@ -38,18 +37,6 @@ class _AdviceScreen extends State<AdviceScreen> {
               },
               child: Text(
                 '첨삭보기 (임시)',
-                style: TextStyle(color: blackColor),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => AdvicePostScreen()),
-                );
-              },
-              child: Text(
-                '첨삭글 (임시)',
                 style: TextStyle(color: blackColor),
               ),
             ),
