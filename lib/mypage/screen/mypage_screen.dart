@@ -6,6 +6,7 @@ import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/common/widget/loading_screen.dart';
 import 'package:flutter_locatrip/mypage/model/mypage_model.dart';
 import 'package:flutter_locatrip/mypage/screen/local_area_auth_screen.dart';
+import 'package:flutter_locatrip/mypage/screen/myfavorites_screen.dart';
 import 'package:flutter_locatrip/mypage/screen/mytrip_screen.dart';
 import 'package:flutter_locatrip/mypage/screen/profile_update_screen.dart';
 import 'package:flutter_locatrip/mypage/widget/custom_dialog.dart';
@@ -53,11 +54,6 @@ class _MypageScreenState extends State<MypageScreen> {
     try {
       LoadingOverlay.show(context);
       Map<String, dynamic> result = await _mypageModel.getMyPageData(context);
-      // FlutterSecureStorage는 default 로 key, value 모두 String 이라 파싱 필수
-      final FlutterSecureStorage _storage = FlutterSecureStorage();
-      final dynamic stringId = await _storage.read(key: 'userId');
-      final int userId = int.tryParse(stringId) ?? 0;
-
       setState(() {
         _userData = result['user'];
         _selectedAdviceCount = result['selectedAdviceCount'].toString();
@@ -100,6 +96,17 @@ class _MypageScreenState extends State<MypageScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => MytripScreen()),
+    );
+
+    if (result == true) {
+      _loadMypageData();
+    }
+  }
+
+  Future<void> _navigateToMyFavoritesPage() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MyfavoritesScreen()),
     );
 
     if (result == true) {
@@ -402,9 +409,9 @@ class _MypageScreenState extends State<MypageScreen> {
                         children: [
                           _materialCreator("assets/icon/trip.png", "내 여행",
                               _navigateToMyTripPage),
-                          /*_materialCreator(
-                              Icons.favorite_border_outlined, "내 저장"),
-                          _materialCreator(Icons.article_outlined, "내 포스트"),
+                          _materialCreator(Icons.favorite_border_outlined,
+                              "내 저장", _navigateToMyFavoritesPage),
+                          /*_materialCreator(Icons.article_outlined, "내 포스트"),
                           _materialCreator(
                               "assets/icon/rate_review.png", "내 첨삭"),*/
                         ],

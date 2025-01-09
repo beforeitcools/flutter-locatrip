@@ -80,7 +80,7 @@ class MypageModel {
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
-      final response = await dio.delete("$backUrl/mypage/deleteTrip/$tripId");
+      final response = await dio.post("$backUrl/mypage/deleteTrip/$tripId");
 
       if (response.statusCode == 200) {
         return "여행 삭제 성공";
