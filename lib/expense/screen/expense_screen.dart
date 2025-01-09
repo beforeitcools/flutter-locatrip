@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/expense/model/expense_model.dart';
 import 'package:flutter_locatrip/expense/screen/expense_extracost_screen.dart';
-import 'package:flutter_locatrip/expense/screen/expense_settlement.dart';
+import 'package:flutter_locatrip/expense/screen/expense_settlement_screen.dart';
 import 'package:flutter_locatrip/expense/screen/expense_updatecost_screen.dart';
 
 class ExpenseScreen extends StatefulWidget {
@@ -18,6 +18,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   final ExpenseModel expenseModel = ExpenseModel();
   Map<String, dynamic> groupedExpenses = {};
   bool isLoading = true;
+  bool isEditing = false;
 
   String selectedPeriod = '기간전체';
 
@@ -38,7 +39,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
 
   Future<void> loadExpensesGroupedByDays() async {
     try {
-      final data = await expenseModel.getExpensesGroupedByDays(widget.tripId);
+      final data = await expenseModel.getExpensesGroupedByDays(widget.tripId, context);
       setState(() {
         groupedExpenses = data;
         isLoading = false;
@@ -93,7 +94,10 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
               ),
 
 
+
+
               // 날짜별 필터 옵션
+
               ...groupedExpenses.entries.map((entry) {
                 final day = entry.key;
                 final date = entry.value['date'];
@@ -128,11 +132,71 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     );
   }
 
-  void _navigateToUpdateExpense(int expenseId) async {
+  void _showEditOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('순서 편집/삭제'),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() {
+                    isEditing = true;
+                  });
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _deleteExpense(int expenseId, String day) async {
+    try {
+      // UI에서 먼저 항목 제거
+      setState(() {
+        final dayExpenses = groupedExpenses[day]?['expenses'];
+        if (dayExpenses != null) {
+          dayExpenses.removeWhere((expense) => expense['id'] == expenseId);
+          if (dayExpenses.isEmpty) {
+            groupedExpenses.remove(day);
+          }
+        }
+      });
+
+      // 서버에 삭제 요청
+      await expenseModel.deleteExpense(expenseId, context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('비용이 성공적으로 삭제되었습니다.')),
+      );
+    } catch (e) {
+      print('Error deleting expense: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('삭제 실패: $e')),
+      );
+      // 오류 발생 시 UI 복구 (선택적)
+      await loadExpensesGroupedByDays();
+    }
+  }
+
+
+  void _navigateToUpdateExpense(int expenseId, String selectedDate) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ExpenseUpdateCostScreen(expenseId: expenseId),
+        builder: (context) => ExpenseUpdateCostScreen(
+          expenseId: expenseId,
+          tripId: widget.tripId,
+          selectedDate: selectedDate,
+          availableDates: groupedExpenses.keys.toList(),
+          groupedExpenses: groupedExpenses,
+        ),
       ),
     );
 
@@ -141,6 +205,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
       setState(() {});
     }
   }
+
 
   Future<void> _navigateToAddExpense(String selectedDate) async {
     final result = await Navigator.push(
@@ -162,8 +227,6 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     final filteredExpenses = selectedPeriod == '기간전체'
@@ -182,6 +245,10 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
             IconButton(
               icon: const Icon(Icons.calculate),
               onPressed: _navigateToSettlementScreen,
+            ),
+            IconButton(
+              icon: const Icon(Icons.more_horiz),
+              onPressed: _showEditOptions,
             ),
           ],
           flexibleSpace: Column(
@@ -231,23 +298,53 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
               ...(dayData['expenses'] as List).map((expense) {
                 final String category = expense['category'] ?? '기타';
                 final IconData icon = categoryIcons[category] ?? Icons.sms;
-                print(expense['id']);
 
                 return ListTile(
-                  leading: Icon(icon, color: pointBlueColor),
+                  leading: isEditing
+                  ? IconButton(
+                    icon: const Icon(Icons.remove_circle, color: Colors.red),
+                    onPressed: () => _deleteExpense(expense['id'], day),
+                  )
+                  : Icon(icon, color: pointBlueColor),
                   title: Text(expense['description']),
-                  trailing: Text('₩${expense['amount']}'),
-                  onTap: () => _navigateToUpdateExpense(expense['id']),
+                  trailing: isEditing
+                    ? const Icon(Icons.drag_handle)
+                    : Text('₩${expense['amount']}'),
+                  onTap: () {
+                    if (!isEditing) {
+                      final formattedDay = day == "preparation"
+                          ? '여행 준비'
+                          : '$day $date';
+                      _navigateToUpdateExpense(expense['id'], formattedDay);
+                    }
+                    },
                 );
               }).toList(),
+              if (isEditing)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        isEditing = false;
+                      });
+                    },
+                    child: const Text('편집 완료'),
+                  ),
+                ),
               OutlinedButton(
                 style: OutlinedButton.styleFrom(
                   foregroundColor: blackColor,
                   side: const BorderSide(color: grayColor),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(5),
+                    borderRadius: BorderRadius.circular(0),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 420, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 160, vertical: 8),
                   textStyle: const TextStyle(fontSize: 16),
                 ),
                 onPressed: () {

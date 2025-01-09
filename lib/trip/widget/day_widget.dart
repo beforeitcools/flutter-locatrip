@@ -9,12 +9,16 @@ class DayWidget extends StatefulWidget {
   final List<String> dropDownDay;
   final int index;
   final Function(int) onDateSelected;
-  const DayWidget(
-      {super.key,
-      required this.selectedItem,
-      required this.dropDownDay,
-      required this.index,
-      required this.onDateSelected});
+  final Map<String, dynamic> tripInfo;
+
+  const DayWidget({
+    super.key,
+    required this.selectedItem,
+    required this.dropDownDay,
+    required this.index,
+    required this.onDateSelected,
+    required this.tripInfo,
+  });
 
   @override
   State<DayWidget> createState() => _DayWidgetState();
@@ -24,6 +28,7 @@ class _DayWidgetState extends State<DayWidget> {
   late List<String> dropDownDayList;
   dynamic _selectedItem;
   late int index;
+  late Map<String, dynamic> _tripInfo;
 
   @override
   void initState() {
@@ -31,6 +36,7 @@ class _DayWidgetState extends State<DayWidget> {
     _selectedItem = widget.selectedItem;
     dropDownDayList = widget.dropDownDay;
     index = widget.index;
+    _tripInfo = widget.tripInfo;
   }
 
   void _showBottomSheet(BuildContext context, dropDownDayList, index) {
@@ -182,7 +188,9 @@ class _DayWidgetState extends State<DayWidget> {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => SearchPlaceScreen()));
+                            builder: (context) => SearchPlaceScreen(
+                                  tripInfo: _tripInfo,
+                                )));
                   },
                   style: OutlinedButton.styleFrom(
                       side: BorderSide(

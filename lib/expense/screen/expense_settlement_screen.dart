@@ -24,12 +24,13 @@ class _ExpenseSettlementScreenState extends State<ExpenseSettlementScreen> {
 
   Future<void> fetchSettlementDetails() async {
     try {
-      final settlementData = await ExpenseModel().getTotalSettlement();
+      final settlementData = await ExpenseModel().getTotalSettlement(context);
       setState(() {
         transactions =
         List<Map<String, dynamic>>.from(settlementData['transactions']);
         userExpenses =
         List<Map<String, dynamic>>.from(settlementData['userExpenses']);
+
         isLoading = false;
       });
     } catch (e) {
@@ -77,7 +78,7 @@ class _ExpenseSettlementScreenState extends State<ExpenseSettlementScreen> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     title: Text(
-                      '${transaction['fromUser']} → ${transaction['toUser']}',
+                      '${transaction['fromNickname']} → ${transaction['toNickname']}',
                       style: TextStyle(fontSize: 16),
                     ),
                     trailing: Column(
@@ -128,7 +129,7 @@ class _ExpenseSettlementScreenState extends State<ExpenseSettlementScreen> {
                       color: Colors.blue,
                     ),
                     title: Text(
-                      '사용자: ${user['userId']}',
+                      '${user['nickname']}',
                       style: TextStyle(fontSize: 16),
                     ),
                     trailing: Column(
@@ -136,7 +137,7 @@ class _ExpenseSettlementScreenState extends State<ExpenseSettlementScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          '지출: ${currencyFormat.format(user['spent'])}원',
+                          '${currencyFormat.format(user['spent'])}원',
                           style: TextStyle(
                               fontSize: 14, fontWeight: FontWeight.bold),
                         ),

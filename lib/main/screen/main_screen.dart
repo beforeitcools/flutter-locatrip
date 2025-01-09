@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_locatrip/checklist/screen/checklist_screen.dart';
-import 'package:flutter_locatrip/expense/screen/expense_screen.dart';
 import 'package:flutter_locatrip/trip/screen/first_trip_screen.dart';
 import 'package:flutter_locatrip/checklist/screen/checklist_screen.dart';
+import 'package:flutter_locatrip/expense/screen/expense_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -25,10 +24,9 @@ class _MainScreenState extends State<MainScreen> {
             // style: Theme.of(context).textTheme.headlineLarge,
           ),
           actions: [
-            IconButton(
-                onPressed: () {}, icon: Icon(Icons.notifications_outlined)),
+            IconButton(onPressed: () {}, icon: Icon(Icons.notifications)),
             TextButton(
-              onPressed: () {
+              onPressed: (){
                 Navigator.push(
                   context,
                   MaterialPageRoute(

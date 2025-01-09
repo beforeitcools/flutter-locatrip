@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
+import 'package:flutter_locatrip/common/widget/loading_screen.dart';
+import 'package:flutter_locatrip/mypage/model/mypage_model.dart';
+import 'package:flutter_locatrip/mypage/widget/category_tab_menu_widget.dart';
+import 'package:flutter_locatrip/mypage/widget/list_tile_widget.dart';
 
 class MytripScreen extends StatefulWidget {
   const MytripScreen({super.key});
@@ -9,129 +13,136 @@ class MytripScreen extends StatefulWidget {
 }
 
 class _MytripScreenState extends State<MytripScreen> {
+  final MypageModel _mypageModel = MypageModel();
+  int _selectedIndex = 0; // 탭한 index(default: 0)
+  late List<List<dynamic>> _myTrips = List.filled(2, []);
+  List<String> _categories = ["다가오는 여행", "지난 여행"];
+  bool _isLoading = true;
+
+  void _categoryOnTabHandler(int categoryIndex) {
+    setState(() {
+      _selectedIndex = categoryIndex;
+    });
+  }
+
+  // 내 여행 불러와서 다가오는 여행, 지난 여행 구분후 myTrips에 index 0,1로 추가
+  Future<void> _loadMyTripData() async {
+    try {
+      LoadingOverlay.show(context);
+      Map<String, dynamic> result = await _mypageModel.getMyTripData(context);
+      print("result: $result");
+      print(result['futureTrips']);
+      print(result['pastTrips']);
+      setState(() {
+        _myTrips[0] = result['futureTrips'];
+        _myTrips[1] = result['pastTrips'];
+        print("mytrips: $_myTrips");
+        print("mytrips1: ${_myTrips[0]}");
+        print("mytrips1: ${_myTrips[0]}[0]['title]");
+        // print("mytrips2: ${_myTrips[0][title]}");
+        _isLoading = false;
+      });
+    } catch (e) {
+      print("!!!!!!!!!!!!!!!!!!마이 트립 로드 중 에러 발생 : $e");
+      setState(() {
+        _myTrips = [[], []];
+      });
+    } finally {
+      LoadingOverlay.hide();
+    }
+  }
+
+  Future<void> deleteTrip(int tripId) async {
+    try {
+      // _isLoading = true;
+      LoadingOverlay.show(context);
+      String result = await _mypageModel.deleteTrip(context, tripId);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(result)));
+      Navigator.pushReplacementNamed(context, "/home");
+      _isLoading = false;
+    } catch (e) {
+      print("!!!!!!!!!!!!!!!!!!트립 삭제중  에러 발생 : $e");
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error : $e')));
+    } finally {
+      await _loadMyTripData();
+      LoadingOverlay.hide();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMyTripData();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus(); // 다른데 누르면 키보드 감춤
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text("내 여행", style: Theme.of(context).textTheme.headlineLarge),
+    if (_isLoading) {
+      // Show loading screen while data is fetching
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
         ),
-        body: SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height - 165,
-            ),
-            child: IntrinsicHeight(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(0, 0, 0, 16),
-                child: Center(
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () {},
-                                splashColor: Color.fromARGB(50, 43, 192, 228),
-                                highlightColor:
-                                    Color.fromARGB(30, 43, 192, 228),
-                                child: Container(
-                                  alignment: Alignment.center,
-                                  width:
-                                      (MediaQuery.of(context).size.width - 50) /
-                                          2,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    border: Border(
-                                      bottom: BorderSide(
-                                        color: grayColor,
-                                        width: 1.0,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    "다가오는 여행",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(color: blackColor),
-                                  ),
-                                ),
-                              ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("내 여행", style: Theme.of(context).textTheme.headlineLarge),
+      ),
+      body: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height - 165,
+          ),
+          child: IntrinsicHeight(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(0, 0, 0, 16),
+              child: Center(
+                child: Column(
+                  children: [
+                    CategoryTabMenuWidget(
+                      categoryOnTabHandler: _categoryOnTabHandler,
+                      selectedIndex: _selectedIndex,
+                      categories: _categories,
+                    ),
+                    SizedBox(
+                      height: 4,
+                    ),
+                    ListTileWidget(
+                      selectedIndex: _selectedIndex,
+                      myTrips: _myTrips,
+                    ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
+                      child: TextButton(
+                        onPressed: () {},
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "현재 위치로 현지인 인증하기",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelLarge
+                                  ?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white),
                             ),
-                          ),
-                          Expanded(
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () {},
-                                splashColor: Color.fromARGB(50, 43, 192, 228),
-                                highlightColor:
-                                    Color.fromARGB(30, 43, 192, 228),
-                                child: Container(
-                                  alignment: Alignment.center,
-                                  width:
-                                      (MediaQuery.of(context).size.width - 50) /
-                                          2,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    border: Border(
-                                      bottom: BorderSide(
-                                        color: grayColor,
-                                        width: 1.0,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    "지난 여행",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(color: blackColor),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 40,
-                      ),
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-                        child: TextButton(
-                          onPressed: () {},
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "현재 위치로 현지인 인증하기",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelLarge
-                                    ?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white),
-                              ),
-                            ],
-                          ),
-                          style: TextButton.styleFrom(
-                            minimumSize: Size(380, 60),
-                            backgroundColor: pointBlueColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                          ],
+                        ),
+                        style: TextButton.styleFrom(
+                          minimumSize: Size(380, 60),
+                          backgroundColor: pointBlueColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
