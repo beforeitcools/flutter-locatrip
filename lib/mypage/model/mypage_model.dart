@@ -74,4 +74,22 @@ class MypageModel {
       throw Exception("Error: $e");
     }
   }
+
+  Future<String> deleteTrip(BuildContext context, int tripId) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    try {
+      final response = await dio.delete("$backUrl/mypage/deleteTrip/$tripId");
+
+      if (response.statusCode == 200) {
+        return "여행 삭제 성공";
+      } else {
+        return "여행 삭제 실패";
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error: $e");
+    }
+  }
 }

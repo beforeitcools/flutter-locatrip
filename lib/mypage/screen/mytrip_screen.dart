@@ -15,7 +15,7 @@ class MytripScreen extends StatefulWidget {
 class _MytripScreenState extends State<MytripScreen> {
   final MypageModel _mypageModel = MypageModel();
   int _selectedIndex = 0; // 탭한 index(default: 0)
-  late List<Map<String, dynamic>> _myTrips = List.filled(2, {});
+  late List<List<dynamic>> _myTrips = List.filled(2, []);
   List<String> _categories = ["다가오는 여행", "지난 여행"];
   bool _isLoading = true;
 
@@ -26,23 +26,47 @@ class _MytripScreenState extends State<MytripScreen> {
   }
 
   // 내 여행 불러와서 다가오는 여행, 지난 여행 구분후 myTrips에 index 0,1로 추가
-  void _loadMyTripData() async {
+  Future<void> _loadMyTripData() async {
     try {
       LoadingOverlay.show(context);
       Map<String, dynamic> result = await _mypageModel.getMyTripData(context);
+      print("result: $result");
+      print(result['futureTrips']);
+      print(result['pastTrips']);
       setState(() {
         _myTrips[0] = result['futureTrips'];
         _myTrips[1] = result['pastTrips'];
-        print("result: $result");
         print("mytrips: $_myTrips");
+        print("mytrips1: ${_myTrips[0]}");
+        print("mytrips1: ${_myTrips[0]}[0]['title]");
+        // print("mytrips2: ${_myTrips[0][title]}");
         _isLoading = false;
       });
     } catch (e) {
-      print("!!!!!!!!!!!!!!!!!!로드 중 에러 발생 : $e");
+      print("!!!!!!!!!!!!!!!!!!마이 트립 로드 중 에러 발생 : $e");
       setState(() {
-        _myTrips = [{}, {}];
+        _myTrips = [[], []];
       });
     } finally {
+      LoadingOverlay.hide();
+    }
+  }
+
+  Future<void> deleteTrip(int tripId) async {
+    try {
+      // _isLoading = true;
+      LoadingOverlay.show(context);
+      String result = await _mypageModel.deleteTrip(context, tripId);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(result)));
+      Navigator.pushReplacementNamed(context, "/home");
+      _isLoading = false;
+    } catch (e) {
+      print("!!!!!!!!!!!!!!!!!!트립 삭제중  에러 발생 : $e");
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error : $e')));
+    } finally {
+      await _loadMyTripData();
       LoadingOverlay.hide();
     }
   }

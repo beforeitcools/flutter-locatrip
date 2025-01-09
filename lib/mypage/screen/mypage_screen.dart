@@ -8,7 +8,8 @@ import 'package:flutter_locatrip/mypage/model/mypage_model.dart';
 import 'package:flutter_locatrip/mypage/screen/local_area_auth_screen.dart';
 import 'package:flutter_locatrip/mypage/screen/mytrip_screen.dart';
 import 'package:flutter_locatrip/mypage/screen/profile_update_screen.dart';
-import 'package:flutter_locatrip/mypage/widget/cusotom_dialog.dart';
+import 'package:flutter_locatrip/mypage/widget/custom_dialog.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class MypageScreen extends StatefulWidget {
   const MypageScreen({super.key});
@@ -27,7 +28,7 @@ class _MypageScreenState extends State<MypageScreen> {
   late String _selectedAdviceCount;
   bool _isLoading = true;
 
-  void _logout() async {
+  Future<void> _logout() async {
     try {
       String result = await _authModel.logout();
       ScaffoldMessenger.of(context)
@@ -48,21 +49,25 @@ class _MypageScreenState extends State<MypageScreen> {
     }
   }
 
-  void _loadMypageData() async {
+  Future<void> _loadMypageData() async {
     try {
       LoadingOverlay.show(context);
       Map<String, dynamic> result = await _mypageModel.getMyPageData(context);
+      // FlutterSecureStorage는 default 로 key, value 모두 String 이라 파싱 필수
+      final FlutterSecureStorage _storage = FlutterSecureStorage();
+      final dynamic stringId = await _storage.read(key: 'userId');
+      final int userId = int.tryParse(stringId) ?? 0;
+
       setState(() {
         _userData = result['user'];
         _selectedAdviceCount = result['selectedAdviceCount'].toString();
         _profileImage = _userData['profilePic'];
         _nickname = _userData['nickname'] ?? '닉네임 없음';
-        _nickname = _truncateWithEllipsis(_nickname, _getMaxLength(context));
         _ownBadge = _userData['ownBadge'];
         _isLoading = false;
       });
     } catch (e) {
-      print("!!!!!!!!!!!!!!!!!!로드 중 에러 발생 : $e");
+      print("!!!!!!!!!!!!!!!!!!마이페이지 로드 중 에러 발생 : $e");
     } finally {
       LoadingOverlay.hide();
     }
@@ -99,24 +104,6 @@ class _MypageScreenState extends State<MypageScreen> {
 
     if (result == true) {
       _loadMypageData();
-    }
-  }
-
-  // 디바이스 사이즈에 맞춰서 텍스트 정리(...처리)
-  String _truncateWithEllipsis(String text, int maxLength) {
-    return (text.length > maxLength)
-        ? '${text.substring(0, maxLength)}...'
-        : text;
-  }
-
-  int _getMaxLength(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    if (screenWidth > 600) {
-      // Tablet - wider screen
-      return 14;
-    } else {
-      // Mobile - narrower screen
-      return 7;
     }
   }
 
@@ -173,7 +160,6 @@ class _MypageScreenState extends State<MypageScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      // Show loading screen while data is fetching
       return Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
@@ -250,51 +236,52 @@ class _MypageScreenState extends State<MypageScreen> {
                               splashColor: Color.fromARGB(50, 43, 192, 228),
                               highlightColor: Color.fromARGB(30, 43, 192, 228),
                               borderRadius: BorderRadius.circular(10),
-                              child: Container(
-                                height: 92,
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 16),
-                                  child: Row(
-                                    children: [
-                                      // 프로필 이미지
-                                      CircleAvatar(
-                                        radius: 30,
-                                        child: _profileImage != null
-                                            ? ClipOval(
-                                                child: CachedNetworkImage(
-                                                  imageUrl: _profileImage!,
-                                                  placeholder: (context, url) =>
-                                                      SizedBox(
-                                                    width: 30,
-                                                    height: 30,
-                                                    child: Center(
-                                                      child:
-                                                          CircularProgressIndicator(),
-                                                    ),
+                              /*child: Expanded(*/
+                              // height: 92,
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 16),
+                                child: Row(
+                                  children: [
+                                    // 프로필 이미지
+                                    CircleAvatar(
+                                      radius: 30,
+                                      child: _profileImage != null
+                                          ? ClipOval(
+                                              child: CachedNetworkImage(
+                                                imageUrl: _profileImage!,
+                                                placeholder: (context, url) =>
+                                                    SizedBox(
+                                                  width: 30,
+                                                  height: 30,
+                                                  child: Center(
+                                                    child:
+                                                        CircularProgressIndicator(),
                                                   ),
-                                                  errorWidget:
-                                                      (context, url, error) =>
-                                                          Icon(
-                                                    Icons.error_outline,
-                                                    size: 48,
-                                                  ),
-                                                  fit: BoxFit.cover,
-                                                  width: 60,
-                                                  height: 60,
                                                 ),
-                                              )
-                                            : CircleAvatar(
-                                                radius: 30,
-                                                backgroundImage: AssetImage(
-                                                        'assets/default_profile_image.png')
-                                                    as ImageProvider),
-                                      ),
-                                      SizedBox(
-                                        width: 16,
-                                      ),
-                                      // 닉네임
-                                      Text(
+                                                errorWidget:
+                                                    (context, url, error) =>
+                                                        Icon(
+                                                  Icons.error_outline,
+                                                  size: 48,
+                                                ),
+                                                fit: BoxFit.cover,
+                                                width: 60,
+                                                height: 60,
+                                              ),
+                                            )
+                                          : CircleAvatar(
+                                              radius: 30,
+                                              backgroundImage: AssetImage(
+                                                      'assets/default_profile_image.png')
+                                                  as ImageProvider),
+                                    ),
+                                    SizedBox(
+                                      width: 16,
+                                    ),
+                                    // 닉네임
+                                    Expanded(
+                                      child: Text(
                                         _nickname,
                                         style: TextStyle(
                                           color: blackColor,
@@ -302,23 +289,28 @@ class _MypageScreenState extends State<MypageScreen> {
                                           fontWeight: FontWeight.w600,
                                           fontFamily: 'NotoSansKR',
                                         ),
+                                        overflow: TextOverflow
+                                            .ellipsis, // 텍스트 삐져나옴 방지(길면...)
+                                        maxLines: 1,
                                       ),
-                                      SizedBox(
-                                        width: 16,
-                                      ),
-                                      // 베지(있으면)
-                                      _ownBadge == 1
-                                          ? Icon(
-                                              Icons.verified_outlined,
-                                              color: pointBlueColor,
-                                            )
-                                          : SizedBox(),
-                                      Spacer(),
-                                      Icon(Icons.chevron_right),
-                                    ],
-                                  ),
+                                    ),
+
+                                    SizedBox(
+                                      width: 16,
+                                    ),
+                                    // 베지(있으면)
+                                    _ownBadge == 1
+                                        ? Icon(
+                                            Icons.verified_outlined,
+                                            color: pointBlueColor,
+                                          )
+                                        : SizedBox(),
+
+                                    Icon(Icons.chevron_right),
+                                  ],
                                 ),
                               ),
+                              // ),
                             ),
                           ),
                           Container(
