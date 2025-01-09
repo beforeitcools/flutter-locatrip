@@ -1,10 +1,14 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/common/Auth/auth_dio_interceptor.dart';
+import 'package:flutter_locatrip/common/widget/url.dart';
 
 class ChecklistModel {
   final dio = Dio();
-  final String baseUrl = "http://localhost:8082/api/checklist";
+  final String baseUrl = "$backUrl/api/checklist";
 
-  Future<List<dynamic>> getCategories() async{
+  Future<List<dynamic>> getCategories(BuildContext context) async{
+    dio.interceptors.add(AuthInterceptor(dio, context));
     try {
       final response = await dio.get("$baseUrl/categories");
 
@@ -19,7 +23,8 @@ class ChecklistModel {
     }
   }
 
-  Future<String> addCategory(Map<String, dynamic> categoryData) async{
+  Future<String> addCategory(Map<String, dynamic> categoryData, BuildContext context) async{
+    dio.interceptors.add(AuthInterceptor(dio, context));
     try{
       final response = await dio.post(
           "$baseUrl/categories/insert",
@@ -37,7 +42,8 @@ class ChecklistModel {
     }
   }
 
-  Future<void> deleteCategory(int categoryId) async {
+  Future<void> deleteCategory(int categoryId, BuildContext context) async {
+    dio.interceptors.add(AuthInterceptor(dio, context));
     try{
       final response = await dio.delete(
         "$baseUrl/categories/delete",
@@ -54,7 +60,8 @@ class ChecklistModel {
     }
   }
 
-  Future<void> deleteItems(List<int> itemIds) async {
+  Future<void> deleteItems(List<int> itemIds, BuildContext context) async {
+    dio.interceptors.add(AuthInterceptor(dio, context));
     try{
       final response = await dio.delete(
         "$baseUrl/items/delete",
@@ -72,7 +79,8 @@ class ChecklistModel {
     }
   }
 
-  Future<List<dynamic>> getItemsByCategory(int categoryId) async {
+  Future<List<dynamic>> getItemsByCategory(int categoryId, BuildContext context) async {
+    dio.interceptors.add(AuthInterceptor(dio, context));
     try {
       final response = await dio.get("$baseUrl/categories/$categoryId/items");
 
@@ -87,7 +95,8 @@ class ChecklistModel {
     }
   }
 
-  Future<String> addItemToCategory(int categoryId, Map<String, dynamic> itemData) async {
+  Future<String> addItemToCategory(int categoryId, Map<String, dynamic> itemData, BuildContext context) async {
+    dio.interceptors.add(AuthInterceptor(dio, context));
     try {
       final response = await dio.post(
         "$baseUrl/categories/$categoryId/items",
@@ -105,7 +114,8 @@ class ChecklistModel {
     }
   }
 
-  Future<String> updateItemCheckedStatus(int itemId, bool isChecked) async {
+  Future<String> updateItemCheckedStatus(int itemId, bool isChecked, BuildContext context) async {
+    dio.interceptors.add(AuthInterceptor(dio, context));
     try {
       final response = await dio.post(
         "$baseUrl/items/$itemId/check",

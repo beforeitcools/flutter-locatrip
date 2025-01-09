@@ -21,6 +21,9 @@ class TripViewScreen extends StatefulWidget {
 }
 
 class _TripViewScreenState extends State<TripViewScreen> {
+  final DraggableScrollableController sheetController =
+      DraggableScrollableController();
+
   Map<String, dynamic> tripInfo = {};
 
   TripModel _tripModel = TripModel();
@@ -55,6 +58,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
       if (result.isNotEmpty) {
         setState(() {
           tripInfo.addAll(result);
+          // print('tripInfo $tripInfo');
           address = tripInfo['selectedRegions'][0]['region'];
 
           isLoading = false;
@@ -87,6 +91,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
         latitude = locations.first.latitude;
         longitude = locations.first.longitude;
         print("latitude: $latitude longitude: $longitude");
+
+        tripInfo['latitude'] = locations.first.latitude;
+        tripInfo['longitude'] = locations.first.longitude;
       });
 
       _moveMapToCurrentLocation();
@@ -186,212 +193,209 @@ class _TripViewScreenState extends State<TripViewScreen> {
               ? Center(child: Text("여행 정보를 불러올 수 없습니다."))
               : Stack(
                   children: [
-                    SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          Container(
-                            padding: EdgeInsets.all(16),
-                            color: Colors.white,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.end,
-                                            children: [
-                                              Text(
-                                                tripInfo["title"] ?? "제목 없음",
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .titleLarge,
-                                              ),
-                                              SizedBox(
-                                                width: 16,
-                                              ),
+                    Column(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(16),
+                          color: Colors.white,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              tripInfo["title"] ?? "제목 없음",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleLarge,
+                                            ),
+                                            SizedBox(
+                                              width: 16,
+                                            ),
 
-                                              // 권한 있는 사람만 편집가능 - 나중에 확인 !
-                                              TextButton(
-                                                  onPressed: () {},
-                                                  style: TextButton.styleFrom(
-                                                    padding: EdgeInsets.zero,
-                                                    minimumSize: Size(
-                                                      0,
-                                                      0,
-                                                    ),
-
-                                                    tapTargetSize:
-                                                        MaterialTapTargetSize
-                                                            .shrinkWrap, // 터치 영역 최소화
+                                            // 권한 있는 사람만 편집가능 - 나중에 확인 !
+                                            TextButton(
+                                                onPressed: () {},
+                                                style: TextButton.styleFrom(
+                                                  padding: EdgeInsets.zero,
+                                                  minimumSize: Size(
+                                                    0,
+                                                    0,
                                                   ),
-                                                  child: Text(
-                                                    "편집",
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .bodySmall
-                                                        ?.copyWith(
-                                                          color: grayColor,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                        ),
-                                                  )),
-                                            ],
-                                          ),
-                                          SizedBox(height: 8),
-                                          Text(
-                                            dateRange,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall
-                                                ?.copyWith(color: grayColor),
-                                          ),
-                                        ]),
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius:
-                                            BorderRadius.circular(100),
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            pointBlueColor,
-                                            subPointColor
+
+                                                  tapTargetSize:
+                                                      MaterialTapTargetSize
+                                                          .shrinkWrap, // 터치 영역 최소화
+                                                ),
+                                                child: Text(
+                                                  "편집",
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodySmall
+                                                      ?.copyWith(
+                                                        color: grayColor,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                )),
                                           ],
-                                          begin: Alignment.topCenter,
-                                          end: Alignment.bottomCenter,
                                         ),
-                                      ),
-                                      child: IconButton(
-                                        onPressed: () {
-                                          if (tripInfo["chattingId"] != null) {
-                                            // 채팅방 들어가기
-                                          } else {
-                                            // 채팅방 만들기
-                                          }
-                                        },
-                                        icon: Icon(
-                                          Icons.sms_outlined,
-                                          color: Colors.white,
+                                        SizedBox(height: 8),
+                                        Text(
+                                          dateRange,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(color: grayColor),
                                         ),
-                                        iconSize: 28,
+                                      ]),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(100),
+                                      gradient: LinearGradient(
+                                        colors: [pointBlueColor, subPointColor],
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
                                       ),
-                                    )
-                                  ],
-                                ),
-                                SizedBox(
-                                  height: 10,
-                                ),
-                                TextButton(
-                                  onPressed: () {},
-                                  style: TextButton.styleFrom(
-                                    backgroundColor: pointBlueColor,
-                                    minimumSize: Size(0, 0),
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                    padding: EdgeInsets.symmetric(
-                                        vertical: 6, horizontal: 12),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.add,
-                                        size: 20,
+                                    ),
+                                    child: IconButton(
+                                      onPressed: () {
+                                        if (tripInfo["chattingId"] != null) {
+                                          // 채팅방 들어가기
+                                        } else {
+                                          // 채팅방 만들기
+                                        }
+                                      },
+                                      icon: Icon(
+                                        Icons.sms_outlined,
                                         color: Colors.white,
                                       ),
-                                      Text(
-                                        "일행과 함께 짜기",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .labelMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.white,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(
-                                  height: 10,
-                                ),
-                                Row(
-                                  children: [
-                                    TextButton(
-                                        onPressed: () {},
-                                        style: TextButton.styleFrom(
-                                          padding:
-                                              EdgeInsets.fromLTRB(12, 6, 12, 6),
-                                          backgroundColor: lightGrayColor,
-                                          minimumSize: Size(
-                                            0,
-                                            0,
-                                          ),
-                                          tapTargetSize:
-                                              MaterialTapTargetSize.shrinkWrap,
-                                        ),
-                                        child: Text("체크리스트",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .labelMedium
-                                                ?.copyWith(
-                                                    fontWeight: FontWeight.w600,
-                                                    color: grayColor))),
-                                    SizedBox(
-                                      width: 10,
+                                      iconSize: 28,
                                     ),
-                                    TextButton(
-                                        onPressed: () {},
-                                        style: TextButton.styleFrom(
-                                          padding:
-                                              EdgeInsets.fromLTRB(12, 6, 12, 6),
-                                          backgroundColor: lightGrayColor,
-                                          minimumSize: Size(
-                                            0,
-                                            0,
+                                  )
+                                ],
+                              ),
+                              SizedBox(
+                                height: 10,
+                              ),
+                              TextButton(
+                                onPressed: () {},
+                                style: TextButton.styleFrom(
+                                  backgroundColor: pointBlueColor,
+                                  minimumSize: Size(0, 0),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 6, horizontal: 12),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.add,
+                                      size: 20,
+                                      color: Colors.white,
+                                    ),
+                                    Text(
+                                      "일행과 함께 짜기",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
                                           ),
-                                          tapTargetSize:
-                                              MaterialTapTargetSize.shrinkWrap,
-                                        ),
-                                        child: Text("가계부",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .labelMedium
-                                                ?.copyWith(
-                                                    fontWeight: FontWeight.w600,
-                                                    color: grayColor))),
+                                    ),
                                   ],
                                 ),
-                              ],
-                            ),
-                          ),
-                          if (latitude != null && longitude != null)
-                            Container(
-                              height: 300,
-                              child: GoogleMap(
-                                initialCameraPosition: CameraPosition(
-                                    target: LatLng(latitude!, longitude!),
-                                    zoom: 9),
-                                // myLocationEnabled: true,
-                                // myLocationButtonEnabled: true,
-                                onMapCreated: (GoogleMapController controller) {
-                                  mapController = controller; // 지도 컨트롤러 초기화
-                                  print("Map Controller Initialized");
-                                },
                               ),
-                            )
-                          else
-                            Center(child: CircularProgressIndicator()),
-                        ],
-                      ),
+                              SizedBox(
+                                height: 10,
+                              ),
+                              Row(
+                                children: [
+                                  TextButton(
+                                      onPressed: () {},
+                                      style: TextButton.styleFrom(
+                                        padding:
+                                            EdgeInsets.fromLTRB(12, 6, 12, 6),
+                                        backgroundColor: lightGrayColor,
+                                        minimumSize: Size(
+                                          0,
+                                          0,
+                                        ),
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      child: Text("체크리스트",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelMedium
+                                              ?.copyWith(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: grayColor))),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  TextButton(
+                                      onPressed: () {},
+                                      style: TextButton.styleFrom(
+                                        padding:
+                                            EdgeInsets.fromLTRB(12, 6, 12, 6),
+                                        backgroundColor: lightGrayColor,
+                                        minimumSize: Size(
+                                          0,
+                                          0,
+                                        ),
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      child: Text("가계부",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelMedium
+                                              ?.copyWith(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: grayColor))),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (latitude != null && longitude != null)
+                          Container(
+                            height: 300,
+                            child: GoogleMap(
+                              initialCameraPosition: CameraPosition(
+                                  target: LatLng(latitude!, longitude!),
+                                  zoom: 9),
+                              // myLocationEnabled: true,
+                              // myLocationButtonEnabled: true,
+                              onMapCreated: (GoogleMapController controller) {
+                                mapController = controller; // 지도 컨트롤러 초기화
+                                print("Map Controller Initialized");
+                              },
+                            ),
+                          )
+                        else
+                          Center(child: CircularProgressIndicator()),
+                      ],
                     ),
-                    DragBottomSheet(dropDownDay: _dropDownDay)
+                    DragBottomSheet(
+                      dropDownDay: _dropDownDay,
+                      tripInfo: tripInfo,
+                    )
                   ],
                 ),
       floatingActionButton: Container(

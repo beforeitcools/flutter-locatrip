@@ -25,10 +25,10 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
     try {
       final response = await _checklistModel.addItemToCategory(widget.categoryId,
-          {'name': itemName}
+          {'name': itemName}, context
       );
       if (response == "항목이 추가되었습니다.") {
-        await _checklistModel.getItemsByCategory(widget.categoryId);
+        await _checklistModel.getItemsByCategory(widget.categoryId, context);
         setState(() {
         });
         Navigator.pop(context, true);

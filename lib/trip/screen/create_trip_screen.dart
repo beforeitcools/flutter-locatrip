@@ -120,7 +120,6 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
             : '${dateFormat.format(_dateRangeModel.startDate!)} ~ ${dateFormat.format(_dateRangeModel.endDate!)}';*/
 
     return Scaffold(
-        backgroundColor: lightGrayColor,
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
@@ -130,176 +129,210 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
           ),
           backgroundColor: lightGrayColor,
         ),
-        body: Padding(
-            padding: EdgeInsets.fromLTRB(16, 25, 16, 0),
-            child: Column(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.all(Radius.circular(16))),
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal, // 가로 스크롤 활성화
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              ...selectedRegions.map((region) {
-                                return Padding(
-                                  padding:
-                                      const EdgeInsets.fromLTRB(0, 0, 20, 20),
+        body: SingleChildScrollView(
+            child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: MediaQuery.of(context).size.height - 64,
+                ),
+                child: IntrinsicHeight(
+                    child: Scaffold(
+                        backgroundColor: lightGrayColor,
+                        body: Padding(
+                            padding: EdgeInsets.fromLTRB(16, 25, 16, 0),
+                            child: Column(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.all(
+                                          Radius.circular(16))),
                                   child: Column(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Image.asset(
-                                          region["imageUrl"].toString() ??
-                                              defaultImageUrl,
-                                          width: 30,
-                                          height: 30,
-                                          fit: BoxFit.cover,
-                                          errorBuilder:
-                                              (context, error, stackTrace) {
-                                            return Image.asset(
-                                              defaultImageUrl,
-                                              width: 50,
-                                              height: 50,
-                                            );
-                                          },
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        SingleChildScrollView(
+                                          scrollDirection:
+                                              Axis.horizontal, // 가로 스크롤 활성화
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
+                                            children: [
+                                              ...selectedRegions.map((region) {
+                                                return Padding(
+                                                  padding:
+                                                      const EdgeInsets.fromLTRB(
+                                                          0, 0, 20, 20),
+                                                  child: Column(
+                                                    children: [
+                                                      ClipRRect(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(12),
+                                                        child: Image.asset(
+                                                          region["imageUrl"]
+                                                                  .toString() ??
+                                                              defaultImageUrl,
+                                                          width: 30,
+                                                          height: 30,
+                                                          fit: BoxFit.cover,
+                                                          errorBuilder:
+                                                              (context, error,
+                                                                  stackTrace) {
+                                                            return Image.asset(
+                                                              defaultImageUrl,
+                                                              width: 50,
+                                                              height: 50,
+                                                            );
+                                                          },
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        region["name"]
+                                                            .toString(),
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .labelSmall
+                                                            ?.copyWith(
+                                                                color:
+                                                                    grayColor),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              }).toList(),
+                                            ],
+                                          ),
                                         ),
+                                        Container(
+                                          width: double.infinity,
+                                          decoration: BoxDecoration(
+                                              border: Border(
+                                                  top: BorderSide(
+                                                      color: lightGrayColor,
+                                                      width: 1.0,
+                                                      style:
+                                                          BorderStyle.solid))),
+                                          child: TextButton(
+                                              style: TextButton.styleFrom(
+                                                padding: EdgeInsets.all(16),
+                                                alignment: Alignment.centerLeft,
+                                              ),
+                                              onPressed: () {
+                                                _openDatePicker();
+                                              },
+                                              child: Text(dateRangeText,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyMedium
+                                                      ?.copyWith(
+                                                          fontWeight: FontWeight
+                                                              .w600))),
+                                        ),
+                                        Container(
+                                          // 선
+                                          width: double.infinity,
+                                          height: 1,
+                                          color: lightGrayColor,
+                                        ),
+                                        TextField(
+                                          controller: _titleInputController,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              if (value.isNotEmpty &&
+                                                  _dateRangeModel.startDate !=
+                                                      null) {
+                                                isCreated = true;
+                                              } else {
+                                                isCreated = false;
+                                              }
+                                            });
+                                          },
+                                          maxLength: 20,
+                                          decoration: InputDecoration(
+                                            hintText: "여행 제목",
+                                            hintStyle: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(color: grayColor),
+                                            enabledBorder: UnderlineInputBorder(
+                                              borderSide: BorderSide(
+                                                width: 0,
+                                                color: Colors.transparent,
+                                              ),
+                                            ),
+                                            focusedBorder: UnderlineInputBorder(
+                                              borderSide: BorderSide(
+                                                width: 0, // 포커스 시 하단 밑줄 제거
+                                                color: Colors.transparent,
+                                              ),
+                                            ),
+                                            contentPadding: EdgeInsets.fromLTRB(
+                                                16, 16, 16, 0),
+                                            border: InputBorder.none,
+                                          ),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium,
+                                        ),
+                                      ]),
+                                ),
+                                SizedBox(
+                                  height: 25,
+                                ),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: TextButton(
+                                    onPressed: isCreated
+                                        ? () async {
+                                            int? newTripId =
+                                                await _insertTrip();
+                                            if (newTripId != null) {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          TripViewScreen(
+                                                              tripId:
+                                                                  newTripId ??
+                                                                      0)));
+                                              // Navigator.pushAndRemoveUntil(
+                                              //   context,
+                                              //   MaterialPageRoute(
+                                              //       builder: (context) =>
+                                              //           TripViewScreen(tripId: newTripId)),
+                                              //
+                                              //   (Route<dynamic> route) =>
+                                              //       false, // 이전 페이지 들을 모두 제거
+                                              // );
+                                            }
+                                          }
+                                        : null,
+                                    style: TextButton.styleFrom(
+                                      minimumSize: Size(100, 56), // 최소 높이 설정
+                                      backgroundColor: !isCreated
+                                          ? lightGrayColor
+                                          : pointBlueColor,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
                                       ),
-                                      Text(
-                                        region["name"].toString(),
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .labelSmall
-                                            ?.copyWith(color: grayColor),
+                                      side: BorderSide(
+                                        color: isCreated
+                                            ? Colors.transparent
+                                            : Colors.white,
+                                        width: 1,
                                       ),
-                                    ],
+                                    ),
+                                    child: Text(
+                                      "일정 생성",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge
+                                          ?.copyWith(color: Colors.white),
+                                    ),
                                   ),
-                                );
-                              }).toList(),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                              border: Border(
-                                  top: BorderSide(
-                                      color: lightGrayColor,
-                                      width: 1.0,
-                                      style: BorderStyle.solid))),
-                          child: TextButton(
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.all(16),
-                                alignment: Alignment.centerLeft,
-                              ),
-                              onPressed: () {
-                                _openDatePicker();
-                              },
-                              child: Text(dateRangeText,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(fontWeight: FontWeight.w600))),
-                        ),
-                        Container(
-                          // 선
-                          width: double.infinity,
-                          height: 1,
-                          color: lightGrayColor,
-                        ),
-                        TextField(
-                          controller: _titleInputController,
-                          onChanged: (value) {
-                            setState(() {
-                              if (value.isNotEmpty &&
-                                  _dateRangeModel.startDate != null) {
-                                isCreated = true;
-                              } else {
-                                isCreated = false;
-                              }
-                            });
-                          },
-                          maxLength: 20,
-                          decoration: InputDecoration(
-                            hintText: "여행 제목",
-                            hintStyle: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(color: grayColor),
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                width: 0,
-                                color: Colors.transparent,
-                              ),
-                            ),
-                            focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                width: 0, // 포커스 시 하단 밑줄 제거
-                                color: Colors.transparent,
-                              ),
-                            ),
-                            contentPadding: EdgeInsets.fromLTRB(16, 16, 16, 0),
-                            border: InputBorder.none,
-                          ),
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ]),
-                ),
-                SizedBox(
-                  height: 25,
-                ),
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: isCreated
-                        ? () async {
-                            int? newTripId = await _insertTrip();
-                            if (newTripId != null) {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => TripViewScreen(
-                                          tripId: newTripId ?? 0)));
-                              // Navigator.pushAndRemoveUntil(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //       builder: (context) =>
-                              //           TripViewScreen(tripId: newTripId)),
-                              //
-                              //   (Route<dynamic> route) =>
-                              //       false, // 이전 페이지 들을 모두 제거
-                              // );
-                            }
-                          }
-                        : null,
-                    style: TextButton.styleFrom(
-                      minimumSize: Size(100, 56), // 최소 높이 설정
-                      backgroundColor:
-                          !isCreated ? lightGrayColor : pointBlueColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      side: BorderSide(
-                        color: isCreated ? Colors.transparent : Colors.white,
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      "일정 생성",
-                      style: Theme.of(context)
-                          .textTheme
-                          .labelLarge
-                          ?.copyWith(color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            )));
+                                ),
+                              ],
+                            )))))));
   }
 }
