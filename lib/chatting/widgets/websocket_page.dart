@@ -14,13 +14,16 @@ class _WebsocketPageState extends State<WebsocketPage> {
   final chatList = <String>[];
   final scrollController = ScrollController();
   final textController = TextEditingController();
+  final uri = Uri.parse('ws://localhost:8082/chattingServer');
 
   @override
   void initState() {
     super.initState();
-    channel = WebSocketChannel.connect(
-      Uri.parse('ws://localhost:8082/chattingServer'),
-    );
+    try {
+      channel = WebSocketChannel.connect(uri);
+    } catch (e) {
+      print('Failed to connect to $uri: $e');
+    }
   }
 
   @override

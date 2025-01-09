@@ -18,7 +18,8 @@ class ChatRoomPage extends StatefulWidget {
 }
 
 class _ChatRoomPageState extends State<ChatRoomPage> {
-  late final WebSocketChannel _channel = WebSocketChannel.connect(Uri.parse('ws://localhost:8082/chattingServer/${widget.chatroomId}'));// 서버 url
+  late final WebSocketChannel _channel;
+  late final uri = Uri.parse('ws://localhost:8082/chattingServer');// 서버 url
 
   final ChatModel _chatModel = ChatModel();
   final TextEditingController _textController = TextEditingController();
@@ -47,6 +48,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   @override
   void initState() {
     super.initState();
+    try {
+      _channel = WebSocketChannel.connect(uri);
+      print('Connected to $uri');
+      print("${_channel.protocol}");
+    } catch (e) {
+      print('Failed to connect to $uri: $e');
+    }
     _loadChatsById();
   }
 
@@ -62,7 +70,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           "sendTime": DateTime.now().toIso8601String(),
           "read": false};
 
-       final jsonMessage =  json.encode(message);
+       final jsonMessage = json.encode(message);
         setState(() {
           _chats.add(message);
           _channel.sink.add(jsonMessage);
