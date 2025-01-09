@@ -21,7 +21,7 @@ class ToggleFavorite {
 
     try {
       Map<String, dynamic> result =
-          await _locationModel.insertLocation(placeData, context);
+          await _locationModel.insertFavorite(placeData, context);
       print('result $result');
 
       if ((result != null && result is Map<String, dynamic>)) {
