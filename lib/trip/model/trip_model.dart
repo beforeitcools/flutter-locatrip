@@ -35,7 +35,6 @@ class TripModel {
         "$backUrl/trip/select/$tripId",
       );
       if (responses.statusCode == 200) {
-        print('responses.data ${responses.data}');
         return responses.data as Map<String, dynamic>;
       } else {
         throw Exception("로드 실패");

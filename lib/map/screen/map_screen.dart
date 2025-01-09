@@ -321,15 +321,17 @@ class _MapScreenState extends State<MapScreen> {
                 category: selectedPlace.category,
                 photoUrl: selectedPlace.photoUrl,
                 location: LatLng(
-                  selectedPlace.location.latitude - 0.001, // latitude 값 수정
+                  selectedPlace.location.latitude - 0.002, // latitude 값 수정
                   selectedPlace.location.longitude,
                 ),
                 icon: selectedPlace.icon,
               );
 
               mapController!.animateCamera(
-                CameraUpdate.newLatLng(LatLng(selectedPlace.location.latitude,
-                    selectedPlace.location.longitude)),
+                CameraUpdate.newLatLngZoom(
+                    LatLng(selectedPlace.location.latitude,
+                        selectedPlace.location.longitude),
+                    16.0),
               );
 
               _showPlaceInfoSheet(selectedPlace);
@@ -1162,7 +1164,7 @@ class _MapScreenState extends State<MapScreen> {
                 child: GoogleMap(
                   initialCameraPosition: CameraPosition(
                       target: LatLng(
-                          _mapCenter.latitude - 0.005, _mapCenter.longitude),
+                          _mapCenter.latitude - 0.004, _mapCenter.longitude),
                       zoom: 15),
                   myLocationEnabled: true,
                   myLocationButtonEnabled: true,

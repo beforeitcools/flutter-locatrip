@@ -129,13 +129,12 @@ class PlaceApiModel {
     final dio = Dio();
     String? apiKey = await ApiKeyLoader.getApiKey2('GEOCODING_API_KEY');
     print('apiKey $apiKey');
+    double lat = latlng.latitude;
+    double lng = latlng.longitude;
     try {
       final responses = await dio.get(
         "https://maps.googleapis.com/maps/api/geocode/json",
-        queryParameters: {
-          'key': apiKey,
-          'latlng': (latlng.latitude, latlng.latitude)
-        },
+        queryParameters: {'key': apiKey, 'latlng': "$lat,$lng"},
       );
 
       if (responses.statusCode == 200) {
