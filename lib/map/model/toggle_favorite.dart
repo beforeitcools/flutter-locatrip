@@ -7,7 +7,7 @@ class ToggleFavorite {
 
   Future<void> insertLocation(
       Place place,
-      Map<String, bool> favoriteStatus,
+      // Map<String, bool> favoriteStatus,
       // List<Map<String, bool>> favoriteStatusList,
       BuildContext context,
       VoidCallback onUpdate) async {
@@ -36,7 +36,7 @@ class ToggleFavorite {
 
   Future<void> removeFavorite(
       Place place,
-      Map<String, bool> favoriteStatus,
+      // Map<String, bool> favoriteStatus,
       // List<Map<String, bool>> favoriteStatusList,
       BuildContext context,
       VoidCallback onUpdate) async {
@@ -63,17 +63,18 @@ class ToggleFavorite {
 
   void toggleFavoriteStatus(
       Place place,
-      Map<String, bool> favoriteStatus,
+      // Map<String, bool> favoriteStatus,
       // List<Map<String, bool>> favoriteStatusList,
+      bool isFavorite,
       BuildContext context,
       VoidCallback onUpdate) {
-    bool isFavorite = favoriteStatus[place.name] ?? false;
-    print('현재 상태: $isFavorite');
+    bool _isFavorite = isFavorite ?? false;
+    print('현재 상태: $_isFavorite');
 
-    if (isFavorite) {
-      removeFavorite(place, favoriteStatus, context, onUpdate);
+    if (_isFavorite) {
+      removeFavorite(place, context, onUpdate);
     } else {
-      insertLocation(place, favoriteStatus, context, onUpdate);
+      insertLocation(place, context, onUpdate);
     }
   }
 }
