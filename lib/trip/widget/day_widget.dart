@@ -10,15 +10,16 @@ class DayWidget extends StatefulWidget {
   final int index;
   final Function(int) onDateSelected;
   final Map<String, dynamic> tripInfo;
+  final int selectedIndex;
 
-  const DayWidget({
-    super.key,
-    required this.selectedItem,
-    required this.dropDownDay,
-    required this.index,
-    required this.onDateSelected,
-    required this.tripInfo,
-  });
+  const DayWidget(
+      {super.key,
+      required this.selectedItem,
+      required this.dropDownDay,
+      required this.index,
+      required this.onDateSelected,
+      required this.tripInfo,
+      required this.selectedIndex});
 
   @override
   State<DayWidget> createState() => _DayWidgetState();
@@ -29,6 +30,9 @@ class _DayWidgetState extends State<DayWidget> {
   dynamic _selectedItem;
   late int index;
   late Map<String, dynamic> _tripInfo;
+  late int _selectedIndex;
+  // 모든 day가 담김
+  List<Map<String, dynamic>> dayPlaceList = [];
 
   @override
   void initState() {
@@ -37,6 +41,8 @@ class _DayWidgetState extends State<DayWidget> {
     dropDownDayList = widget.dropDownDay;
     index = widget.index;
     _tripInfo = widget.tripInfo;
+    _selectedIndex = widget.selectedIndex;
+    print('_selectedIndex $_selectedIndex');
   }
 
   void _showBottomSheet(BuildContext context, dropDownDayList, index) {
@@ -68,105 +74,73 @@ class _DayWidgetState extends State<DayWidget> {
   }
 
   Widget getWidget(int index) {
-    if (index == 0) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Text(
-                "day${index + 1}",
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              SizedBox(
-                width: 8,
-              ),
-              TextButton(
-                onPressed: () {
-                  _showBottomSheet(context, dropDownDayList, index);
-                },
-                style: TextButton.styleFrom(
-                    minimumSize: Size(0, 0),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    backgroundColor: Colors.transparent,
-                    padding: EdgeInsets.zero),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _selectedItem,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                            color: grayColor,
-                          ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Text(
+              "day${index + 1}",
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            SizedBox(
+              width: 8,
+            ),
+            index == 0
+                ? TextButton(
+                    onPressed: () {
+                      _showBottomSheet(context, dropDownDayList, index);
+                    },
+                    style: TextButton.styleFrom(
+                        minimumSize: Size(0, 0),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        backgroundColor: Colors.transparent,
+                        padding: EdgeInsets.zero),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _selectedItem,
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                    color: grayColor,
+                                  ),
+                        ),
+                        Icon(
+                          Icons.keyboard_arrow_down,
+                          size: 18,
+                          color: blackColor,
+                        ),
+                      ],
                     ),
-                    Icon(
-                      Icons.keyboard_arrow_down,
-                      size: 18,
-                      color: blackColor,
-                    ),
-                  ],
-                ),
-              )
-
-              /*DropdownButton(
-                  value: _selectedItem,
-                  hint: Text(
-                    _dropDownDay[index],
+                  )
+                : Text(
+                    dropDownDayList[index],
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w500, color: grayColor),
-                  ),
-                  dropdownColor: Colors.white,
-                  items: _dropDownDay.map((String date) {
-                    return DropdownMenuItem(value: date, child: Text(date));
-                  }).toList(),
-                  onChanged: (dynamic newValue) {
-                    // _onMenuSelected(newValue);
-                  })*/
-            ],
-          ),
-          TextButton(
-            onPressed: () {},
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.zero,
-              minimumSize: Size(0, 0),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Text(
-              "편집",
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: grayColor,
-                    fontWeight: FontWeight.w500,
-                  ),
-            ),
-          ),
-        ],
-      );
-    } else {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Text(
-                "day${index + 1}",
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              SizedBox(
-                width: 8,
-              ),
-              Text(
-                dropDownDayList[index],
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(fontWeight: FontWeight.w500, color: grayColor),
+                  )
+          ],
+        ),
+        index == 0
+            ? TextButton(
+                onPressed: () {},
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size(0, 0),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  "편집",
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: grayColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
               )
-            ],
-          ),
-        ],
-      );
-    }
+            : SizedBox.shrink(),
+      ],
+    );
   }
 
   @override
@@ -184,13 +158,17 @@ class _DayWidgetState extends State<DayWidget> {
             ),
             Expanded(
               child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.push(
+                  onPressed: () async {
+                    _tripInfo["day"] = index;
+
+                    final Map<String, dynamic> receiver = await Navigator.push(
                         context,
                         MaterialPageRoute(
                             builder: (context) => SearchPlaceScreen(
                                   tripInfo: _tripInfo,
                                 )));
+
+                    print('receiver $receiver');
                   },
                   style: OutlinedButton.styleFrom(
                       side: BorderSide(

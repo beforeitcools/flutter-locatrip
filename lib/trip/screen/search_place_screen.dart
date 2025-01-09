@@ -71,11 +71,15 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
   bool isSearchLoading = false;
   bool isSearchLoaded = false;
 
+  Map<String, dynamic> viewPortMap = {};
+  int _viewCount = 2;
+
   @override
   void initState() {
     super.initState();
 
     _tripInfo = widget.tripInfo;
+    print('_tripInfo $_tripInfo');
     latitude = _tripInfo["latitude"];
     longitude = _tripInfo["longitude"];
 
@@ -175,6 +179,21 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
       Map<String, dynamic> result =
           await _placeApiModel.getViewPorts(LatLng(latitude!, longitude!));
 
+      viewPortMap = {
+        "locationBias": {
+          "rectangle": {
+            "low": {
+              "latitude": result["southwest"]["lat"],
+              "longitude": result["southwest"]["lng"]
+            },
+            "high": {
+              "latitude": result["northeast"]["lat"],
+              "longitude": result["northeast"]["lng"]
+            }
+          }
+        }
+      };
+
       print('viewPort $result');
     } catch (e) {
       print('에러메시지 $e');
@@ -194,7 +213,7 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
       "locationRestriction": {
         "circle": {
           "center": {"latitude": _latitude, "longitude": _longitude},
-          "radius": 30000
+          "radius": 10000
         }
       },
       "languageCode": "ko",
@@ -299,15 +318,17 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                 category: selectedPlace.category,
                 photoUrl: selectedPlace.photoUrl,
                 location: LatLng(
-                  selectedPlace.location.latitude - 0.001, // latitude 값 수정
+                  selectedPlace.location.latitude - 0.002, // latitude 값 수정
                   selectedPlace.location.longitude,
                 ),
                 icon: selectedPlace.icon,
               );
 
               mapController!.animateCamera(
-                CameraUpdate.newLatLng(LatLng(selectedPlace.location.latitude,
-                    selectedPlace.location.longitude)),
+                CameraUpdate.newLatLngZoom(
+                    LatLng(selectedPlace.location.latitude,
+                        selectedPlace.location.longitude),
+                    15.0),
               );
 
               // 새로운 장소 등록 시키는 팝업 추가
@@ -326,12 +347,7 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
       "pageSize": "10",
       "languageCode": "ko",
       "regionCode": "KR",
-      "locationBias": {
-        "rectangle": {
-          "low": {"latitude": 40.477398, "longitude": -74.259087},
-          "high": {"latitude": 40.91618, "longitude": -73.70018}
-        }
-      }
+      ...viewPortMap
     };
 
     setState(() {
@@ -559,8 +575,8 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                   child: GoogleMap(
                     initialCameraPosition: CameraPosition(
                         target: LatLng(
-                            _mapCenter.latitude - 0.005, _mapCenter.longitude),
-                        zoom: 15),
+                            _mapCenter.latitude - 0.008, _mapCenter.longitude),
+                        zoom: 11),
                     myLocationEnabled: true,
                     myLocationButtonEnabled: true,
                     onMapCreated: (GoogleMapController controller) {
@@ -728,6 +744,7 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                                 ),
                               ),
                             ),
+
                       isSearched
                           ? SizedBox.shrink()
                           : SingleChildScrollView(
@@ -980,7 +997,10 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                                                                             index]
                                                                         .address !=
                                                                     '')
-                                                              Text(" · "),
+                                                              Text(" · ",
+                                                                  style: TextStyle(
+                                                                      color:
+                                                                          grayColor)),
                                                             Text(
                                                               _nearByPlacesList[
                                                                       index]
@@ -1006,7 +1026,18 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                                                       ],
                                                     ),
                                                     TextButton(
-                                                        onPressed: () {},
+                                                        onPressed: () {
+                                                          Map<String, dynamic>
+                                                              selected = {
+                                                            "place":
+                                                                _nearByPlacesList[
+                                                                    index],
+                                                            "day":
+                                                                _tripInfo["day"]
+                                                          };
+                                                          Navigator.pop(context,
+                                                              selected);
+                                                        },
                                                         style: TextButton.styleFrom(
                                                             padding: EdgeInsets
                                                                 .symmetric(
