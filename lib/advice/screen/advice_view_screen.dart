@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/advice/screen/advice_post_screen.dart';
+import 'package:flutter_locatrip/common/widget/color.dart';
 
 class AdviceViewScreen extends StatefulWidget {
   const AdviceViewScreen({Key? key}) : super(key: key);
@@ -40,36 +42,71 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Stack(
         children: [
-          _buildHeader(),
-          const SizedBox(height: 10),
-          Expanded(child: _buildAdviceList()),
+          // 점선
+          Positioned(
+            left: 210, // 점선 위치 조정
+            top: 75, // 헤더의 대략적 높이에서 시작 (고정값)
+            bottom: 0, // 하단 끝까지 점선
+            child: Container(
+              width: 1,
+              color: Colors.transparent,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final totalHeight = constraints.maxHeight;
+                  return Column(
+                    children: List.generate(
+                      (totalHeight / 8).floor(),
+                          (i) => i.isEven
+                          ? Container(height: 4, color: grayColor)
+                          : Container(height: 4, color: Colors.transparent),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+
+          // 콘텐츠
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(), // 헤더
+              const SizedBox(height: 10),
+              Expanded(child: _buildAdviceList()), // 리스트
+            ],
+          ),
         ],
       ),
     );
   }
 
+
   // 헤더 영역
   Widget _buildHeader() {
     return Stack(
       children: [
-        // 점선 추가 (헤더 박스 중앙에서 시작)
+        // 점선 추가
         Positioned(
-          left: 42, // 박스 중앙에 맞추기 위한 조정
-          top: 50, // 중앙에서 시작
-          bottom: -10, // 점선을 아래로 이어짐
+          left: 210, // 박스 중앙에 맞추기 위한 조정
+          top: 50, // 헤더 중앙에서 시작
+          bottom: 0, // 아래로 끝까지 이어짐
           child: Container(
             width: 1,
             color: Colors.transparent,
-            child: Column(
-              children: List.generate(
-                50,
-                    (i) => i.isEven
-                    ? Container(height: 4, color: Colors.grey.shade400)
-                    : Container(height: 4, color: Colors.transparent),
-              ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final totalHeight = constraints.maxHeight;
+                return Column(
+                  children: List.generate(
+                    (totalHeight / 8).floor(),
+                        (i) => i.isEven
+                        ? Container(height: 4, color: grayColor)
+                        : Container(height: 4, color: Colors.transparent),
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -82,7 +119,7 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
             children: [
               CircleAvatar(
                 radius: 16,
-                backgroundColor: Colors.blue,
+                backgroundColor: pointBlueColor,
                 child: Text(
                   '1',
                   style: TextStyle(
@@ -100,7 +137,7 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.2),
+                        color: grayColor.withOpacity(0.2),
                         spreadRadius: 1,
                         blurRadius: 5,
                         offset: const Offset(0, 3),
@@ -122,7 +159,7 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
                         '관광명소 · 서울 강남구',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey,
+                          color: grayColor,
                         ),
                       ),
                     ],
@@ -168,7 +205,7 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
         borderRadius: BorderRadius.circular(8.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: grayColor.withOpacity(0.2),
             blurRadius: 4,
             spreadRadius: 1,
             offset: const Offset(0, 2),
@@ -183,7 +220,7 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.person, color: Colors.grey),
+                  const Icon(Icons.person, color: grayColor),
                   const SizedBox(width: 8),
                   Text(
                     author,
@@ -194,7 +231,7 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
                   Text(
                     date,
                     style: const TextStyle(
-                        fontSize: 12, color: Colors.grey),
+                        fontSize: 12, color: grayColor),
                   ),
                 ],
               ),
@@ -231,7 +268,13 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
                 leading: const Icon(Icons.visibility),
                 title: const Text('첨삭글보기'),
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.pop(context); // 바텀시트 닫기
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AdvicePostScreen(), // AdvicePostScreen으로 이동
+                    ),
+                  );
                 },
               ),
             ],
@@ -240,4 +283,5 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
       },
     );
   }
+
 }
