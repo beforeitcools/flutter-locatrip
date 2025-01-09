@@ -6,6 +6,7 @@ import 'package:flutter_locatrip/chatting/ui/own_message_ui.dart';
 import 'package:flutter_locatrip/chatting/ui/reply_message_ui.dart';
 import 'package:flutter_locatrip/chatting/widgets//chat_room_setting.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ChatRoomPage extends StatefulWidget {
@@ -27,7 +28,16 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   List<dynamic> _chats = [];
   dynamic _selectedChat;
 
-  int myUserId = 1; // 현재 유저 아이디
+  final FlutterSecureStorage _storage = FlutterSecureStorage();
+  late final int myUserId;
+
+
+
+  Future<void> _getUserId() async{
+    final dynamic stringId = await _storage.read(key: 'userId');
+    myUserId = int.tryParse(stringId) ?? 0; // 현재 유저 아이디
+  }
+
 
   void _loadChatsById() async {
     List<dynamic> chatData = await _chatModel.fetchChatRoomData(widget.chatroomId, context);
@@ -48,6 +58,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   @override
   void initState() {
     super.initState();
+    _getUserId();
     try {
       _channel = WebSocketChannel.connect(uri);
       print('Connected to $uri');
@@ -62,6 +73,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     if(_textController.text.isNotEmpty){
       try{
         final message = {
+          "userId": myUserId,
           "chatRoom":{
             "id": widget.chatroomId,
             "chatroomName": widget.chatroomName
@@ -71,13 +83,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           "read": false};
 
        final jsonMessage = json.encode(message);
+        _channel.sink.add(jsonMessage); //TODO: 이녀석을 가게 해야함
         setState(() {
           _chats.add(message);
-          _channel.sink.add(jsonMessage);
           _textController.clear();
         });
         WidgetsBinding.instance.addPostFrameCallback((_) {_scrollToBottom();});
-        await _chatModel.saveMessage(jsonMessage, context);
+       // await _chatModel.saveMessage(jsonMessage, context);
       }catch(e){
         print('메세지를 보내는 중 에러가 발생했습니다 : $e');
       }

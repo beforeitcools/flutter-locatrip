@@ -1,1 +1,2 @@
-String backUrl = "http://112.221.66.174:1102";
+String backUrl = "http://localhost:8082";
+// android = "http://10.0.2.2";

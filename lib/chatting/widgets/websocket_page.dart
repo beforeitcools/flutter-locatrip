@@ -46,6 +46,7 @@ class _WebsocketPageState extends State<WebsocketPage> {
               stream: channel.stream,
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
+                  {print('스냅샷 데이터 : ${snapshot.data}');}
                   chatList.insert(0, snapshot.data);
                 }
                 if (scrollController.hasClients) {
@@ -89,7 +90,6 @@ class _WebsocketPageState extends State<WebsocketPage> {
                   onPressed: () {
                     if (textController.text.isNotEmpty) {
                       channel.sink.add(textController.text);
-
                       textController.text = '';
                     }
                   },
