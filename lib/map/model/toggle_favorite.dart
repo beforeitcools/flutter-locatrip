@@ -12,6 +12,7 @@ class ToggleFavorite {
       BuildContext context,
       VoidCallback onUpdate) async {
     Map<String, dynamic> placeData = {
+      "googleId": place.id,
       "name": place.name,
       "address": place.address,
       "latitude": place.location.latitude,
@@ -40,13 +41,14 @@ class ToggleFavorite {
       // List<Map<String, bool>> favoriteStatusList,
       BuildContext context,
       VoidCallback onUpdate) async {
-    Map<String, dynamic> placeData = {
+    /*Map<String, dynamic> placeData = {
       "name": place.name,
       "address": place.address
-    };
+    };*/
+    String googleId = place.id;
 
     try {
-      String result = await _locationModel.deleteFavorite(placeData, context);
+      String result = await _locationModel.deleteFavorite(googleId, context);
 
       if (result != null) {
         /*favoriteStatus[place.name] = false;

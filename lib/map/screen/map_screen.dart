@@ -138,12 +138,6 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    super.dispose();
-  }
-
   // 지도에서 현위치 때 사용
   _getGeoData() async {
     try {
@@ -1105,6 +1099,20 @@ class _MapScreenState extends State<MapScreen> {
 
       print('_favoriteStatusList $_favoriteStatusList');*/
     });
+  }
+
+  @override
+  void dispose() {
+    // FocusNode 정리
+    _focusNode.dispose();
+
+    // ScrollController 정리
+    _categoryScrollController.dispose();
+
+    // TextEditingController 정리
+    _searchController.dispose();
+
+    super.dispose();
   }
 
   @override
