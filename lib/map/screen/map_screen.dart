@@ -44,7 +44,7 @@ class _MapScreenState extends State<MapScreen> {
   GoogleMapController? mapController;
 
   final double maxSize = 0.9;
-  final double minSize = 0.32;
+  final double minSize = 0.34;
   final double tolerance = 0.001;
   double sheetSize = 0.47;
 
@@ -71,6 +71,8 @@ class _MapScreenState extends State<MapScreen> {
   String _selectedCategory = '';
 
   Map<String, bool> _favoriteStatus = {};
+  bool isSearchLoading = false;
+  bool isSearchLoaded = false;
   // List<Map<String, bool>> _favoriteStatusList = [];
 
   @override
@@ -198,6 +200,7 @@ class _MapScreenState extends State<MapScreen> {
     setState(() {
       _isLoadingMarkers = true;
       _nearByPlacesList.clear();
+      _markers.clear();
     });
 
     Map<String, dynamic> data = {
@@ -220,27 +223,23 @@ class _MapScreenState extends State<MapScreen> {
 
       /*print('nearByPlaces : $nearByPlaces');*/
 
-      List<dynamic> nearByPlacesList = nearByPlaces["places"];
-      /*print('nearByPlacesList $nearByPlacesList');*/
+      if (nearByPlaces.isNotEmpty) {
+        List<dynamic> nearByPlacesList = nearByPlaces["places"];
+        print('nearByPlacesList $nearByPlacesList');
+        // 마커 추가 전 리스트 클리어
+        setState(() {
+          _nearByPlacesList.clear();
+        });
 
-      // 마커 추가 전 리스트 클리어
-      setState(() {
-        _nearByPlacesList.clear();
-      });
-
-      // 장소 데이터를 비동기로 처리
-      for (var place in nearByPlacesList) {
-        _processAndAddPlace(place);
+        if (nearByPlacesList.isNotEmpty) {
+          // 장소 데이터를 비동기로 처리
+          for (var place in nearByPlacesList) {
+            _processAndAddPlace(place);
+          }
+        }
+      } else {
+        isSearchLoaded = true;
       }
-
-      // 마커 추가
-      // _addMarkersToMap(places);
-
-      /*if (latitude != _latitude || _longitude != longitude) {
-        mapController!.animateCamera(
-          CameraUpdate.newLatLng(LatLng(_latitude, _longitude)),
-        );
-      }*/
     } catch (e) {
       print("에러메시지 : $e");
     } finally {
@@ -277,9 +276,9 @@ class _MapScreenState extends State<MapScreen> {
 
     Place newPlace = Place(
       id: place['id'],
-      name: place['displayName']['text'] ?? 'Unknown',
-      address: place['shortFormattedAddress'] ?? 'Unknown',
-      category: place['primaryTypeDisplayName']['text'] ?? 'Others',
+      name: place['displayName']['text'] ?? '',
+      address: place['shortFormattedAddress'] ?? '',
+      category: place['primaryTypeDisplayName']?['text'] ?? '',
       photoUrl: photoUris,
       location: location,
       icon: BitmapDescriptor.defaultMarker,
@@ -314,10 +313,45 @@ class _MapScreenState extends State<MapScreen> {
             );
 
             // 장소 정보 하단 시트로 띄우기
-            if (selectedPlace.id.isNotEmpty) {
+            if (selectedPlace != null && selectedPlace.id.isNotEmpty) {
+              selectedPlace = Place(
+                id: selectedPlace.id,
+                name: selectedPlace.name,
+                address: selectedPlace.address,
+                category: selectedPlace.category,
+                photoUrl: selectedPlace.photoUrl,
+                location: LatLng(
+                  selectedPlace.location.latitude - 0.002, // latitude 값 수정
+                  selectedPlace.location.longitude,
+                ),
+                icon: selectedPlace.icon,
+              );
+
+              mapController!.animateCamera(
+                CameraUpdate.newLatLngZoom(
+                    LatLng(selectedPlace.location.latitude,
+                        selectedPlace.location.longitude),
+                    16.0),
+              );
+
               _showPlaceInfoSheet(selectedPlace);
             }
           }));
+      isSearchLoading = false;
+      isSearchLoaded = false;
+    });
+  }
+
+  Future<void> _navigateAndDisplaySelection(
+      BuildContext context, Place place) async {
+    final isFavorite = await Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => LocationDetailScreen(place: place)),
+    );
+    setState(() {
+      print('isFavorite $isFavorite');
+      _favoriteStatus[place.name] = isFavorite;
     });
   }
 
@@ -338,13 +372,7 @@ class _MapScreenState extends State<MapScreen> {
               children: [
                 GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => LocationDetailScreen(
-                                  place: place,
-                                  // favoriteStatusList: _favoriteStatusList,
-                                  favoriteStatus: _favoriteStatus)));
+                      _navigateAndDisplaySelection(context, place);
                     },
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -386,13 +414,7 @@ class _MapScreenState extends State<MapScreen> {
                     children: place.photoUrl!.map((url) {
                       return GestureDetector(
                           onTap: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => LocationDetailScreen(
-                                        place: place,
-                                        // favoriteStatusList: _favoriteStatusList,
-                                        favoriteStatus: _favoriteStatus)));
+                            _navigateAndDisplaySelection(context, place);
                           },
                           child: Container(
                             margin: EdgeInsets.only(right: 8),
@@ -422,22 +444,55 @@ class _MapScreenState extends State<MapScreen> {
       "textQuery": _searchController.text.toString(),
       "pageSize": "10",
       "languageCode": "ko",
-      "regionCode": "KR"
+      "regionCode": "KR",
+      "locationRestriction": {
+        "rectangle": {
+          "low": {"latitude": 33.0, "longitude": 124.0},
+          "high": {"latitude": 38.5, "longitude": 132.0}
+        }
+      }
     };
 
     setState(() {
       _isLoadingMarkers = true;
       _nearByPlacesList.clear();
       _markers.clear();
+      isSearchLoading = true;
     });
 
     try {
       List<dynamic> resultList = await _placeApiModel.getSearchPlace(data);
-      print('resultList: $resultList');
+      List<dynamic> filteredResultList = resultList.where((place) {
+        double latitude = place['location']['latitude'];
+        double longitude = place['location']['longitude'];
+        double minLatitude = 33.0; // 남쪽
+        double maxLatitude = 38.5; // 북쪽
+        double minLongitude = 124.0; // 서쪽
+        double maxLongitude = 132.0; // 동쪽
 
-      // 장소 데이터 비동기 처리 및 마커 추가
-      for (var place in resultList) {
-        _processAndAddPlace(place);
+        // 대한민국 범위 내에 있는지 확인
+        return latitude >= minLatitude &&
+            latitude <= maxLatitude &&
+            longitude >= minLongitude &&
+            longitude <= maxLongitude;
+      }).toList();
+      print('filteredResultList: $filteredResultList');
+
+      if (filteredResultList.isNotEmpty) {
+        setState(() {
+          isSearchLoading = true;
+          isSearchLoaded = false;
+        });
+
+        mapController!.animateCamera(
+          CameraUpdate.newLatLng(LatLng(
+              filteredResultList[0]['location']['latitude'] - 0.005,
+              filteredResultList[0]['location']['longitude'])),
+        );
+        // 장소 데이터 비동기 처리 및 마커 추가
+        for (var place in filteredResultList) {
+          _processAndAddPlace(place);
+        }
       }
     } catch (e) {
       print("에러메시지 : $e");
@@ -454,6 +509,7 @@ class _MapScreenState extends State<MapScreen> {
         AppOverlayController.removeOverlay();
         isCategorySelected = false;
         _selectedCategory = '';
+
         _getNearByPlaces(
           _mapCenter.latitude,
           _mapCenter.longitude,
@@ -481,6 +537,7 @@ class _MapScreenState extends State<MapScreen> {
                 curve: Curves.easeOut,
               );
             });
+
             _getNearByPlaces(
               _mapCenter.latitude,
               _mapCenter.longitude,
@@ -520,6 +577,14 @@ class _MapScreenState extends State<MapScreen> {
       }
     }
   }
+/*
+  void _onSearchResultClick(Place place) {
+    // 카메라를 마커 위치로 이동
+    mapController?.animateCamera(
+      CameraUpdate.newLatLng(
+          LatLng(place.location.latitude - 0.005, place.location.longitude)),
+    );
+  }*/
 
   // 카테고리 버튼 위젯 빌더
   Widget _buildCategoryButton(
@@ -832,158 +897,173 @@ class _MapScreenState extends State<MapScreen> {
                           ),
                         )),
                 Expanded(
-                    child: _nearByPlacesList.isNotEmpty
-                        ? ListView.builder(
-                            controller: scrollController,
-                            physics:
-                                BouncingScrollPhysics(), // 리스트 수가 적을 때 스크롤 가능 하도록 !
-                            padding: EdgeInsets.zero,
-                            shrinkWrap: true,
-                            itemCount: _nearByPlacesList.length,
-                            itemBuilder: (context, index) {
-                              Place place = _nearByPlacesList[index];
-                              bool isFavorite =
-                                  _favoriteStatus[place.name] ?? false;
-                              return Container(
-                                padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                LocationDetailScreen(
-                                                    place: place,
-                                                    // favoriteStatusList:_favoriteStatusList,
-                                                    favoriteStatus:
-                                                        _favoriteStatus)));
-                                  },
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
+                    child: isSearchLoading
+                        ? Center(
+                            child: CircularProgressIndicator(), // 로딩 스피너
+                          )
+                        : _nearByPlacesList.isNotEmpty
+                            ? ListView.builder(
+                                controller: scrollController,
+                                physics:
+                                    BouncingScrollPhysics(), // 리스트 수가 적을 때 스크롤 가능 하도록 !
+                                padding: EdgeInsets.zero,
+                                shrinkWrap: true,
+                                itemCount: _nearByPlacesList.length,
+                                itemBuilder: (context, index) {
+                                  Place place = _nearByPlacesList[index];
+                                  bool isFavorite =
+                                      _favoriteStatus[place.name] ?? false;
+                                  return Container(
+                                    padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        _navigateAndDisplaySelection(
+                                            context, place);
+                                      },
+                                      child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Column(
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
-                                              Container(
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    0.7,
-                                                child: Text(
-                                                  _nearByPlacesList[index].name,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .bodySmall
-                                                      ?.copyWith(
-                                                          fontWeight:
-                                                              FontWeight.w600),
-                                                  softWrap: true,
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                height: 5,
-                                              ),
-                                              Row(
+                                              Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
                                                 children: [
-                                                  Text(
-                                                    _nearByPlacesList[index]
-                                                        .category,
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .labelSmall
-                                                        ?.copyWith(
-                                                            color: grayColor,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .w500),
+                                                  Container(
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            0.7,
+                                                    child: Text(
+                                                      _nearByPlacesList[index]
+                                                          .name,
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .bodySmall
+                                                          ?.copyWith(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600),
+                                                      softWrap: true,
+                                                    ),
                                                   ),
-                                                  Text(
-                                                    " · ${_nearByPlacesList[index].address.split(" ")[0]}",
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .labelSmall
-                                                        ?.copyWith(
-                                                            color: grayColor,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .w500),
-                                                  )
+                                                  SizedBox(
+                                                    height: 5,
+                                                  ),
+                                                  Row(
+                                                    children: [
+                                                      Text(
+                                                        _nearByPlacesList[index]
+                                                            .category,
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .labelSmall
+                                                            ?.copyWith(
+                                                                color:
+                                                                    grayColor,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w500),
+                                                      ),
+                                                      if (_nearByPlacesList[
+                                                                      index]
+                                                                  .category !=
+                                                              "" &&
+                                                          _nearByPlacesList[
+                                                                      index]
+                                                                  .address !=
+                                                              '')
+                                                        Text(" · "),
+                                                      Text(
+                                                        _nearByPlacesList[index]
+                                                            .address
+                                                            .split(" ")[0],
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .labelSmall
+                                                            ?.copyWith(
+                                                                color:
+                                                                    grayColor,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w500),
+                                                      )
+                                                    ],
+                                                  ),
+                                                  SizedBox(
+                                                    height: 12,
+                                                  ),
                                                 ],
                                               ),
-                                              SizedBox(
-                                                height: 12,
-                                              ),
+                                              IconButton(
+                                                  onPressed: () {
+                                                    _toggleFavorite
+                                                        .toggleFavoriteStatus(
+                                                            place,
+                                                            isFavorite,
+                                                            // _favoriteStatus,
+                                                            // _favoriteStatusList,
+                                                            context,
+                                                            () => _updateFavoriteStatus(
+                                                                !(_favoriteStatus[
+                                                                        _nearByPlacesList[index]
+                                                                            .name] ??
+                                                                    false),
+                                                                _nearByPlacesList[
+                                                                    index]));
+                                                  },
+                                                  padding: EdgeInsets.zero,
+                                                  icon: Icon(
+                                                    isFavorite
+                                                        ? Icons.favorite
+                                                        : Icons
+                                                            .favorite_outline_outlined,
+                                                    color: isFavorite
+                                                        ? Colors.red
+                                                        : null,
+                                                  )),
                                             ],
                                           ),
-                                          IconButton(
-                                              onPressed: () {
-                                                _toggleFavorite
-                                                    .toggleFavoriteStatus(
-                                                        place,
-                                                        _favoriteStatus,
-                                                        // _favoriteStatusList,
-                                                        context,
-                                                        () => _updateFavoriteStatus(
-                                                            !(_favoriteStatus[
-                                                                    _nearByPlacesList[
-                                                                            index]
-                                                                        .name] ??
-                                                                false),
-                                                            _nearByPlacesList[
-                                                                index]));
-                                              },
-                                              padding: EdgeInsets.zero,
-                                              icon: Icon(
-                                                isFavorite
-                                                    ? Icons.favorite
-                                                    : Icons
-                                                        .favorite_outline_outlined,
-                                                color: isFavorite
-                                                    ? Colors.red
-                                                    : null,
-                                              )),
+                                          SingleChildScrollView(
+                                            scrollDirection: Axis.horizontal,
+                                            child: Row(
+                                              children: _nearByPlacesList[index]
+                                                  .photoUrl!
+                                                  .map((photo) {
+                                                return Container(
+                                                  margin: EdgeInsets.only(
+                                                      right: 16),
+                                                  width: 150,
+                                                  height: 90,
+                                                  decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            6),
+                                                    image: DecorationImage(
+                                                      fit: BoxFit.cover,
+                                                      image:
+                                                          NetworkImage(photo),
+                                                    ),
+                                                  ),
+                                                );
+                                              }).toList(),
+                                            ),
+                                          )
                                         ],
                                       ),
-                                      SingleChildScrollView(
-                                        scrollDirection: Axis.horizontal,
-                                        child: Row(
-                                          children: _nearByPlacesList[index]
-                                              .photoUrl!
-                                              .map((photo) {
-                                            return Container(
-                                              margin:
-                                                  EdgeInsets.only(right: 16),
-                                              width: 150,
-                                              height: 90,
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(6),
-                                                image: DecorationImage(
-                                                  fit: BoxFit.cover,
-                                                  image: NetworkImage(photo),
-                                                ),
-                                              ),
-                                            );
-                                          }).toList(),
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          )
-                        : Center(
-                            child: CircularProgressIndicator(),
-                          ))
+                                    ),
+                                  );
+                                },
+                              )
+                            : isSearchLoaded
+                                ? Center(child: Text("검색 결과가 없습니다."))
+                                : SizedBox.shrink())
               ],
             ),
           ),
@@ -993,6 +1073,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _syncFavoriteStatus() async {
+    print('실행돼?');
     List<String> locationNameList =
         _nearByPlacesList.map((place) => place.name).toList();
 
@@ -1000,7 +1081,7 @@ class _MapScreenState extends State<MapScreen> {
     List<Map<String, bool>>? fetchedStatusList = await _locationModel
         .fetchFavoriteStatusFromServer(locationNameList, context);
 
-    // print('fetchedStatusList $fetchedStatusList');
+    print('fetchedStatusList $fetchedStatusList');
 
     if (fetchedStatusList != null) {
       setState(() {
@@ -1083,7 +1164,7 @@ class _MapScreenState extends State<MapScreen> {
                 child: GoogleMap(
                   initialCameraPosition: CameraPosition(
                       target: LatLng(
-                          _mapCenter.latitude - 0.005, _mapCenter.longitude),
+                          _mapCenter.latitude - 0.004, _mapCenter.longitude),
                       zoom: 15),
                   myLocationEnabled: true,
                   myLocationButtonEnabled: true,
@@ -1092,7 +1173,12 @@ class _MapScreenState extends State<MapScreen> {
                   },
                   markers: _markers,
                   onCameraMove: (CameraPosition position) {
-                    _mapCenter = position.target;
+                    setState(() {
+                      _mapCenter = position.target;
+                      latitude = _mapCenter.latitude;
+                      longitude = _mapCenter.longitude;
+                      print('_mapCenter $_mapCenter');
+                    });
                   },
                   zoomGesturesEnabled: true,
                   tiltGesturesEnabled: true,
@@ -1112,10 +1198,10 @@ class _MapScreenState extends State<MapScreen> {
                   child: ElevatedButton(
                     onPressed: () {
                       setState(() {
-                        _mapCenter =
-                            LatLng(_mapCenter.latitude, _mapCenter.longitude);
                         _searchController.clear();
+                        _nearByPlacesList.clear();
                       });
+                      print('_mapCenter $_mapCenter');
                       _getNearByPlaces(_mapCenter.latitude,
                           _mapCenter.longitude, "POPULARITY", typeAll);
                     },

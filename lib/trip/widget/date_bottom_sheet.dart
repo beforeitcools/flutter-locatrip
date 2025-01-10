@@ -48,42 +48,6 @@ class _DateBottomSheetState extends State<DateBottomSheet> {
           SizedBox(height: 8),
           Column(
             mainAxisSize: MainAxisSize.min,
-            /*children: _dropDownDay.map((String item) {
-              return SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                      onPressed: () {
-                        widget.onItemSelected(_index);
-                        Navigator.pop(context);
-                      },
-                      style: TextButton.styleFrom(
-                          alignment: Alignment.centerLeft,
-                          padding:
-                              EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                          minimumSize: Size(0, 48),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.zero)),
-                      child: item != _dropDownDay[_index]
-                          ? Text(
-                              item,
-                              style: Theme.of(context).textTheme.labelSmall,
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  item,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelSmall
-                                      ?.copyWith(
-                                          color: pointBlueColor,
-                                          fontWeight: FontWeight.w600),
-                                ),
-                                Icon(Icons.check)
-                              ],
-                            )));
-            }).toList(),*/
             children: _dropDownDay.asMap().entries.map((entry) {
               int idx = entry.key;
               String item = entry.value;
