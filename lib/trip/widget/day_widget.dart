@@ -202,22 +202,12 @@ class _DayWidgetState extends State<DayWidget> {
         _dayPlace["orderIndex"] = result["orderIndex"];
         _dayPlace["memo"] = result["memo"];
         _dayPlace["expenseId"] = result["expenseId"];
-
-        /*TripDayLocation tripDayLocation = TripDayLocation(
-            place: _dayPlace["place"],
-            id: result["id"],
-            tripId: result["tripId"],
-            locationId: result["locationId"],
-            date: DateTime.parse(result["date"]),
-            visitTime: result["date"] != null ? DateTime.parse(result["date"]) : "",
-            orderIndex: result["date"],
-            memo: result["date"],
-            expenseId: result["expenseId"] == null ? "" : result["expenseId"]);*/
-
-        _dayPlaceList.add(_dayPlace);
+        _dayPlace["isChecked"] = false;
 
         print('_dayPlaceList $_dayPlaceList');
-        // _dayPlace.clear();
+        setState(() {
+          _dayPlaceList.add(_dayPlace);
+        });
       }
     } catch (e) {
       print('에러메시지 $e');
@@ -264,6 +254,12 @@ class _DayWidgetState extends State<DayWidget> {
     _saveTripDayLocation();
   }
 
+  /* Map<String, bool> _items = {
+    "Option 1": false,
+    "Option 2": false,
+    "Option 3": false,
+  };*/
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -271,7 +267,155 @@ class _DayWidgetState extends State<DayWidget> {
         Padding(padding: EdgeInsets.all(16), child: getWidget(index)),
 
         // 여기에 장소 추가/ 메모 추가 되면 됨 !
-
+        Container(
+          child: ReorderableListView(
+            physics: NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            onReorder: (oldIndex, newIndex) {
+              setState(() {
+                if (newIndex > oldIndex) newIndex -= 1;
+                final item = _dayPlaceList.removeAt(oldIndex);
+                _dayPlaceList.insert(newIndex, item);
+              });
+            },
+            children: [
+              for (int i = 0; i < _dayPlaceList.length; i++)
+                ListTile(
+                    key: ValueKey(_dayPlaceList[i]),
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                    horizontalTitleGap: 0,
+                    leading: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _dayPlaceList[i]["isChecked"] =
+                              !_dayPlaceList[i]["isChecked"];
+                        });
+                      },
+                      icon: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _dayPlaceList[i]["isChecked"]!
+                                ? pointBlueColor
+                                : Colors.white,
+                            border: Border.all(
+                                color: _dayPlaceList[i]["isChecked"]!
+                                    ? pointBlueColor
+                                    : grayColor,
+                                width: 1)),
+                        child: _dayPlaceList[i]["isChecked"]!
+                            ? Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 20,
+                              )
+                            : null,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints(),
+                    ),
+                    title: Container(
+                      // width: double.infinity,
+                      padding:
+                          EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                      decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              offset: Offset(1, 1),
+                              blurRadius: 4,
+                            ),
+                          ],
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(6)),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              // 순서
+                              Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: grayColor, //임시
+                                ),
+                                width: 20,
+                                height: 20,
+                                alignment: Alignment.center,
+                                child: Text(
+                                  _dayPlaceList[i]["orderIndex"].toString(),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelSmall
+                                      ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                              SizedBox(
+                                width: 10,
+                              ),
+                              // 텍스트
+                              Container(
+                                width: MediaQuery.of(context).size.width * 0.45,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _dayPlaceList[i]["place"].name,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall,
+                                    ),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          _dayPlaceList[i]["place"].category,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelSmall
+                                              ?.copyWith(color: grayColor),
+                                        ),
+                                        if (_dayPlaceList[i]["place"]
+                                                    .category !=
+                                                null &&
+                                            _dayPlaceList[i]["place"].address !=
+                                                null)
+                                          Text(
+                                            " · ",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .labelSmall
+                                                ?.copyWith(color: grayColor),
+                                          ),
+                                        Text(
+                                          _dayPlaceList[i]["place"]
+                                              .address
+                                              .split(" ")[0],
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelSmall
+                                              ?.copyWith(color: grayColor),
+                                        )
+                                      ],
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          Icon(
+                            Icons.menu,
+                            color: grayColor,
+                          ),
+                        ],
+                      ),
+                    )),
+            ],
+          ),
+        ),
         Row(
           children: [
             SizedBox(
