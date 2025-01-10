@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:flutter_locatrip/chatting/model/chat_model.dart';
 import 'package:flutter_locatrip/chatting/ui/own_message_ui.dart';
 import 'package:flutter_locatrip/chatting/ui/reply_message_ui.dart';
 import 'package:flutter_locatrip/chatting/widgets//chat_room_setting.dart';
+import 'package:flutter_locatrip/common/Auth/auth_dio_interceptor.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -19,8 +21,10 @@ class ChatRoomPage extends StatefulWidget {
 }
 
 class _ChatRoomPageState extends State<ChatRoomPage> {
+  StreamController streamController = StreamController.broadcast();
   late final WebSocketChannel _channel;
   late final uri = Uri.parse('ws://localhost:8082/chattingServer');// 서버 url
+  late final String myToken;
 
   final ChatModel _chatModel = ChatModel();
   final TextEditingController _textController = TextEditingController();
@@ -36,6 +40,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   Future<void> _getUserId() async{
     final dynamic stringId = await _storage.read(key: 'userId');
     myUserId = int.tryParse(stringId) ?? 0; // 현재 유저 아이디
+    final dynamic token = await _storage.read(key: "ACCESS_TOKEN");
+    myToken = token.toString();
   }
 
 
@@ -62,10 +68,12 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     try {
       _channel = WebSocketChannel.connect(uri);
       print('Connected to $uri');
-      print("${_channel.protocol}");
     } catch (e) {
       print('Failed to connect to $uri: $e');
     }
+    streamController.stream.listen((message) {
+      print("Received from server: $message");
+    }); // 받은 데이터 처리
     _loadChatsById();
   }
 
@@ -87,9 +95,10 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         setState(() {
           _chats.add(message);
           _textController.clear();
+
         });
         WidgetsBinding.instance.addPostFrameCallback((_) {_scrollToBottom();});
-       // await _chatModel.saveMessage(jsonMessage, context);
+        await _chatModel.saveMessage(jsonMessage, context);
       }catch(e){
         print('메세지를 보내는 중 에러가 발생했습니다 : $e');
       }
@@ -123,13 +132,14 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           child: Stack(
             children: [
               StreamBuilder(stream: _channel.stream, builder: (context, snapshot){
-                if(snapshot.hasData){
+                  if(snapshot.hasData){
                   print("my snapshot data : ${snapshot.data}");
                   try {
                     final data = json.decode(snapshot.data as String);
                     if (data["type"] == "chat") {
                       setState(() {
-                        _chats.add(data);
+                        print('chat이랑 type이 같습니까?');
+                            _chats.add(data);
                       });
                     } else if (data["type"] == "status") {
                       print("Status update: ${data["message"]}");
