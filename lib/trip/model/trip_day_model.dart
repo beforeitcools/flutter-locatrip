@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 
@@ -10,11 +12,12 @@ class TripDayModel {
       Map<String, dynamic> data, BuildContext context) async {
     final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
-    print('요청 가나?');
+    print('요청 가나? $backUrl ');
 
     try {
-      final responses =
-          await dio.post("$backUrl/tripDay/saveTripDayLocation", data: data);
+      print("요청시작");
+      final responses = await dio.post("$backUrl/tripDay/saveTripDayLocation",
+          data: jsonEncode(data));
       print('responsese $responses');
       if (responses.statusCode == 200) {
         return responses.data as Map<String, dynamic>;

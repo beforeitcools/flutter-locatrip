@@ -175,7 +175,6 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
 
   void getViewport() async {
     try {
-      print('latitude $latitude');
       Map<String, dynamic> result =
           await _placeApiModel.getViewPorts(LatLng(latitude!, longitude!));
 
