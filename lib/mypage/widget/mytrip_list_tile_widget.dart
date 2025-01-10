@@ -84,13 +84,22 @@ class MytripListTileWidget extends StatelessWidget {
                                 myTrips[selectedIndex][index]['tripId']),
                           );
                         }, // 삭제
-                        splashColor: Color.fromARGB(50, 43, 192, 228),
-                        highlightColor: Color.fromARGB(30, 43, 192, 228),
-                        child: Image.asset(
-                          "assets/icon/delete.png",
-                          width: 24,
-                          height: 24,
-                          fit: BoxFit.cover,
+                        splashColor: Color.fromARGB(50, 244, 67, 54),
+                        highlightColor: Color.fromARGB(30, 244, 67, 54),
+                        borderRadius: BorderRadius.circular(20),
+                        customBorder: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20)),
+                          child: Image.asset(
+                            "assets/icon/delete.png",
+                            width: 24,
+                            height: 24,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       )
                     : SizedBox(),

@@ -93,35 +93,29 @@ class _MytripScreenState extends State<MytripScreen> {
       appBar: AppBar(
         title: Text("내 여행", style: Theme.of(context).textTheme.headlineLarge),
       ),
-      body: SingleChildScrollView(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: MediaQuery.of(context).size.height - 165,
-          ),
-          child: IntrinsicHeight(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(0, 0, 0, 16),
-              child: Center(
-                child: Column(
-                  children: [
-                    CategoryTabMenuWidget(
-                      categoryOnTabHandler: _categoryOnTabHandler,
-                      selectedIndex: _selectedIndex,
-                      categories: _categories,
-                    ),
-                    SizedBox(
-                      height: 4,
-                    ),
-                    MytripListTileWidget(
+      body: Center(
+        child: Column(
+          children: [
+            CategoryTabMenuWidget(
+              categoryOnTabHandler: _categoryOnTabHandler,
+              selectedIndex: _selectedIndex,
+              categories: _categories,
+            ),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(0, 1, 0, 1),
+                child: SingleChildScrollView(
+                  child: IntrinsicHeight(
+                    child: MytripListTileWidget(
                       selectedIndex: _selectedIndex,
                       myTrips: _myTrips,
                       deleteTrip: deleteTrip,
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
