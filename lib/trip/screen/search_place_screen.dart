@@ -43,7 +43,7 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
   GoogleMapController? mapController;
 
   final double maxSize = 0.9;
-  final double minSize = 0.32;
+  final double minSize = 0.34;
   final double tolerance = 0.001;
   double sheetSize = 0.47;
 
@@ -68,12 +68,18 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
   bool _isLoadingMarkers = false;
 
   String _selectedCategory = '';
+  bool isSearchLoading = false;
+  bool isSearchLoaded = false;
+
+  Map<String, dynamic> viewPortMap = {};
+  int _viewCount = 2;
 
   @override
   void initState() {
     super.initState();
 
     _tripInfo = widget.tripInfo;
+    print('_tripInfo $_tripInfo');
     latitude = _tripInfo["latitude"];
     longitude = _tripInfo["longitude"];
 
@@ -134,6 +140,7 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
         );
       }
     });
+    getViewport();
 
     _getNearByPlaces(latitude!, longitude!, "POPULARITY", typeAll);
   }
@@ -142,21 +149,6 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
   void dispose() {
     _focusNode.dispose();
     super.dispose();
-  }
-
-  void _moveMapToCurrentLocation() {
-    if (latitude != null && longitude != null && mapController != null) {
-      mapController!.animateCamera(
-        CameraUpdate.newLatLng(LatLng(latitude!, longitude!)),
-      );
-    }
-  }
-
-  void _showPermissionDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => DeniedPermissionDialog(),
-    );
   }
 
   void _toggleSheetHeight() {
@@ -181,26 +173,54 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
     return DateFormat('y년 M월 d일').format(date);
   }
 
+  void getViewport() async {
+    try {
+      print('latitude $latitude');
+      Map<String, dynamic> result =
+          await _placeApiModel.getViewPorts(LatLng(latitude!, longitude!));
+
+      viewPortMap = {
+        "locationBias": {
+          "rectangle": {
+            "low": {
+              "latitude": result["southwest"]["lat"],
+              "longitude": result["southwest"]["lng"]
+            },
+            "high": {
+              "latitude": result["northeast"]["lat"],
+              "longitude": result["northeast"]["lng"]
+            }
+          }
+        }
+      };
+
+      print('viewPort $result');
+    } catch (e) {
+      print('에러메시지 $e');
+    }
+  }
+
   // 근처 장소 검색
   void _getNearByPlaces(double _latitude, double _longitude,
       String rankPreference, List typeList) async {
     setState(() {
       _isLoadingMarkers = true;
       _nearByPlacesList.clear();
+      _markers.clear();
     });
 
     Map<String, dynamic> data = {
       "locationRestriction": {
         "circle": {
           "center": {"latitude": _latitude, "longitude": _longitude},
-          "radius": 500
+          "radius": 10000
         }
       },
       "languageCode": "ko",
       "regionCode": "KR",
       "maxResultCount": 10,
       "includedTypes": typeList,
-      "rankPreference": rankPreference
+      "rankPreference": rankPreference,
     };
 
     try {
@@ -208,18 +228,22 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
           await _placeApiModel.getNearByPlaces(data);
 
       print('nearByPlaces : $nearByPlaces');
+      if (nearByPlaces.isNotEmpty) {
+        List<dynamic> nearByPlacesList = nearByPlaces["places"];
+        print('nearByPlacesList $nearByPlacesList');
+        // 마커 추가 전 리스트 클리어
+        setState(() {
+          _nearByPlacesList.clear();
+        });
 
-      List<dynamic> nearByPlacesList = nearByPlaces["places"];
-      print('nearByPlacesList $nearByPlacesList');
-
-      // 마커 추가 전 리스트 클리어
-      setState(() {
-        _nearByPlacesList.clear();
-      });
-
-      // 장소 데이터를 비동기로 처리
-      for (var place in nearByPlacesList) {
-        _processAndAddPlace(place);
+        if (nearByPlacesList.isNotEmpty) {
+          // 장소 데이터를 비동기로 처리
+          for (var place in nearByPlacesList) {
+            _processAndAddPlace(place);
+          }
+        }
+      } else {
+        isSearchLoaded = true;
       }
     } catch (e) {
       print("에러메시지 : $e");
@@ -251,9 +275,9 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
 
     Place newPlace = Place(
       id: place['id'],
-      name: place['displayName']['text'] ?? 'Unknown',
-      address: place['shortFormattedAddress'] ?? 'Unknown',
-      category: place['primaryTypeDisplayName']['text'] ?? 'Others',
+      name: place['displayName']['text'] ?? '',
+      address: place['shortFormattedAddress'] ?? '',
+      category: place['primaryTypeDisplayName']?['text'] ?? '',
       photoUrl: photoUris,
       location: location,
       icon: BitmapDescriptor.defaultMarker,
@@ -285,7 +309,33 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                 icon: BitmapDescriptor.defaultMarker,
               ),
             );
+
+            if (selectedPlace != null && selectedPlace.id.isNotEmpty) {
+              selectedPlace = Place(
+                id: selectedPlace.id,
+                name: selectedPlace.name,
+                address: selectedPlace.address,
+                category: selectedPlace.category,
+                photoUrl: selectedPlace.photoUrl,
+                location: LatLng(
+                  selectedPlace.location.latitude - 0.002, // latitude 값 수정
+                  selectedPlace.location.longitude,
+                ),
+                icon: selectedPlace.icon,
+              );
+
+              mapController!.animateCamera(
+                CameraUpdate.newLatLngZoom(
+                    LatLng(selectedPlace.location.latitude,
+                        selectedPlace.location.longitude),
+                    15.0),
+              );
+
+              // 새로운 장소 등록 시키는 팝업 추가
+            }
           }));
+      isSearchLoading = false;
+      isSearchLoaded = false;
     });
   }
 
@@ -297,30 +347,34 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
       "pageSize": "10",
       "languageCode": "ko",
       "regionCode": "KR",
-      "locationBias": {
-        "circle": {
-          "center": {
-            "latitude": _tripInfo["latitude"],
-            "longitude": _tripInfo["longitude"]
-          },
-          "radius": 500.0
-        }
-      }
+      ...viewPortMap
     };
 
     setState(() {
       _isLoadingMarkers = true;
       _nearByPlacesList.clear();
       _markers.clear();
+      isSearchLoading = true;
     });
 
     try {
       List<dynamic> resultList = await _placeApiModel.getSearchPlace(data);
       print('resultList: $resultList');
 
-      // 장소 데이터 비동기 처리 및 마커 추가
-      for (var place in resultList) {
-        _processAndAddPlace(place);
+      if (resultList.isNotEmpty) {
+        setState(() {
+          isSearchLoading = true;
+          isSearchLoaded = false;
+        });
+
+        mapController!.animateCamera(
+          CameraUpdate.newLatLng(LatLng(resultList[0]['location']['latitude'],
+              resultList[0]['location']['longitude'])),
+        );
+        // 장소 데이터 비동기 처리 및 마커 추가
+        for (var place in resultList) {
+          _processAndAddPlace(place);
+        }
       }
     } catch (e) {
       print("에러메시지 : $e");
@@ -519,9 +573,9 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                   height: MediaQuery.of(context).size.height - 80,
                   child: GoogleMap(
                     initialCameraPosition: CameraPosition(
-                        target: LatLng(
-                            _mapCenter.latitude - 0.005, _mapCenter.longitude),
-                        zoom: 15),
+                        target: LatLng(_mapCenter.latitude - 0.008,
+                            _mapCenter.longitude - 0.008),
+                        zoom: 11),
                     myLocationEnabled: true,
                     myLocationButtonEnabled: true,
                     onMapCreated: (GoogleMapController controller) {
@@ -689,6 +743,7 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                                 ),
                               ),
                             ),
+
                       isSearched
                           ? SizedBox.shrink()
                           : SingleChildScrollView(
@@ -848,164 +903,202 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                                 ),
                               )),
                       Expanded(
-                          child: _nearByPlacesList.isNotEmpty
-                              ? ListView.builder(
-                                  controller: scrollController,
-                                  physics:
-                                      BouncingScrollPhysics(), // 리스트 수가 적을 때 스크롤 가능 하도록 !
-                                  padding: EdgeInsets.zero,
-                                  shrinkWrap: true,
-                                  itemCount: _nearByPlacesList.length,
-                                  itemBuilder: (context, index) {
-                                    Place place = _nearByPlacesList[index];
+                          child: isSearchLoading
+                              ? Center(
+                                  child: CircularProgressIndicator(), // 로딩 스피너
+                                )
+                              : _nearByPlacesList.isNotEmpty
+                                  ? ListView.builder(
+                                      controller: scrollController,
+                                      physics:
+                                          BouncingScrollPhysics(), // 리스트 수가 적을 때 스크롤 가능 하도록 !
+                                      padding: EdgeInsets.zero,
+                                      shrinkWrap: true,
+                                      itemCount: _nearByPlacesList.length,
+                                      itemBuilder: (context, index) {
+                                        Place place = _nearByPlacesList[index];
 
-                                    return Container(
-                                      padding:
-                                          EdgeInsets.fromLTRB(16, 0, 16, 16),
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          /* Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      LocationDetailScreen(
-                                                          place: place,
-                                                          // favoriteStatusList:_favoriteStatusList,
-                                                          favoriteStatus:
-                                                              _favoriteStatus)));*/
-                                        },
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
+                                        return Container(
+                                          padding: EdgeInsets.fromLTRB(
+                                              16, 0, 16, 16),
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          LocationDetailScreen(
+                                                            place: place,
+                                                          )));
+                                            },
+                                            child: Column(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
                                               children: [
-                                                Column(
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
                                                   crossAxisAlignment:
                                                       CrossAxisAlignment.start,
                                                   children: [
-                                                    Container(
-                                                      width:
-                                                          MediaQuery.of(context)
+                                                    Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Container(
+                                                          width: MediaQuery.of(
+                                                                      context)
                                                                   .size
                                                                   .width *
                                                               0.7,
-                                                      child: Text(
-                                                        _nearByPlacesList[index]
-                                                            .name,
-                                                        style: Theme.of(context)
-                                                            .textTheme
-                                                            .bodySmall
-                                                            ?.copyWith(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600),
-                                                        softWrap: true,
-                                                      ),
-                                                    ),
-                                                    SizedBox(
-                                                      height: 5,
-                                                    ),
-                                                    Row(
-                                                      children: [
-                                                        Text(
-                                                          _nearByPlacesList[
-                                                                  index]
-                                                              .category,
-                                                          style: Theme.of(
-                                                                  context)
-                                                              .textTheme
-                                                              .labelSmall
-                                                              ?.copyWith(
-                                                                  color:
-                                                                      grayColor,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w500),
+                                                          child: Text(
+                                                            _nearByPlacesList[
+                                                                    index]
+                                                                .name,
+                                                            style: Theme.of(
+                                                                    context)
+                                                                .textTheme
+                                                                .bodySmall
+                                                                ?.copyWith(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w600),
+                                                            softWrap: true,
+                                                          ),
                                                         ),
-                                                        Text(
-                                                          " · ${_nearByPlacesList[index].address.split(" ")[0]}",
-                                                          style: Theme.of(
-                                                                  context)
-                                                              .textTheme
-                                                              .labelSmall
-                                                              ?.copyWith(
-                                                                  color:
-                                                                      grayColor,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w500),
-                                                        )
+                                                        SizedBox(
+                                                          height: 5,
+                                                        ),
+                                                        Row(
+                                                          children: [
+                                                            Text(
+                                                              _nearByPlacesList[
+                                                                      index]
+                                                                  .category,
+                                                              style: Theme.of(
+                                                                      context)
+                                                                  .textTheme
+                                                                  .labelSmall
+                                                                  ?.copyWith(
+                                                                      color:
+                                                                          grayColor,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w500),
+                                                            ),
+                                                            if (_nearByPlacesList[
+                                                                            index]
+                                                                        .category !=
+                                                                    "" &&
+                                                                _nearByPlacesList[
+                                                                            index]
+                                                                        .address !=
+                                                                    '')
+                                                              Text(" · ",
+                                                                  style: TextStyle(
+                                                                      color:
+                                                                          grayColor)),
+                                                            Text(
+                                                              _nearByPlacesList[
+                                                                      index]
+                                                                  .address
+                                                                  .split(
+                                                                      " ")[0],
+                                                              style: Theme.of(
+                                                                      context)
+                                                                  .textTheme
+                                                                  .labelSmall
+                                                                  ?.copyWith(
+                                                                      color:
+                                                                          grayColor,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w500),
+                                                            )
+                                                          ],
+                                                        ),
+                                                        SizedBox(
+                                                          height: 12,
+                                                        ),
                                                       ],
                                                     ),
-                                                    SizedBox(
-                                                      height: 12,
-                                                    ),
+                                                    TextButton(
+                                                        onPressed: () {
+                                                          Map<String, dynamic>
+                                                              selected = {
+                                                            "place":
+                                                                _nearByPlacesList[
+                                                                    index],
+                                                            "day":
+                                                                _tripInfo["day"]
+                                                          };
+                                                          Navigator.pop(context,
+                                                              selected);
+                                                        },
+                                                        style: TextButton.styleFrom(
+                                                            padding: EdgeInsets
+                                                                .symmetric(
+                                                                    vertical: 4,
+                                                                    horizontal:
+                                                                        12),
+                                                            backgroundColor:
+                                                                lightGrayColor,
+                                                            minimumSize:
+                                                                Size(0, 0),
+                                                            shape: RoundedRectangleBorder(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            999))),
+                                                        child: Text(
+                                                          "선택",
+                                                          style:
+                                                              Theme.of(context)
+                                                                  .textTheme
+                                                                  .labelSmall,
+                                                        ))
                                                   ],
                                                 ),
-                                                TextButton(
-                                                    onPressed: () {},
-                                                    style: TextButton.styleFrom(
-                                                        padding: EdgeInsets
-                                                            .symmetric(
-                                                                vertical: 4,
-                                                                horizontal: 12),
-                                                        backgroundColor:
-                                                            lightGrayColor,
-                                                        minimumSize: Size(0, 0),
-                                                        shape: RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        999))),
-                                                    child: Text(
-                                                      "선택",
-                                                      style: Theme.of(context)
-                                                          .textTheme
-                                                          .labelSmall,
-                                                    ))
+                                                SingleChildScrollView(
+                                                  scrollDirection:
+                                                      Axis.horizontal,
+                                                  child: Row(
+                                                    children:
+                                                        _nearByPlacesList[index]
+                                                            .photoUrl!
+                                                            .map((photo) {
+                                                      return Container(
+                                                        margin: EdgeInsets.only(
+                                                            right: 16),
+                                                        width: 150,
+                                                        height: 90,
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(6),
+                                                          image:
+                                                              DecorationImage(
+                                                            fit: BoxFit.cover,
+                                                            image: NetworkImage(
+                                                                photo),
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }).toList(),
+                                                  ),
+                                                )
                                               ],
                                             ),
-                                            SingleChildScrollView(
-                                              scrollDirection: Axis.horizontal,
-                                              child: Row(
-                                                children:
-                                                    _nearByPlacesList[index]
-                                                        .photoUrl!
-                                                        .map((photo) {
-                                                  return Container(
-                                                    margin: EdgeInsets.only(
-                                                        right: 16),
-                                                    width: 150,
-                                                    height: 90,
-                                                    decoration: BoxDecoration(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              6),
-                                                      image: DecorationImage(
-                                                        fit: BoxFit.cover,
-                                                        image:
-                                                            NetworkImage(photo),
-                                                      ),
-                                                    ),
-                                                  );
-                                                }).toList(),
-                                              ),
-                                            )
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                )
-                              : Center(
-                                  child: CircularProgressIndicator(),
-                                ))
+                                          ),
+                                        );
+                                      },
+                                    )
+                                  : isSearchLoaded
+                                      ? Center(child: Text("검색 결과가 없습니다."))
+                                      : SizedBox.shrink())
                     ],
                   ),
                 ),

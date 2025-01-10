@@ -15,13 +15,13 @@ import '../model/product_image_provider.dart';
 
 class LocationDetailScreen extends StatefulWidget {
   final Place place;
-  final Map<String, bool> favoriteStatus;
+  // final Map<String, bool> favoriteStatus;
   // final List<Map<String, bool>> favoriteStatusList;
 
   const LocationDetailScreen({
     super.key,
     required this.place,
-    required this.favoriteStatus,
+    // required this.favoriteStatus,
     // required this.favoriteStatusList
   });
 
@@ -44,8 +44,9 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
 
   bool _isExpanded = false;
 
-  Map<String, bool> _favoriteStatus = {};
+  // Map<String, bool> _favoriteStatus = {};
   // List<Map<String, bool>> _favoriteStatusList = [];
+  bool _isFavorite = false;
 
   void _handlePageChange(int newIndex) {
     setState(() {
@@ -90,8 +91,8 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
     setState(() {
       AppOverlayController.removeOverlay();
       // _favoriteStatusList = widget.favoriteStatusList;
-      _favoriteStatus = widget.favoriteStatus;
-      print('_favoriteStatus $_favoriteStatus');
+      // _favoriteStatus = widget.favoriteStatus;
+      // print('_favoriteStatus $_favoriteStatus');
     });
   }
 
@@ -143,7 +144,8 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
       print('result $result');
       if (result != null) {
         setState(() {
-          _favoriteStatus[locationName] = result[locationName]!;
+          _isFavorite = result[locationName]!;
+          // _favoriteStatus[locationName] = result[locationName]!;
         });
       }
     } catch (e) {
@@ -154,7 +156,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
   void _updateFavoriteStatus(bool isFavorite, Place place) {
     // print('누른 후 isFavorite $isFavorite');
     setState(() {
-      _favoriteStatus[place.name] = isFavorite;
+      // _favoriteStatus[place.name] = isFavorite;
       // print('_favoriteStatus[place.name] ${_favoriteStatus[place.name]}');
     });
   }
@@ -163,6 +165,12 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+            onPressed: () {
+              print('this $_isFavorite');
+              Navigator.pop(context, _isFavorite);
+            },
+            icon: Icon(Icons.arrow_back)),
         actions: [
           _placeDetail?.googleMapsUri != null
               ? IconButton(
@@ -182,8 +190,8 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
                     builder: (BuildContext context) {
                       return StatefulBuilder(builder:
                           (BuildContext context, StateSetter setStateModal) {
-                        bool isFavorite =
-                            _favoriteStatus[_placeDetail?.place.name] ?? false;
+                        // bool isFavorite =
+                        //     _favoriteStatus[_placeDetail?.place.name] ?? false;
                         return Padding(
                             padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
                             child: Column(
@@ -194,23 +202,23 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
                                       // _toggleFavoriteStatus(_placeDetail!.place);
                                       _toggleFavorite.toggleFavoriteStatus(
                                           _placeDetail!.place,
-                                          _favoriteStatus,
+                                          _isFavorite,
                                           // _favoriteStatusList,
                                           context, () {
-                                        _updateFavoriteStatus(
+                                        /* _updateFavoriteStatus(
                                             !(_favoriteStatus[
                                                 _placeDetail?.place.name]!),
-                                            _placeDetail!.place);
+                                            _placeDetail!.place);*/
 
                                         // Modal 내부 setState 호출
                                         setStateModal(() {
-                                          isFavorite = !isFavorite;
+                                          _isFavorite = !_isFavorite;
                                         });
                                         // 부모 위젯의 상태도 업데이트
-                                        setState(() {
+                                        /* setState(() {
                                           _favoriteStatus[_placeDetail!
                                               .place.name] = isFavorite;
-                                        });
+                                        });*/
                                       });
                                       // _toggleFavoriteStatus(_placeDetail!.place);
                                     },
@@ -218,7 +226,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: [
-                                        isFavorite
+                                        _isFavorite
                                             ? Icon(
                                                 Icons.favorite,
                                                 color: Colors.red,
@@ -230,7 +238,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
                                                 size: 20,
                                               ),
                                         SizedBox(width: 15),
-                                        Text(isFavorite ? "저장 취소" : "장소 저장",
+                                        Text(_isFavorite ? "저장 취소" : "장소 저장",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .labelLarge),
