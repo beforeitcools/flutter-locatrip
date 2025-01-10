@@ -14,13 +14,16 @@ class _WebsocketPageState extends State<WebsocketPage> {
   final chatList = <String>[];
   final scrollController = ScrollController();
   final textController = TextEditingController();
+  final uri = Uri.parse('ws://localhost:8082/chattingServer');
 
   @override
   void initState() {
     super.initState();
-    channel = WebSocketChannel.connect(
-      Uri.parse('ws://localhost:8082/chattingServer'),
-    );
+    try {
+      channel = WebSocketChannel.connect(uri);
+    } catch (e) {
+      print('Failed to connect to $uri: $e');
+    }
   }
 
   @override
@@ -43,6 +46,7 @@ class _WebsocketPageState extends State<WebsocketPage> {
               stream: channel.stream,
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
+                  {print('스냅샷 데이터 : ${snapshot.data}');}
                   chatList.insert(0, snapshot.data);
                 }
                 if (scrollController.hasClients) {
@@ -86,7 +90,6 @@ class _WebsocketPageState extends State<WebsocketPage> {
                   onPressed: () {
                     if (textController.text.isNotEmpty) {
                       channel.sink.add(textController.text);
-
                       textController.text = '';
                     }
                   },

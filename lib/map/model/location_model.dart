@@ -26,14 +26,13 @@ class LocationModel {
     }
   }
 
-  Future<String> deleteFavorite(
-      Map<String, dynamic> place, BuildContext context) async {
+  Future<String> deleteFavorite(String googleId, BuildContext context) async {
     final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
       final responses =
-          await dio.post("$backUrl/location/deleteFavorite", data: place);
+          await dio.post("$backUrl/location/deleteFavorite", data: googleId);
       if (responses.statusCode == 200) {
         return responses.data as String;
       } else {
