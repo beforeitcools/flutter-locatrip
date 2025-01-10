@@ -56,4 +56,40 @@ class MypageModel {
       throw Exception("Error: $e");
     }
   }
+
+  Future<Map<String, dynamic>> getMyTripData(BuildContext context) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    try {
+      final response = await dio.get("$backUrl/mypage/myTrip");
+
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception("내 여행 데이터 로드 실패");
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error: $e");
+    }
+  }
+
+  Future<String> deleteTrip(BuildContext context, int tripId) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    try {
+      final response = await dio.post("$backUrl/mypage/deleteTrip/$tripId");
+
+      if (response.statusCode == 200) {
+        return "여행 삭제 성공";
+      } else {
+        return "여행 삭제 실패";
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error: $e");
+    }
+  }
 }

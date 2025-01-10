@@ -85,8 +85,10 @@ class AuthModel {
         final FlutterSecureStorage _storage = FlutterSecureStorage();
         final accessToken = response.headers['Authorization']?.first;
         final refreshToken = response.headers['Refresh_Token']?.first;
+        final int userId = response.data['userId'];
         await _storage.write(key: 'ACCESS_TOKEN', value: accessToken);
         await _storage.write(key: 'REFRESH_TOKEN', value: refreshToken);
+        await _storage.write(key: 'userId', value: userId.toString());
 
         return "로그인 완료";
       } else {
@@ -101,8 +103,11 @@ class AuthModel {
           throw Exception(e.response?.data['failType'] ?? "사용자 없음");
         } else if (e.response?.statusCode == 403) {
           throw Exception(e.response?.data['failType'] ?? "접근 금지");
+        } else if (e.response?.statusCode == 500) {
+          throw Exception("Exception: 서버에러! 다시 로그인 해주세요.");
         }
       }
+      print(e);
       throw Exception("Error: $e");
     }
   }

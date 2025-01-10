@@ -6,7 +6,7 @@ import 'package:flutter_locatrip/Auth/model/auth_model.dart';
 import 'package:flutter_locatrip/Auth/widget/image_pick_widget.dart';
 import 'package:flutter_locatrip/Auth/widget/nickname_widget.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
-import 'package:flutter_locatrip/common/widget/splash_screen_for_loading.dart';
+import 'package:flutter_locatrip/common/widget/loading_screen.dart';
 import 'package:flutter_locatrip/mypage/model/mypage_model.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -30,9 +30,7 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
   @override
   void initState() {
     super.initState();
-    LoadingOverlay.show();
     _loadMypageData();
-    LoadingOverlay.hide();
   }
 
   void _loadMypageData() async {
@@ -42,9 +40,6 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
       _nicknameController.text = result['user']['nickname'];
       _unchangedNickname = result['user']['nickname'];
       _nicknameCheck = true;
-
-      print(_profileImage);
-      print(_nicknameController.text);
     });
   }
 
