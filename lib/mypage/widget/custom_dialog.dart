@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
 class CustomDialog {
-  static void show(
-      BuildContext context, String contentMessage, String buttonText) {
+  static void show(BuildContext context, String contentMessage,
+      String buttonText, VoidCallback onConfirm) {
     showDialog(
       context: context,
       barrierDismissible: false, // dialog 밖에 눌렀을때 닫힘 방지
@@ -82,9 +82,8 @@ class CustomDialog {
                         ),
                         child: InkWell(
                           onTap: () {
-                            // 삭제 후
-
                             Navigator.pop(context);
+                            onConfirm();
                           },
                           splashColor: Color.fromARGB(90, 43, 192, 228),
                           highlightColor: Color.fromARGB(90, 43, 192, 228),
