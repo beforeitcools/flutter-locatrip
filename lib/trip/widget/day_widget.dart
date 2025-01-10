@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
+import 'package:flutter_locatrip/trip/model/trip_day_location.dart';
 import 'package:flutter_locatrip/trip/model/trip_day_model.dart';
 import 'package:flutter_locatrip/trip/model/trip_model.dart';
 import 'package:flutter_locatrip/trip/widget/date_bottom_sheet.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../../map/model/place.dart';
 import '../screen/search_place_screen.dart';
 
 class DayWidget extends StatefulWidget {
@@ -176,25 +178,55 @@ class _DayWidgetState extends State<DayWidget> {
     DateTime endDate = DateTime.parse(_tripInfo["endDate"]);
     List<DateTime> dates = getDatesBetween(startDate, endDate);
     Map<String, dynamic> data = {
+      "googleId": _dayPlace["place"].id,
       "tripId": _tripInfo["id"],
-      "name": _dayPlace["name"],
-      "date": dates[_dayPlace["day"]]
+      "name": _dayPlace["place"].name,
+      "address": _dayPlace["place"].address,
+      "latitude": _dayPlace["place"].location.latitude,
+      "longitude": _dayPlace["place"].location.longitude,
+      "category": _dayPlace["place"].category,
+      "date": dates[_dayPlace["day"]].toIso8601String()
     };
 
     try {
       Map<String, dynamic> result =
           await _tripDayModel.saveTripDayLocation(data, context);
       if (result.isNotEmpty) {
-        print('result $result');
+        print('_dayPlace $_dayPlace');
+
+        _dayPlace["id"] = result["id"];
+        _dayPlace["tripId"] = result["tripId"];
+        _dayPlace["locationId"] = result["locationId"];
+        _dayPlace["date"] = result["date"];
+        _dayPlace["visitTime"] = result["visitTime"];
+        _dayPlace["orderIndex"] = result["orderIndex"];
+        _dayPlace["memo"] = result["memo"];
+        _dayPlace["expenseId"] = result["expenseId"];
+
+        /*TripDayLocation tripDayLocation = TripDayLocation(
+            place: _dayPlace["place"],
+            id: result["id"],
+            tripId: result["tripId"],
+            locationId: result["locationId"],
+            date: DateTime.parse(result["date"]),
+            visitTime: result["date"] != null ? DateTime.parse(result["date"]) : "",
+            orderIndex: result["date"],
+            memo: result["date"],
+            expenseId: result["expenseId"] == null ? "" : result["expenseId"]);*/
+
+        _dayPlaceList.add(_dayPlace);
+
+        print('_dayPlaceList $_dayPlaceList');
+        // _dayPlace.clear();
       }
     } catch (e) {
       print('에러메시지 $e');
     }
 
-    // 1.장소가 없으면 장소 저장 - 있으면 저장x  -> 장소 이름 넘겨서 아이디 찾기
-    // 2. 일정 id trip_view_screen 에서 받아오기
+    // 1.장소가 없으면 장소 저장 - 있으면 저장x  -> 장소 이름 넘겨서 아이디 찾기 ㅇ
+    // 2. 일정 id trip_view_screen 에서 받아오기 - tripInfo에 있음 ㅇ
     // 3. place 로 저장.. // 이름 주소 카테고리 위도 경도
-    // 저장 후에 tripDayLocation Id값도 반환받아서 갖고 있기
+    // 저장 후에 tripDayLocation Id 값도 반환받아서 갖고 있기
   }
 
   // 두 지점 간 거리 계산
@@ -218,13 +250,15 @@ class _DayWidgetState extends State<DayWidget> {
 
     print('receiver $receiver');
     setState(() {
-      _dayPlace = {
+      Place selectedPlace = receiver['place'];
+      _dayPlace = {"place": selectedPlace, "day": receiver["day"]};
+      /*_dayPlace = {
         "name": receiver["place"].name, // 장소명
         "address": receiver["place"].address,
         "category": receiver["place"].category,
         "location": receiver["place"].location,
         "day": receiver["day"]
-      };
+      };*/
     });
 
     _saveTripDayLocation();

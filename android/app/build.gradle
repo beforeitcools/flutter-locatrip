@@ -38,6 +38,7 @@ android {
         versionName = flutter.versionName
         buildConfigField "String", "MAPS_API_KEY", "\"${secretsProps['MAPS_API_KEY']}\""
         buildConfigField "String", "PLACES_API_KEY", "\"${secretsProps['PLACES_API_KEY']}\""
+        buildConfigField "String", "GEOCODING_API_KEY", "\"${secretsProps['GEOCODING_API_KEY']}\""
     }
 
     buildTypes {
