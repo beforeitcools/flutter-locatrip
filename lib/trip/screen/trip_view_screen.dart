@@ -63,7 +63,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
     _singleScrollController.addListener(() {
       setState(() {
         _animatedPositionedOffset = _singleScrollController.offset;
-        print('_animatedPositionedOffset $_animatedPositionedOffset');
+        // print('_animatedPositionedOffset $_animatedPositionedOffset');
         if (_animatedPositionedOffset > 0) {
           _isTop = true;
         } else {
@@ -84,7 +84,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
         setState(() {
           tripInfo.addAll(result);
 
-          print('tripInfo ${tripInfo['selectedRegions']}');
+          // print('tripInfo ${tripInfo['selectedRegions']}');
           address = tripInfo['selectedRegions'][0]['region'];
 
           isLoading = false;
@@ -112,11 +112,11 @@ class _TripViewScreenState extends State<TripViewScreen> {
   _getCoordinatesFromAddress() async {
     try {
       List<Location> locations = await locationFromAddress(address);
-      print("locations $locations");
+
       setState(() {
         latitude = locations.first.latitude;
         longitude = locations.first.longitude;
-        print("latitude: $latitude longitude: $longitude");
+        // print("latitude: $latitude longitude: $longitude");
 
         tripInfo['latitude'] = locations.first.latitude;
         tripInfo['longitude'] = locations.first.longitude;
@@ -130,7 +130,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
 
   void _moveMapToCurrentLocation() {
     if (latitude != null && longitude != null && mapController != null) {
-      print("latitude2: $latitude longitude: $longitude");
+      // print("latitude2: $latitude longitude: $longitude");
       mapController!.animateCamera(
         CameraUpdate.newLatLng(LatLng(latitude!, longitude!)),
       );
@@ -187,7 +187,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
 
     double screenHeight = MediaQuery.of(context).size.height;
 
-    print('animatedPositionedOffset $_animatedPositionedOffset');
+    // print('animatedPositionedOffset $_animatedPositionedOffset');
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -456,11 +456,12 @@ class _TripViewScreenState extends State<TripViewScreen> {
                     // 슬라이드 컨텐츠
 
                     DragBottomSheet(
-                        dropDownDay: _dropDownDay,
-                        tripInfo: tripInfo,
-                        animatedPositionedOffset: _animatedPositionedOffset,
-                        containerHeight: _containerHeight,
-                        singleScrollController: _singleScrollController)
+                      dropDownDay: _dropDownDay,
+                      tripInfo: tripInfo,
+                      animatedPositionedOffset: _animatedPositionedOffset,
+                      containerHeight: _containerHeight,
+                      singleScrollController: _singleScrollController,
+                    )
                   ],
                 ),
       floatingActionButton: Container(

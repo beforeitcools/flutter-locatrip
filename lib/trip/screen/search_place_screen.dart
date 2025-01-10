@@ -368,8 +368,7 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
         });
 
         mapController!.animateCamera(
-          CameraUpdate.newLatLng(LatLng(
-              resultList[0]['location']['latitude'] - 0.005,
+          CameraUpdate.newLatLng(LatLng(resultList[0]['location']['latitude'],
               resultList[0]['location']['longitude'])),
         );
         // 장소 데이터 비동기 처리 및 마커 추가
@@ -574,8 +573,8 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                   height: MediaQuery.of(context).size.height - 80,
                   child: GoogleMap(
                     initialCameraPosition: CameraPosition(
-                        target: LatLng(
-                            _mapCenter.latitude - 0.008, _mapCenter.longitude),
+                        target: LatLng(_mapCenter.latitude - 0.008,
+                            _mapCenter.longitude - 0.008),
                         zoom: 11),
                     myLocationEnabled: true,
                     myLocationButtonEnabled: true,

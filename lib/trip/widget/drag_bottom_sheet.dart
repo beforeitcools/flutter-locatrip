@@ -9,13 +9,14 @@ class DragBottomSheet extends StatefulWidget {
   final double containerHeight;
   final ScrollController singleScrollController;
 
-  const DragBottomSheet(
-      {super.key,
-      required this.dropDownDay,
-      required this.tripInfo,
-      required this.animatedPositionedOffset,
-      required this.containerHeight,
-      required this.singleScrollController});
+  const DragBottomSheet({
+    super.key,
+    required this.dropDownDay,
+    required this.tripInfo,
+    required this.animatedPositionedOffset,
+    required this.containerHeight,
+    required this.singleScrollController,
+  });
 
   @override
   State<DragBottomSheet> createState() => _DragBottomSheetState();
@@ -104,7 +105,7 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
     double screenHeight = MediaQuery.of(context).size.height;
 
     return AnimatedPositioned(
-      duration: Duration(milliseconds: 300),
+      duration: Duration(milliseconds: 100),
       curve: Curves.easeInOut,
       bottom: 0,
       left: 0,
@@ -178,8 +179,8 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
                           dropDownDay: _dropDownDay,
                           index: index,
                           onDateSelected: _scrollToSelectedItem,
-                          tripInfo: _tripInfo,
-                          selectedIndex: _selectedIndex),
+                          selectedIndex: _selectedIndex,
+                          tripInfo: _tripInfo),
                     );
                   },
                 ),
