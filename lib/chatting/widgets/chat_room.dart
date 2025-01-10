@@ -6,13 +6,14 @@ import 'package:flutter_locatrip/chatting/model/chat_model.dart';
 import 'package:flutter_locatrip/chatting/ui/own_message_ui.dart';
 import 'package:flutter_locatrip/chatting/ui/reply_message_ui.dart';
 import 'package:flutter_locatrip/chatting/widgets//chat_room_setting.dart';
-import 'package:flutter_locatrip/common/Auth/auth_dio_interceptor.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ChatRoomPage extends StatefulWidget {
-  const ChatRoomPage({super.key, required this.chatroomId, required this.chatroomName});
+  ChatRoomPage({super.key, required this.token, required this.chatroomId, required this.chatroomName});
+  String token;
   final String chatroomName;
   final int chatroomId;
 
@@ -21,10 +22,9 @@ class ChatRoomPage extends StatefulWidget {
 }
 
 class _ChatRoomPageState extends State<ChatRoomPage> {
-  StreamController streamController = StreamController.broadcast();
-  late final WebSocketChannel _channel;
+
   late final uri = Uri.parse('ws://localhost:8082/chattingServer');// 서버 url
-  late final String myToken;
+  late final WebSocketChannel _channel;
 
   final ChatModel _chatModel = ChatModel();
   final TextEditingController _textController = TextEditingController();
@@ -40,8 +40,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   Future<void> _getUserId() async{
     final dynamic stringId = await _storage.read(key: 'userId');
     myUserId = int.tryParse(stringId) ?? 0; // 현재 유저 아이디
-    final dynamic token = await _storage.read(key: "ACCESS_TOKEN");
-    myToken = token.toString();
   }
 
 
@@ -67,20 +65,16 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     _getUserId();
     try {
       _channel = WebSocketChannel.connect(uri);
-      print('Connected to $uri');
     } catch (e) {
       print('Failed to connect to $uri: $e');
     }
-    streamController.stream.listen((message) {
-      print("Received from server: $message");
-    }); // 받은 데이터 처리
     _loadChatsById();
   }
 
   void _sendMessage() async{
     if(_textController.text.isNotEmpty){
       try{
-        final message = {
+        Map<String, Object> message = {
           "userId": myUserId,
           "chatRoom":{
             "id": widget.chatroomId,
@@ -91,11 +85,10 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           "read": false};
 
        final jsonMessage = json.encode(message);
-        _channel.sink.add(jsonMessage); //TODO: 이녀석을 가게 해야함
+        _channel.sink.add(jsonMessage);
         setState(() {
           _chats.add(message);
           _textController.clear();
-
         });
         WidgetsBinding.instance.addPostFrameCallback((_) {_scrollToBottom();});
         await _chatModel.saveMessage(jsonMessage, context);
@@ -131,23 +124,14 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           width: MediaQuery.of(context).size.width,
           child: Stack(
             children: [
-              StreamBuilder(stream: _channel.stream, builder: (context, snapshot){
-                  if(snapshot.hasData){
-                  print("my snapshot data : ${snapshot.data}");
-                  try {
-                    final data = json.decode(snapshot.data as String);
-                    if (data["type"] == "chat") {
-                      setState(() {
-                        print('chat이랑 type이 같습니까?');
-                            _chats.add(data);
-                      });
-                    } else if (data["type"] == "status") {
-                      print("Status update: ${data["message"]}");
+              StreamBuilder(
+                  stream: _channel.stream, // 이 스트림을 참조하께여 구독중
+                  builder: (context, snapshot){
+                    if(snapshot.hasData){
+                      {print('스냅샷 데이터 : ${snapshot.data}');
+                      Map<String, dynamic> mapData = jsonDecode(snapshot.data);
+                      _chats.add(mapData);}
                     }
-                  } catch (e) {
-                    print("Error decoding WebSocket message: ${snapshot.data}");
-                  }
-                }
                 return Container(
                   height: MediaQuery.of(context).size.height - 150,
                   child: ListView.builder(
@@ -156,7 +140,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                     itemCount: _chats.length,
                     itemBuilder: (context, index){
                       final chat = _chats[index];
-                      print('$chat'); // myuserId 가져와야돼
                           return chat["userId"] == myUserId ? OwnMessageUi(text: chat["messageContents"], time: chat["sendTime"].toString()) : ReplyMessageUi(text: chat["messageContents"], time: chat["sendTime"].toString()); //TODO: userId 확인해서 "나"면 Own, 외에는 Reply
                     },
                   ),
@@ -187,7 +170,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                                   controller: _textController,
                                   onFieldSubmitted: (value){
                                     if(value.isNotEmpty){
-                                      _sendMessage();
+                                      _channel.sink.add(value);
                                       _textController.text = "";
                                     }
                                   },
@@ -196,7 +179,11 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                                       hintText: "메세지를 입력하세요",
                                       contentPadding: EdgeInsets.only(left: 20, right: 20, bottom: 15)),
                                 )),
-                                IconButton(onPressed: (){_sendMessage();}, icon: Icon(Icons.send), color: grayColor,)
+                                IconButton(onPressed: (){
+                                  if(_textController.text.isNotEmpty){
+                                    _sendMessage();
+                                  }
+                                }, icon: Icon(Icons.send), color: grayColor,)
                               ],
                             )))),
                 ]),
