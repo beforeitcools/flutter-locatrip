@@ -82,7 +82,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           },
           "messageContents": _textController.text,
           "sendTime": DateTime.now().toIso8601String(),
-          "read": false};
+          "read": false,
+          "readCount": 1};
 
        final jsonMessage = json.encode(message);
         _channel.sink.add(jsonMessage);
