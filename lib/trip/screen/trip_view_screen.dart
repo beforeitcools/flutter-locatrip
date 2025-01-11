@@ -124,8 +124,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
   }
 
   Future<void> _loadTripDayLocation() async {
+    // Future<Map<int, List<Map<String, dynamic>>>> _loadTripDayLocation() async {
     print('이거 실행되는지?');
-    // 일정Id로 조회하기
+
     int tripId = tripInfo["id"];
     print('tripId $tripId');
     try {
@@ -133,66 +134,102 @@ class _TripViewScreenState extends State<TripViewScreen> {
           await _tripDayModel.getTripDay(tripId, context);
       print('result조회 $result');
       if (result != null && result.isNotEmpty) {
+        // 상태 변경 전에 데이터를 완전히 업데이트
+        tripDayAllList.clear();
+        for (Map<String, dynamic> resultItem in result) {
+          Map<String, dynamic> resultMap = {
+            "id": resultItem["id"],
+            "tripId": resultItem["tripId"],
+            "locationId": resultItem["locationId"],
+            "date": resultItem["date"],
+            "visitTime": resultItem["visitTime"],
+            "orderIndex": resultItem["orderIndex"],
+            "memo": resultItem["memo"],
+            "expenseId": resultItem["expenseId"],
+            "dateIndex": resultItem["dateIndex"],
+            "isChecked": false,
+            "place": Place(
+                id: resultItem["location"]["googleId"],
+                name: resultItem["location"]["name"],
+                address: resultItem["location"]["address"],
+                category: resultItem["location"]["category"],
+                photoUrl: null,
+                location: LatLng(resultItem["location"]["latitude"],
+                    resultItem["location"]["longitude"]),
+                icon: BitmapDescriptor.defaultMarker)
+          };
+          tripDayAllList.add(resultMap);
+        }
+        await _seletMemo();
+
+        // 상태 변경 후 UI 갱신
         setState(() {
-          for (Map<String, dynamic> resultItem in result) {
-            Map<String, dynamic> resultMap = {
-              "id": resultItem["id"],
-              "tripId": resultItem["tripId"],
-              "locationId": resultItem["locationId"],
-              "date": resultItem["date"],
-              "visitTime": resultItem["visitTime"],
-              "orderIndex": resultItem["orderIndex"],
-              "memo": resultItem["memo"],
-              "expenseId": resultItem["expenseId"],
-              "dateIndex": resultItem["dateIndex"],
-              "isChecked": false,
-              "place": Place(
-                  id: resultItem["location"]["googleId"],
-                  name: resultItem["location"]["name"],
-                  address: resultItem["location"]["address"],
-                  category: resultItem["location"]["category"],
-                  photoUrl: null,
-                  location: LatLng(resultItem["location"]["latitude"],
-                      resultItem["location"]["longitude"]),
-                  icon: BitmapDescriptor.defaultMarker)
-            };
-            tripDayAllList.add(resultMap);
-          }
-
-          print('resultList $tripDayAllList');
-
-          setState(() {
-            groupedTripDayAllList = groupByDate(tripDayAllList);
-            print('groupedTripDayAllList $groupedTripDayAllList');
-            /* _groupedTripDayAllList.forEach((key, value) {
-              print("Date: $key");
-              print("Items: $value\n");
-            });*/
-          });
+          groupedTripDayAllList =
+              groupByDate(tripDayAllList, _dropDownDay.length);
         });
+
+        print('resultList $tripDayAllList');
+        print('groupedTripDayAllList $groupedTripDayAllList');
+        // return groupedTripDayAllList;
       } else {
         print('결과가 없거나 null입니다.');
+        await _seletMemo();
+
+        setState(() {
+          groupedTripDayAllList =
+              groupByDate(tripDayAllList, _dropDownDay.length);
+        });
       }
     } catch (e) {
       print('에러메시지 $e');
+      // return {};
     }
   }
 
   Map<int, List<Map<String, dynamic>>> groupByDate(
-      List<Map<String, dynamic>> list) {
+      List<Map<String, dynamic>> list, int totalDays) {
     // 빈 Map 생성
     Map<int, List<Map<String, dynamic>>> groupedMap = {};
 
-    for (var item in list) {
-      print('item1 $item');
-      int date = item['dateIndex'];
-      if (!groupedMap.containsKey(date)) {
-        groupedMap[date] = []; // 새로운 그룹 생성
-      }
-      groupedMap[date]!.add(item); // 그룹에 데이터 추가
+    // 초기화: 모든 인덱스를 빈 리스트로 설정
+    for (int i = 0; i < totalDays; i++) {
+      groupedMap[i] = [];
     }
+
+    // 리스트의 데이터를 그룹화
+    for (var item in list) {
+      print('item $item');
+      int dateIndex = item['dateIndex']; // dateIndex를 키로 사용
+      groupedMap[dateIndex]?.add(item); // 해당 키에 데이터 추가
+    }
+
     print('groupedMap $groupedMap');
     return groupedMap;
+  }
+
+  Future<void> _seletMemo() async {
+    try {
+      List<Map<String, dynamic>> selectMemoList =
+          await _tripModel.selectMemo(tripInfo["id"], context);
+      if (selectMemoList != null) {
+        print('메모 조회 성공');
+        print('selectMemoList $selectMemoList');
+
+        List<Map<String, dynamic>> tempList = [];
+        for (Map<String, dynamic> memo in selectMemoList) {
+          Map<String, dynamic> newDayPlace = {};
+          newDayPlace["isMemo"] = true;
+          newDayPlace["memo"] = memo["content"];
+          newDayPlace["dateIndex"] = memo["dateIndex"];
+          tempList.add(newDayPlace);
+        }
+        // _dayPlaceList.addAll(tempList);
+        tripDayAllList.addAll(tempList);
+        print('new tripDayAllList $tripDayAllList');
+      }
+    } catch (e) {
+      print("에러메시지 $e");
+    }
   }
 
   _getCoordinatesFromAddress() async {
@@ -346,12 +383,22 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.end,
                                             children: [
-                                              Text(
-                                                tripInfo["title"] ?? "제목 없음",
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .titleLarge,
+                                              Container(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.5,
+                                                child: Text(
+                                                  tripInfo["title"] ?? "제목 없음",
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .titleLarge,
+                                                  overflow:
+                                                      TextOverflow.visible,
+                                                  softWrap: true,
+                                                ),
                                               ),
+
                                               SizedBox(
                                                 width: 16,
                                               ),

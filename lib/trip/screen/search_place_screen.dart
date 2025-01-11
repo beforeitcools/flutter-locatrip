@@ -1035,6 +1035,8 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                                                                 "day"],
                                                             "dateIndex": index
                                                           };
+                                                          AppOverlayController
+                                                              .removeOverlay();
                                                           Navigator.pop(context,
                                                               selected);
                                                         },
