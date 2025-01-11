@@ -287,17 +287,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                                                         TripViewScreen(
                                                             tripId:
                                                                 newTripId ?? 0),
-                                                    fullscreenDialog: false,
                                                   ));
-                                              // Navigator.pushAndRemoveUntil(
-                                              //   context,
-                                              //   MaterialPageRoute(
-                                              //       builder: (context) =>
-                                              //           TripViewScreen(tripId: newTripId)),
-                                              //
-                                              //   (Route<dynamic> route) =>
-                                              //       false, // 이전 페이지 들을 모두 제거
-                                              // );
                                             }
                                           }
                                         : null,

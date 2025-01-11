@@ -4,6 +4,7 @@ import 'package:flutter_locatrip/trip/model/trip_day_model.dart';
 import 'package:flutter_locatrip/trip/model/trip_model.dart';
 import 'package:flutter_locatrip/trip/widget/date_bottom_sheet.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../map/model/place.dart';
 import '../screen/search_place_screen.dart';
@@ -51,11 +52,10 @@ class _DayWidgetState extends State<DayWidget> {
     _tripInfo = widget.tripInfo;
     _selectedIndex = widget.selectedIndex;
 
-    print('tripInfo $_tripInfo');
     /*
     * tripInfo {id: 16, userId: 1, title: ㅇ허ㅣ, startDate: 2025-01-16, endDate: 2025-01-24, createdAt: 2025-01-09T21:31:54, updatedAt: 2025-01-09T21:31:54, chattingId: null, status: 1, selectedRegions: [{tripId: 16, region: 여수}]}
     * */
-    print('dropDownDayList $dropDownDayList');
+
     /*
     * dropDownDayList [01.16/목, 01.17/금, 01.18/토, 01.19/일, 01.20/월, 01.21/화, 01.22/수, 01.23/목, 01.24/금]
     * */
@@ -176,6 +176,7 @@ class _DayWidgetState extends State<DayWidget> {
     DateTime startDate = DateTime.parse(_tripInfo["startDate"]);
     DateTime endDate = DateTime.parse(_tripInfo["endDate"]);
     List<DateTime> dates = getDatesBetween(startDate, endDate);
+
     Map<String, dynamic> data = {
       "googleId": _dayPlace["place"].id,
       "tripId": _tripInfo["id"],
@@ -184,39 +185,35 @@ class _DayWidgetState extends State<DayWidget> {
       "latitude": _dayPlace["place"].location.latitude,
       "longitude": _dayPlace["place"].location.longitude,
       "category": _dayPlace["place"].category,
-      "date": dates[_dayPlace["day"]].toIso8601String()
+      "date": dates[_dayPlace["day"]].toIso8601String(),
+      "dateIndex": _dayPlace["day"]
     };
 
     try {
       Map<String, dynamic> result =
           await _tripDayModel.saveTripDayLocation(data, context);
+      print('saveTripDayLocation결과 $result');
       if (result.isNotEmpty) {
         print('_dayPlace $_dayPlace');
 
-        _dayPlace["id"] = result["id"];
-        _dayPlace["tripId"] = result["tripId"];
-        _dayPlace["locationId"] = result["locationId"];
-        _dayPlace["date"] = result["date"];
-        _dayPlace["visitTime"] = result["visitTime"];
-        _dayPlace["orderIndex"] = result["orderIndex"];
-        _dayPlace["memo"] = result["memo"];
-        _dayPlace["expenseId"] = result["expenseId"];
+        setState(() {
+          if (!_dayPlaceList.any((place) => place["id"] == result["id"])) {
+            _dayPlace["id"] = result["id"];
+            _dayPlace["tripId"] = result["tripId"];
+            _dayPlace["locationId"] = result["locationId"];
+            _dayPlace["date"] = result["date"];
+            _dayPlace["visitTime"] = result["visitTime"];
+            _dayPlace["orderIndex"] = result["orderIndex"];
+            _dayPlace["memo"] = result["memo"];
+            _dayPlace["expenseId"] = result["expenseId"];
+            _dayPlace["isChecked"] = false;
+            _dayPlace["dateIndex"] = result["dateIndex"];
 
-        /*TripDayLocation tripDayLocation = TripDayLocation(
-            place: _dayPlace["place"],
-            id: result["id"],
-            tripId: result["tripId"],
-            locationId: result["locationId"],
-            date: DateTime.parse(result["date"]),
-            visitTime: result["date"] != null ? DateTime.parse(result["date"]) : "",
-            orderIndex: result["date"],
-            memo: result["date"],
-            expenseId: result["expenseId"] == null ? "" : result["expenseId"]);*/
-
-        _dayPlaceList.add(_dayPlace);
-
-        print('_dayPlaceList $_dayPlaceList');
-        // _dayPlace.clear();
+            _dayPlaceList.add(_dayPlace);
+          } else {
+            print("이미 추가된 장소입니다.");
+          }
+        });
       }
     } catch (e) {
       print('에러메시지 $e');
@@ -247,17 +244,13 @@ class _DayWidgetState extends State<DayWidget> {
                   tripInfo: _tripInfo,
                 )));
 
-    print('receiver $receiver');
     setState(() {
       Place selectedPlace = receiver['place'];
-      _dayPlace = {"place": selectedPlace, "day": receiver["day"]};
-      /*_dayPlace = {
-        "name": receiver["place"].name, // 장소명
-        "address": receiver["place"].address,
-        "category": receiver["place"].category,
-        "location": receiver["place"].location,
-        "day": receiver["day"]
-      };*/
+      _dayPlace = {
+        "place": selectedPlace,
+        "day": receiver["day"],
+        "dateIndex": receiver["dateIndex"]
+      };
     });
 
     _saveTripDayLocation();
@@ -265,12 +258,179 @@ class _DayWidgetState extends State<DayWidget> {
 
   @override
   Widget build(BuildContext context) {
+    print('빌드_dayPlaceList $_dayPlaceList');
     return Column(
       children: [
         Padding(padding: EdgeInsets.all(16), child: getWidget(index)),
 
         // 여기에 장소 추가/ 메모 추가 되면 됨 !
 
+        if (_dayPlaceList.isNotEmpty)
+          Container(
+            child: ReorderableListView(
+              physics: NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              onReorder: (oldIndex, newIndex) {
+                setState(() {
+                  if (newIndex > oldIndex) newIndex -= 1;
+                  final item = _dayPlaceList.removeAt(oldIndex);
+                  _dayPlaceList.insert(newIndex, item);
+                });
+              },
+              children: [
+                for (int i = 0; i < _dayPlaceList.length; i++)
+                  ListTile(
+                      key: ValueKey(_dayPlaceList[i]),
+                      contentPadding:
+                          EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                      horizontalTitleGap: 0,
+                      leading: IconButton(
+                        onPressed: () {
+                          setState(() {
+                            if (_dayPlaceList[i]["isChecked"] != null) {
+                              _dayPlaceList[i]["isChecked"] =
+                                  !_dayPlaceList[i]["isChecked"];
+                            }
+                          });
+                        },
+                        icon: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _dayPlaceList[i]["isChecked"] != null &&
+                                      _dayPlaceList[i]["isChecked"]!
+                                  ? pointBlueColor
+                                  : Colors.white,
+                              border: Border.all(
+                                  color:
+                                      _dayPlaceList[i]["isChecked"] != null &&
+                                              _dayPlaceList[i]["isChecked"]!
+                                          ? pointBlueColor
+                                          : grayColor,
+                                  width: 1)),
+                          child: _dayPlaceList[i]["isChecked"] != null &&
+                                  _dayPlaceList[i]["isChecked"]!
+                              ? Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 20,
+                                )
+                              : null,
+                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: BoxConstraints(),
+                      ),
+                      title: Container(
+                        // width: double.infinity,
+                        padding:
+                            EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                        decoration: BoxDecoration(
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                offset: Offset(1, 1),
+                                blurRadius: 4,
+                              ),
+                            ],
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(6)),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                // 순서
+                                Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: grayColor, //임시
+                                  ),
+                                  width: 20,
+                                  height: 20,
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    _dayPlaceList[i]["orderIndex"]
+                                            ?.toString() ??
+                                        "",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w500),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 10,
+                                ),
+                                // 텍스트
+                                Container(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.45,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _dayPlaceList[i]["place"]?.name ?? "",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleSmall,
+                                      ),
+                                      Wrap(
+                                        spacing: 2,
+                                        children: [
+                                          Text(
+                                            _dayPlaceList[i]["place"]
+                                                    ?.category ??
+                                                "",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .labelSmall
+                                                ?.copyWith(color: grayColor),
+                                          ),
+                                          if (_dayPlaceList[i]["place"]
+                                                      ?.category !=
+                                                  null &&
+                                              _dayPlaceList[i]["place"]
+                                                      .address !=
+                                                  null)
+                                            Text(
+                                              "·",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .labelSmall
+                                                  ?.copyWith(color: grayColor),
+                                            ),
+                                          Text(
+                                            _dayPlaceList[i]["place"]
+                                                    ?.address
+                                                    ?.split(" ")[0] ??
+                                                "",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .labelSmall
+                                                ?.copyWith(color: grayColor),
+                                          )
+                                        ],
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Icon(
+                              Icons.menu,
+                              color: grayColor,
+                            ),
+                          ],
+                        ),
+                      )),
+              ],
+            ),
+          ),
         Row(
           children: [
             SizedBox(
