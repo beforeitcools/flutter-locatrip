@@ -5,12 +5,31 @@ import 'package:flutter_locatrip/common/widget/url.dart';
 
 class ChatModel{
 
-  Future<List<dynamic>> fetchMessageData(int userId, BuildContext context) async{
+  // 최신 메세지 가져옴
+  Future<List<dynamic>> fetchMessageData(BuildContext context) async{
     final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
     
     try{
       final response = await dio.get("$backUrl/api/chat/recent");
+
+      if(response.statusCode == 200){
+        return response.data as List<dynamic>;
+      }else{
+        throw Exception("메세지 로드 실패");
+      }
+    } catch (e) {
+      throw Exception("Error: $e");
+    }
+  }
+
+  // 검색 메세지 가져옴
+  Future<List<dynamic>> fetchSearchMessageData(String searchKeyword, BuildContext context) async{
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    try{
+      final response = await dio.get("$backUrl/chatroom/search/$searchKeyword");
 
       if(response.statusCode == 200){
         return response.data as List<dynamic>;
@@ -69,7 +88,7 @@ class ChatModel{
     print('$chatroomId 는 나의 채팅방 아이디, $chatroomName 는 내가 바꿀 이름');
     try {
       final response = await dio.post(
-          "$backUrl/updateRoom/$chatroomId",
+          "$backUrl/chatroom/update/$chatroomId",
           data: chatroomName);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
