@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
-import 'package:flutter_locatrip/trip/model/trip_day_location.dart';
 import 'package:flutter_locatrip/trip/model/trip_day_model.dart';
 import 'package:flutter_locatrip/trip/model/trip_model.dart';
 import 'package:flutter_locatrip/trip/widget/date_bottom_sheet.dart';
