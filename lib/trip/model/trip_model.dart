@@ -44,4 +44,46 @@ class TripModel {
       throw Exception("Error : $e");
     }
   }
+
+  // 메모 등록
+  Future<Map<String, dynamic>> addMemo(
+      Map<String, dynamic> data, BuildContext context) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+    try {
+      final responses = await dio.post("$backUrl/memo/insertMemo", data: data);
+      print('responses memo $responses.data');
+      if (responses.statusCode == 200) {
+        return responses.data as Map<String, dynamic>;
+      } else {
+        throw Exception("로드 실패");
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error : $e");
+    }
+  }
+
+  // 메모 조회
+  Future<List<Map<String, dynamic>>> selectMemo(
+      int tripId, BuildContext context) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+    try {
+      final responses = await dio.get("$backUrl/memo/selectMemo/$tripId");
+      print('responses memo! $responses.data');
+      if (responses.statusCode == 200) {
+        final List<dynamic> responseData = responses.data;
+        final List<Map<String, dynamic>> result =
+            responseData.map((item) => item as Map<String, dynamic>).toList();
+        print('조회result $result');
+        return result;
+      } else {
+        throw Exception("로드 실패");
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error : $e");
+    }
+  }
 }

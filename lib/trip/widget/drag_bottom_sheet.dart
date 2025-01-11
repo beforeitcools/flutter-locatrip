@@ -8,15 +8,16 @@ class DragBottomSheet extends StatefulWidget {
   final double animatedPositionedOffset;
   final double containerHeight;
   final ScrollController singleScrollController;
+  final Map<int, List<Map<String, dynamic>>> groupedTripDayAllList;
 
-  const DragBottomSheet({
-    super.key,
-    required this.dropDownDay,
-    required this.tripInfo,
-    required this.animatedPositionedOffset,
-    required this.containerHeight,
-    required this.singleScrollController,
-  });
+  const DragBottomSheet(
+      {super.key,
+      required this.dropDownDay,
+      required this.tripInfo,
+      required this.animatedPositionedOffset,
+      required this.containerHeight,
+      required this.singleScrollController,
+      required this.groupedTripDayAllList});
 
   @override
   State<DragBottomSheet> createState() => _DragBottomSheetState();
@@ -39,6 +40,8 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
   late ScrollController _singleScrollController;
   bool _isExpanded = false;
   int _selectedIndex = 0;
+  late Map<int, List<Map<String, dynamic>>> _groupedTripDayAllList;
+  late List<int> sortedKeys;
 
   @override
   void initState() {
@@ -48,6 +51,9 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
     _containerHeight = widget.containerHeight;
     _singleScrollController = widget.singleScrollController;
     _animatedPositionedOffset = widget.animatedPositionedOffset;
+    _groupedTripDayAllList = widget.groupedTripDayAllList;
+    print('21_groupedTripDayAllList $_groupedTripDayAllList');
+    // sortedKeys = _groupedTripDayAllList.keys.toList()..sort();
 
     // 각 아이템에 GlobalKey 부여
     for (int i = 0; i < _dropDownDay.length; i++) {
@@ -67,6 +73,18 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
         _animatedPositionedOffset = _singleScrollController.offset;
       });
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant DragBottomSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 상위 위젯에서 데이터가 변경된 후 이를 처리
+    if (widget.groupedTripDayAllList != oldWidget.groupedTripDayAllList) {
+      setState(() {
+        _groupedTripDayAllList = widget.groupedTripDayAllList;
+        print('여기 왔어???');
+      });
+    }
   }
 
   void _toggleContainer() {
@@ -102,7 +120,6 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
-    double screenHeight = MediaQuery.of(context).size.height;
 
     return AnimatedPositioned(
       duration: Duration(milliseconds: 100),
@@ -166,25 +183,43 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
                       ),
                     ),
                   )),
-              Expanded(
-                child: ListView.builder(
-                  controller: _scrollController,
-                  physics: BouncingScrollPhysics(),
-                  itemCount: _dropDownDay.length,
-                  itemBuilder: (context, index) {
-                    return Container(
-                      key: _itemKeys[index],
-                      child: DayWidget(
-                          selectedItem: _dropDownDay[index],
-                          dropDownDay: _dropDownDay,
-                          index: index,
-                          onDateSelected: _scrollToSelectedItem,
-                          selectedIndex: _selectedIndex,
-                          tripInfo: _tripInfo),
-                    );
-                  },
-                ),
-              )
+              _dropDownDay.length == _groupedTripDayAllList.length
+                  ? Expanded(
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        physics: BouncingScrollPhysics(),
+                        itemCount: _dropDownDay.length,
+                        itemBuilder: (context, index) {
+                          print(
+                              '2groupedTripDayAllList $_groupedTripDayAllList');
+
+                          // List<Map<String, dynamic>> dayPlaceList = [];
+                          // if (_groupedTripDayAllList.length != 0) {
+                          int key =
+                              _groupedTripDayAllList.keys.elementAt(index);
+                          List<Map<String, dynamic>> dayPlaceList =
+                              _groupedTripDayAllList[key] ?? [];
+                          // } else {
+                          //   dayPlaceList = [];
+                          // }
+
+                          return Container(
+                            key: _itemKeys[index],
+                            child: DayWidget(
+                                selectedItem: _dropDownDay[index],
+                                dropDownDay: _dropDownDay,
+                                index: index,
+                                onDateSelected: _scrollToSelectedItem,
+                                selectedIndex: _selectedIndex,
+                                tripInfo: _tripInfo,
+                                dayPlaceList: dayPlaceList),
+                          );
+                        },
+                      ),
+                    )
+                  : Center(
+                      child: CircularProgressIndicator(),
+                    )
             ],
           ),
         ),
