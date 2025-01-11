@@ -51,6 +51,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
   bool _isInfoLoaded = false;
 
   List<Map<String, dynamic>> tripDayAllList = [];
+  Map<int, List<Map<String, dynamic>>> groupedTripDayAllList = {};
 
   @override
   void initState() {
@@ -159,13 +160,14 @@ class _TripViewScreenState extends State<TripViewScreen> {
           }
 
           print('resultList $tripDayAllList');
-// 그룹화 실행
-          var groupedTripDayAllList = groupByDate(tripDayAllList);
 
-// 결과 출력
-          groupedTripDayAllList.forEach((key, value) {
-            print("Date: $key");
-            print("Items: $value\n");
+          setState(() {
+            groupedTripDayAllList = groupByDate(tripDayAllList);
+            print('groupedTripDayAllList $groupedTripDayAllList');
+            /* _groupedTripDayAllList.forEach((key, value) {
+              print("Date: $key");
+              print("Items: $value\n");
+            });*/
           });
         });
       } else {
@@ -548,6 +550,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
                       animatedPositionedOffset: _animatedPositionedOffset,
                       containerHeight: _containerHeight,
                       singleScrollController: _singleScrollController,
+                      groupedTripDayAllList: groupedTripDayAllList,
                     )
                   ],
                 ),

@@ -8,15 +8,16 @@ class DragBottomSheet extends StatefulWidget {
   final double animatedPositionedOffset;
   final double containerHeight;
   final ScrollController singleScrollController;
+  // final Map<int, List<Map<String, dynamic>>> groupedTripDayAllList;
 
-  const DragBottomSheet({
-    super.key,
-    required this.dropDownDay,
-    required this.tripInfo,
-    required this.animatedPositionedOffset,
-    required this.containerHeight,
-    required this.singleScrollController,
-  });
+  const DragBottomSheet(
+      {super.key,
+      required this.dropDownDay,
+      required this.tripInfo,
+      required this.animatedPositionedOffset,
+      required this.containerHeight,
+      required this.singleScrollController,
+      required this.groupedTripDayAllList});
 
   @override
   State<DragBottomSheet> createState() => _DragBottomSheetState();
@@ -180,7 +181,8 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
                           index: index,
                           onDateSelected: _scrollToSelectedItem,
                           selectedIndex: _selectedIndex,
-                          tripInfo: _tripInfo),
+                          tripInfo: _tripInfo,
+                          groupedTripDayAllList: widget.groupedTripDayAllList),
                     );
                   },
                 ),

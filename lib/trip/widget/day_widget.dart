@@ -16,16 +16,17 @@ class DayWidget extends StatefulWidget {
   final Function(int) onDateSelected;
   final Map<String, dynamic> tripInfo;
   final int selectedIndex;
+  final Map<int, List<Map<String, dynamic>>> groupedTripDayAllList;
 
-  const DayWidget({
-    super.key,
-    required this.selectedItem,
-    required this.dropDownDay,
-    required this.index,
-    required this.onDateSelected,
-    required this.tripInfo,
-    required this.selectedIndex,
-  });
+  const DayWidget(
+      {super.key,
+      required this.selectedItem,
+      required this.dropDownDay,
+      required this.index,
+      required this.onDateSelected,
+      required this.tripInfo,
+      required this.selectedIndex,
+      required this.groupedTripDayAllList});
 
   @override
   State<DayWidget> createState() => _DayWidgetState();
@@ -38,6 +39,7 @@ class _DayWidgetState extends State<DayWidget> {
   late int index;
   late Map<String, dynamic> _tripInfo;
   late int _selectedIndex;
+  late Map<int, List<Map<String, dynamic>>> _groupedTripDayAllList;
 
   // 모든 day가 담김
   List<Map<String, dynamic>> _dayPlaceList = [];
@@ -51,6 +53,11 @@ class _DayWidgetState extends State<DayWidget> {
     index = widget.index;
     _tripInfo = widget.tripInfo;
     _selectedIndex = widget.selectedIndex;
+
+    /* _groupedTripDayAllList.forEach((key, value) {
+      print("Date: $key");
+      print("Items: $value\n");
+    });*/
 
     /*
     * tripInfo {id: 16, userId: 1, title: ㅇ허ㅣ, startDate: 2025-01-16, endDate: 2025-01-24, createdAt: 2025-01-09T21:31:54, updatedAt: 2025-01-09T21:31:54, chattingId: null, status: 1, selectedRegions: [{tripId: 16, region: 여수}]}
