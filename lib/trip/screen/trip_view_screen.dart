@@ -2,12 +2,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
+import 'package:flutter_locatrip/main/screen/main_screen.dart';
+import 'package:flutter_locatrip/trip/model/trip_day_model.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import '../../map/model/place.dart';
 import '../model/trip_model.dart';
 import '../widget/drag_bottom_sheet.dart';
 
@@ -28,6 +31,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
   Map<String, dynamic> tripInfo = {};
 
   TripModel _tripModel = TripModel();
+  TripDayModel _tripDayModel = TripDayModel();
   bool isLoading = true;
 
   double? latitude;
@@ -44,13 +48,23 @@ class _TripViewScreenState extends State<TripViewScreen> {
   double _animatedPositionedOffset = 0;
   bool _isTop = false;
 
+  bool _isInfoLoaded = false;
+
+  List<Map<String, dynamic>> tripDayAllList = [];
+  Map<String, List<Map<String, dynamic>>> groupedByDate = {};
+  late DateTime startDate;
+  late DateTime endDate;
+
   @override
   void initState() {
     super.initState();
 
     initializeDateFormatting('ko_KR', null).then((_) {
       Intl.defaultLocale = 'ko_KR';
-      _loadInfo();
+      if (!_isInfoLoaded) {
+        _isInfoLoaded = true;
+        _loadInfo();
+      }
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -80,12 +94,15 @@ class _TripViewScreenState extends State<TripViewScreen> {
     try {
       Map<String, dynamic> result =
           await _tripModel.selectTrip(widget.tripId, context);
+
       if (result.isNotEmpty) {
         setState(() {
           tripInfo.addAll(result);
 
           // print('tripInfo ${tripInfo['selectedRegions']}');
           address = tripInfo['selectedRegions'][0]['region'];
+          startDate = tripInfo["startDate"];
+          endDate = tripInfo["endDate"];
 
           isLoading = false;
 
@@ -96,6 +113,8 @@ class _TripViewScreenState extends State<TripViewScreen> {
         if (address.isNotEmpty) {
           _getCoordinatesFromAddress();
         }
+
+        await _loadTripDayLocation();
       } else {
         setState(() {
           isLoading = false;
@@ -108,6 +127,91 @@ class _TripViewScreenState extends State<TripViewScreen> {
       });
     }
   }
+
+  Future<void> _loadTripDayLocation() async {
+    print('이거 실행되는지?');
+    // 일정Id로 조회하기
+    int tripId = tripInfo["id"];
+    print('tripId $tripId');
+    try {
+      List<Map<String, dynamic>> result =
+          await _tripDayModel.getTripDay(tripId, context);
+      print('result조회 $result');
+      if (result != null && result.isNotEmpty) {
+        setState(() {
+          for (Map<String, dynamic> resultItem in result) {
+            Map<String, dynamic> resultMap = {
+              "id": resultItem["id"],
+              "tripId": resultItem["tripId"],
+              "locationId": resultItem["locationId"],
+              "date": resultItem["date"],
+              "visitTime": resultItem["visitTime"],
+              "orderIndex": resultItem["orderIndex"],
+              "memo": resultItem["memo"],
+              "expenseId": resultItem["expenseId"],
+              "isChecked": false,
+              "place": Place(
+                  id: resultItem["location"]["googleId"],
+                  name: resultItem["location"]["name"],
+                  address: resultItem["location"]["address"],
+                  category: resultItem["location"]["category"],
+                  photoUrl: null,
+                  location: LatLng(resultItem["location"]["latitude"],
+                      resultItem["location"]["longitude"]),
+                  icon: BitmapDescriptor.defaultMarker)
+            };
+            tripDayAllList.add(resultMap);
+          }
+
+          print('resultList $tripDayAllList');
+          // 날짜별로 그룹화
+          groupedByDate = _groupByDate(tripDayAllList);
+          print('groupedByDate $groupedByDate');
+        });
+      } else {
+        print('결과가 없거나 null입니다.');
+      }
+    } catch (e) {
+      print('에러메시지 $e');
+    }
+  }
+
+  // 날짜별로 리스트를 그룹화하는 함수
+  Map<String, List<Map<String, dynamic>>> _groupByDate(
+      List<Map<String, dynamic>> list) {
+    Map<String, List<Map<String, dynamic>>> grouped = {};
+
+    for (var item in list) {
+      String date = item["date"];
+      if (grouped.containsKey(date)) {
+        grouped[date]!.add(item);
+      } else {
+        grouped[date] = [item];
+      }
+    }
+
+    return grouped;
+  }
+
+  // 날짜 범위 생성 함수 (시작일과 종료일을 기준으로 모든 날짜 반환)
+  List<String> _getAllDates() {
+    List<String> dates = [];
+    DateTime currentDate = startDate;
+
+    while (currentDate.isBefore(endDate) ||
+        currentDate.isAtSameMomentAs(endDate)) {
+      dates.add(DateFormat('yyyy-MM-dd')
+          .format(currentDate)); // 날짜 포맷을 "yyyy-MM-dd"로 설정
+      currentDate = currentDate.add(Duration(days: 1));
+    }
+
+    return dates;
+  }
+
+/*  // 날짜에 해당하는 콘텐츠 리스트를 반환하는 함수
+  List<Map<String, dynamic>> _getContentForDate(String date) {
+    return groupedByDate[date] ?? [];
+  }*/
 
   _getCoordinatesFromAddress() async {
     try {
@@ -196,12 +300,12 @@ class _TripViewScreenState extends State<TripViewScreen> {
         leading: IconButton(
             onPressed: () {
               // **추가해야함 ! 뒤로 가기 클릭했을 때 마이페이지 or 홈으로 이동 시키기...!!!
-              // Navigator.pushAndRemoveUntil(
-              //   context,
-              //   MaterialPageRoute(builder: (context) => MyPage()),
-              //       (Route<dynamic> route) => false,
-              // );
-              Navigator.pop(context);
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => MainScreen()),
+                (Route<dynamic> route) => false,
+              );
+              // Navigator.pop(context);
             },
             icon: Icon(Icons.arrow_back)),
         title: _isTop

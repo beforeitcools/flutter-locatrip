@@ -280,24 +280,24 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                                             int? newTripId =
                                                 await _insertTrip();
                                             if (newTripId != null) {
-                                              Navigator.push(
+                                              /*Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
                                                     builder: (context) =>
                                                         TripViewScreen(
                                                             tripId:
                                                                 newTripId ?? 0),
-                                                    fullscreenDialog: false,
-                                                  ));
-                                              // Navigator.pushAndRemoveUntil(
-                                              //   context,
-                                              //   MaterialPageRoute(
-                                              //       builder: (context) =>
-                                              //           TripViewScreen(tripId: newTripId)),
-                                              //
-                                              //   (Route<dynamic> route) =>
-                                              //       false, // 이전 페이지 들을 모두 제거
-                                              // );
+                                                  ));*/
+                                              Navigator.pushAndRemoveUntil(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        TripViewScreen(
+                                                            tripId: newTripId)),
+
+                                                (Route<dynamic> route) =>
+                                                    false, // 이전 페이지 들을 모두 제거
+                                              );
                                             }
                                           }
                                         : null,

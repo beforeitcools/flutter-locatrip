@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/trip/screen/first_trip_screen.dart';
 import 'package:flutter_locatrip/checklist/screen/checklist_screen.dart';
 import 'package:flutter_locatrip/expense/screen/expense_screen.dart';
+import 'package:flutter_locatrip/trip/screen/trip_view_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -18,7 +19,7 @@ class _MainScreenState extends State<MainScreen> {
         preferredSize: Size.fromHeight(64),
         child: AppBar(
           title: Text(
-            "여행자, 평온한토미님!",
+            "여행자, 평온한 토미님!",
             style: TextStyle(fontSize: 20),
             // 참고용
             // style: Theme.of(context).textTheme.headlineLarge,
@@ -26,7 +27,7 @@ class _MainScreenState extends State<MainScreen> {
           actions: [
             IconButton(onPressed: () {}, icon: Icon(Icons.notifications)),
             TextButton(
-              onPressed: (){
+              onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -40,23 +41,34 @@ class _MainScreenState extends State<MainScreen> {
               ),
             ),
             TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ExpenseScreen(tripId: 1),
-                  ),
-                );
-              },
-              child: Text(
-                '가계부',
-                style: TextStyle(color: Colors.black),
-              )
-            )
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ExpenseScreen(tripId: 1),
+                    ),
+                  );
+                },
+                child: Text(
+                  '가계부',
+                  style: TextStyle(color: Colors.black),
+                ))
           ],
         ),
       ),
-      body: Text("메인"),
+      body: Column(
+        children: [
+          Text("메인"),
+          ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => TripViewScreen(tripId: 3)));
+              },
+              child: Text("일정3번 불러오는지 테스트"))
+        ],
+      ),
       floatingActionButton: Container(
         width: 68,
         height: 65,

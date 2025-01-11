@@ -169,11 +169,11 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
               Expanded(
                 child: ListView.builder(
                   controller: _scrollController,
-                  physics: BouncingScrollPhysics(), // 리스트 수가 적을 때 스크롤 가능 하도록 !
+                  physics: BouncingScrollPhysics(),
                   itemCount: _dropDownDay.length,
                   itemBuilder: (context, index) {
                     return Container(
-                      key: _itemKeys[index], // 각 위젯에 key 부여
+                      key: _itemKeys[index],
                       child: DayWidget(
                           selectedItem: _dropDownDay[index],
                           dropDownDay: _dropDownDay,

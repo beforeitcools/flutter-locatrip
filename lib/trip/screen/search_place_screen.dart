@@ -177,6 +177,7 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
     try {
       Map<String, dynamic> result =
           await _placeApiModel.getViewPorts(LatLng(latitude!, longitude!));
+      print('viewport result $result');
 
       viewPortMap = {
         "locationBias": {

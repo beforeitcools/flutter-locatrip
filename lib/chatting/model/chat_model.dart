@@ -4,12 +4,6 @@ import 'package:flutter_locatrip/common/Auth/auth_dio_interceptor.dart';
 import 'package:flutter_locatrip/common/widget/url.dart';
 
 class ChatModel{
-  // String name;
-  // bool isGroup;
-  // String time;
-  // String currentMessage;
-  // ChatModel({
-  //   required this.name, required this.isGroup, required this.time, required this.currentMessage});
 
   Future<List<dynamic>> fetchMessageData(int userId, BuildContext context) async{
     final dio = Dio();
@@ -87,6 +81,24 @@ class ChatModel{
     } catch (e) {
       print("room name didn't change");
       throw Exception("Error $e");
+    }
+  }
+
+  Future<void> insertNewChattingRoom(String chatroomName, BuildContext context) async{
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    //TODO 새 채팅방 넣는 로직
+    // chatroomName 1:1의 경우 상대방의 이름
+    // 여행의 경우 trip name 넣기
+
+    try{
+      final response = await dio.post(
+        "$backUrl/",
+        data: chatroomName);
+    }catch(e){
+      print("Failed to make new room");
+      throw Exception ("Error  $e");
     }
   }
 }
