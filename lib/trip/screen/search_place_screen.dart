@@ -1031,8 +1031,9 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                                                             "place":
                                                                 _nearByPlacesList[
                                                                     index],
-                                                            "day":
-                                                                _tripInfo["day"]
+                                                            "day": _tripInfo[
+                                                                "day"],
+                                                            "dateIndex": index
                                                           };
                                                           Navigator.pop(context,
                                                               selected);

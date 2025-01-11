@@ -51,9 +51,6 @@ class _TripViewScreenState extends State<TripViewScreen> {
   bool _isInfoLoaded = false;
 
   List<Map<String, dynamic>> tripDayAllList = [];
-  Map<String, List<Map<String, dynamic>>> groupedByDate = {};
-  late DateTime startDate;
-  late DateTime endDate;
 
   @override
   void initState() {
@@ -99,10 +96,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
         setState(() {
           tripInfo.addAll(result);
 
-          // print('tripInfo ${tripInfo['selectedRegions']}');
           address = tripInfo['selectedRegions'][0]['region'];
-          startDate = tripInfo["startDate"];
-          endDate = tripInfo["endDate"];
 
           isLoading = false;
 
@@ -149,6 +143,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
               "orderIndex": resultItem["orderIndex"],
               "memo": resultItem["memo"],
               "expenseId": resultItem["expenseId"],
+              "dateIndex": resultItem["dateIndex"],
               "isChecked": false,
               "place": Place(
                   id: resultItem["location"]["googleId"],
@@ -164,9 +159,14 @@ class _TripViewScreenState extends State<TripViewScreen> {
           }
 
           print('resultList $tripDayAllList');
-          // 날짜별로 그룹화
-          groupedByDate = _groupByDate(tripDayAllList);
-          print('groupedByDate $groupedByDate');
+// 그룹화 실행
+          var groupedTripDayAllList = groupByDate(tripDayAllList);
+
+// 결과 출력
+          groupedTripDayAllList.forEach((key, value) {
+            print("Date: $key");
+            print("Items: $value\n");
+          });
         });
       } else {
         print('결과가 없거나 null입니다.');
@@ -176,42 +176,22 @@ class _TripViewScreenState extends State<TripViewScreen> {
     }
   }
 
-  // 날짜별로 리스트를 그룹화하는 함수
-  Map<String, List<Map<String, dynamic>>> _groupByDate(
+  Map<int, List<Map<String, dynamic>>> groupByDate(
       List<Map<String, dynamic>> list) {
-    Map<String, List<Map<String, dynamic>>> grouped = {};
+    // 빈 Map 생성
+    Map<int, List<Map<String, dynamic>>> groupedMap = {};
 
     for (var item in list) {
-      String date = item["date"];
-      if (grouped.containsKey(date)) {
-        grouped[date]!.add(item);
-      } else {
-        grouped[date] = [item];
+      print('item1 $item');
+      int date = item['dateIndex'];
+      if (!groupedMap.containsKey(date)) {
+        groupedMap[date] = []; // 새로운 그룹 생성
       }
+      groupedMap[date]!.add(item); // 그룹에 데이터 추가
     }
-
-    return grouped;
+    print('groupedMap $groupedMap');
+    return groupedMap;
   }
-
-  // 날짜 범위 생성 함수 (시작일과 종료일을 기준으로 모든 날짜 반환)
-  List<String> _getAllDates() {
-    List<String> dates = [];
-    DateTime currentDate = startDate;
-
-    while (currentDate.isBefore(endDate) ||
-        currentDate.isAtSameMomentAs(endDate)) {
-      dates.add(DateFormat('yyyy-MM-dd')
-          .format(currentDate)); // 날짜 포맷을 "yyyy-MM-dd"로 설정
-      currentDate = currentDate.add(Duration(days: 1));
-    }
-
-    return dates;
-  }
-
-/*  // 날짜에 해당하는 콘텐츠 리스트를 반환하는 함수
-  List<Map<String, dynamic>> _getContentForDate(String date) {
-    return groupedByDate[date] ?? [];
-  }*/
 
   _getCoordinatesFromAddress() async {
     try {
@@ -300,12 +280,15 @@ class _TripViewScreenState extends State<TripViewScreen> {
         leading: IconButton(
             onPressed: () {
               // **추가해야함 ! 뒤로 가기 클릭했을 때 마이페이지 or 홈으로 이동 시키기...!!!
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => MainScreen()),
-                (Route<dynamic> route) => false,
-              );
-              // Navigator.pop(context);
+              // Navigator.pushAndRemoveUntil(
+              //   context,
+              //   MaterialPageRoute(
+              //     builder: (context) => MainScreen(),
+              //     fullscreenDialog: false,
+              //   ),
+              //   (Route<dynamic> route) => false,
+              // );
+              Navigator.popUntil(context, (route) => route.isFirst);
             },
             icon: Icon(Icons.arrow_back)),
         title: _isTop
@@ -578,7 +561,6 @@ class _TripViewScreenState extends State<TripViewScreen> {
             //     context,
             //     MaterialPageRoute(
             //       builder: (context) => TripScreen(),
-            //       fullscreenDialog: true,
             //     ));
           },
           child: Column(
