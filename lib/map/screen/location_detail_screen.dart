@@ -37,7 +37,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
   int _currentIndex = 0;
   final CarouselSliderController carouselController =
       CarouselSliderController();
-
+  late Place _place;
   PlaceDetail? _placeDetail;
   bool _isLoading = false;
   // bool _isFavorite = false;
@@ -86,8 +86,8 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
   @override
   void initState() {
     super.initState();
-
-    _loadDetail(widget.place.id);
+    _place = widget.place;
+    _loadDetail(_place.id);
     setState(() {
       AppOverlayController.removeOverlay();
       // _favoriteStatusList = widget.favoriteStatusList;
@@ -103,9 +103,22 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
       print('placeDetail $placeDetail');
 
       if (placeDetail.isNotEmpty) {
+        List<dynamic> photos = placeDetail['photos'] ?? [];
+        List<String> photoUrls = [];
+        for (var photo in photos) {
+          String? photoUri = photo['name'];
+          if (photoUri != null) {
+            photoUrls.add(photoUri);
+          }
+        }
+
+        // 병렬로 사진 가져오기
+        List<String> photoUris = await _placeApiModel.getPlacePhotos(photoUrls);
+        _place.photoUrl = photoUris.isNotEmpty ? photoUris : null;
+
         setState(() {
           _placeDetail = PlaceDetail(
-            place: widget.place,
+            place: _place,
             phone: placeDetail["internationalPhoneNumber"] ?? "",
             rating: placeDetail["rating"] != null
                 ? (placeDetail["rating"] as num).toDouble()

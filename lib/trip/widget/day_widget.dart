@@ -16,16 +16,17 @@ class DayWidget extends StatefulWidget {
   final Function(int) onDateSelected;
   final Map<String, dynamic> tripInfo;
   final int selectedIndex;
+  final Map<int, List<Map<String, dynamic>>> groupedTripDayAllList;
 
-  const DayWidget({
-    super.key,
-    required this.selectedItem,
-    required this.dropDownDay,
-    required this.index,
-    required this.onDateSelected,
-    required this.tripInfo,
-    required this.selectedIndex,
-  });
+  const DayWidget(
+      {super.key,
+      required this.selectedItem,
+      required this.dropDownDay,
+      required this.index,
+      required this.onDateSelected,
+      required this.tripInfo,
+      required this.selectedIndex,
+      required this.groupedTripDayAllList});
 
   @override
   State<DayWidget> createState() => _DayWidgetState();
@@ -38,6 +39,7 @@ class _DayWidgetState extends State<DayWidget> {
   late int index;
   late Map<String, dynamic> _tripInfo;
   late int _selectedIndex;
+  late Map<int, List<Map<String, dynamic>>> _groupedTripDayAllList;
 
   // 모든 day가 담김
   List<Map<String, dynamic>> _dayPlaceList = [];
@@ -51,7 +53,11 @@ class _DayWidgetState extends State<DayWidget> {
     index = widget.index;
     _tripInfo = widget.tripInfo;
     _selectedIndex = widget.selectedIndex;
-    // _loadTripDayLocation();
+
+    /* _groupedTripDayAllList.forEach((key, value) {
+      print("Date: $key");
+      print("Items: $value\n");
+    });*/
 
     /*
     * tripInfo {id: 16, userId: 1, title: ㅇ허ㅣ, startDate: 2025-01-16, endDate: 2025-01-24, createdAt: 2025-01-09T21:31:54, updatedAt: 2025-01-09T21:31:54, chattingId: null, status: 1, selectedRegions: [{tripId: 16, region: 여수}]}
@@ -177,6 +183,7 @@ class _DayWidgetState extends State<DayWidget> {
     DateTime startDate = DateTime.parse(_tripInfo["startDate"]);
     DateTime endDate = DateTime.parse(_tripInfo["endDate"]);
     List<DateTime> dates = getDatesBetween(startDate, endDate);
+
     Map<String, dynamic> data = {
       "googleId": _dayPlace["place"].id,
       "tripId": _tripInfo["id"],
@@ -185,7 +192,8 @@ class _DayWidgetState extends State<DayWidget> {
       "latitude": _dayPlace["place"].location.latitude,
       "longitude": _dayPlace["place"].location.longitude,
       "category": _dayPlace["place"].category,
-      "date": dates[_dayPlace["day"]].toIso8601String()
+      "date": dates[_dayPlace["day"]].toIso8601String(),
+      "dateIndex": _dayPlace["day"]
     };
 
     try {
@@ -206,6 +214,7 @@ class _DayWidgetState extends State<DayWidget> {
             _dayPlace["memo"] = result["memo"];
             _dayPlace["expenseId"] = result["expenseId"];
             _dayPlace["isChecked"] = false;
+            _dayPlace["dateIndex"] = result["dateIndex"];
 
             _dayPlaceList.add(_dayPlace);
           } else {
@@ -244,14 +253,11 @@ class _DayWidgetState extends State<DayWidget> {
 
     setState(() {
       Place selectedPlace = receiver['place'];
-      _dayPlace = {"place": selectedPlace, "day": receiver["day"]};
-      /*_dayPlace = {
-        "name": receiver["place"].name, // 장소명
-        "address": receiver["place"].address,
-        "category": receiver["place"].category,
-        "location": receiver["place"].location,
-        "day": receiver["day"]
-      };*/
+      _dayPlace = {
+        "place": selectedPlace,
+        "day": receiver["day"],
+        "dateIndex": receiver["dateIndex"]
+      };
     });
 
     _saveTripDayLocation();
@@ -370,6 +376,7 @@ class _DayWidgetState extends State<DayWidget> {
                                   width:
                                       MediaQuery.of(context).size.width * 0.45,
                                   child: Column(
+                                    mainAxisSize: MainAxisSize.min,
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
@@ -379,7 +386,8 @@ class _DayWidgetState extends State<DayWidget> {
                                             .textTheme
                                             .titleSmall,
                                       ),
-                                      Row(
+                                      Wrap(
+                                        spacing: 2,
                                         children: [
                                           Text(
                                             _dayPlaceList[i]["place"]
@@ -397,7 +405,7 @@ class _DayWidgetState extends State<DayWidget> {
                                                       .address !=
                                                   null)
                                             Text(
-                                              " · ",
+                                              "·",
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .labelSmall

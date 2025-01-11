@@ -64,9 +64,9 @@ class _MainScreenState extends State<MainScreen> {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => TripViewScreen(tripId: 3)));
+                        builder: (context) => TripViewScreen(tripId: 1)));
               },
-              child: Text("일정3번 불러오는지 테스트"))
+              child: Text("일정13번 불러오는지 테스트"))
         ],
       ),
       floatingActionButton: Container(
@@ -78,7 +78,7 @@ class _MainScreenState extends State<MainScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => TripScreen(),
-                  fullscreenDialog: true,
+                  // fullscreenDialog: true,
                 ));
           },
           child: Column(
