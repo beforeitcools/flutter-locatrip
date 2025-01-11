@@ -6,19 +6,23 @@ class MytripListTileWidget extends StatelessWidget {
   final int selectedIndex;
   final List<dynamic> myTrips;
   final Future<void> Function(int tripId) deleteTrip;
+  final Future<void> Function(int tripId) navigateToTripViewScreen;
 
   const MytripListTileWidget({
     super.key,
     required this.selectedIndex,
     required this.myTrips,
     required this.deleteTrip,
+    required this.navigateToTripViewScreen,
   });
 
   Widget _listTileCreator(int index, BuildContext context) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () {}, // 여행 게획 페이지로 연결
+        // 여행 게획 페이지로 연결
+        onTap: () =>
+            navigateToTripViewScreen(myTrips[selectedIndex][index]['tripId']),
         splashColor: Color.fromARGB(50, 43, 192, 228),
         highlightColor: Color.fromARGB(30, 43, 192, 228),
         child: Padding(
@@ -54,18 +58,29 @@ class MytripListTileWidget extends StatelessWidget {
                       height: 1,
                     ),
                     Text(
-                        "${myTrips[selectedIndex][index]['startDate']} ~ ${myTrips[selectedIndex][index]['endDate']}",
-                        style: Theme.of(context).textTheme.labelSmall),
+                      "${myTrips[selectedIndex][index]['startDate']} ~ ${myTrips[selectedIndex][index]['endDate']}",
+                      style: Theme.of(context).textTheme.labelSmall,
+                      overflow: TextOverflow.ellipsis, // 텍스트 삐져나옴 방지(길면...)
+                      maxLines: 1,
+                    ),
                     SizedBox(
                       height: 1,
                     ),
                     myTrips[selectedIndex][index]['memberCount'] == 0
                         ? Text(
                             "${myTrips[selectedIndex][index]['regionCount']}개 지역",
-                            style: Theme.of(context).textTheme.labelSmall)
+                            style: Theme.of(context).textTheme.labelSmall,
+                            overflow:
+                                TextOverflow.ellipsis, // 텍스트 삐져나옴 방지(길면...)
+                            maxLines: 1,
+                          )
                         : Text(
                             "${myTrips[selectedIndex][index]['memberCount']}명과 함께, ${myTrips[selectedIndex][index]['regionCount']}개 지역",
-                            style: Theme.of(context).textTheme.labelSmall),
+                            style: Theme.of(context).textTheme.labelSmall,
+                            overflow:
+                                TextOverflow.ellipsis, // 텍스트 삐져나옴 방지(길면...)
+                            maxLines: 1,
+                          ),
                   ],
                 ),
               ),

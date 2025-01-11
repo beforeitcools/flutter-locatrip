@@ -157,7 +157,8 @@ class _MypageScreenState extends State<MypageScreen> {
     }
   }
 
-  Widget _materialCreator(dynamic icon, String title, Future navigateTo()) {
+  Widget _materialCreator(
+      dynamic icon, String title, Future Function() navigateTo) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -233,6 +234,9 @@ class _MypageScreenState extends State<MypageScreen> {
             splashColor: Color.fromARGB(70, 43, 192, 228),
             highlightColor: Color.fromARGB(50, 43, 192, 228),
           ),
+          SizedBox(
+            width: 10,
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -265,8 +269,6 @@ class _MypageScreenState extends State<MypageScreen> {
                               splashColor: Color.fromARGB(50, 43, 192, 228),
                               highlightColor: Color.fromARGB(30, 43, 192, 228),
                               borderRadius: BorderRadius.circular(10),
-                              /*child: Expanded(*/
-                              // height: 92,
                               child: Padding(
                                 padding: EdgeInsets.symmetric(
                                     horizontal: 16, vertical: 16),

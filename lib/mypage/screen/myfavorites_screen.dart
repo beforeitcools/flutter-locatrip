@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/loading_screen.dart';
+import 'package:flutter_locatrip/map/model/place.dart';
+import 'package:flutter_locatrip/map/model/toggle_favorite.dart';
 import 'package:flutter_locatrip/mypage/model/mypage_model.dart';
 import 'package:flutter_locatrip/mypage/widget/category_tab_menu_widget.dart';
+import 'package:flutter_locatrip/mypage/widget/myfavorites_list_tile_widget.dart';
 
 class MyfavoritesScreen extends StatefulWidget {
   const MyfavoritesScreen({super.key});
@@ -13,9 +16,13 @@ class MyfavoritesScreen extends StatefulWidget {
 class _MyfavoritesScreenState extends State<MyfavoritesScreen> {
   final MypageModel _mypageModel = MypageModel();
   int _selectedIndex = 0; // 탭한 index(default: 0)
-  late List<List<dynamic>> _myTrips = List.filled(2, []);
+  late List<List<dynamic>> _myFavorites = List.filled(2, []);
   List<String> _categories = ["장소", "게시글"];
   bool _isLoading = true;
+
+  // like/unlike 토글과 location_detail_screen으로 보내기 위해서 필요한
+  final ToggleFavorite _toggleFavorite = ToggleFavorite();
+  Map<String, bool> _favoriteStatus = {};
 
   void _categoryOnTabHandler(int categoryIndex) {
     setState(() {
@@ -24,36 +31,45 @@ class _MyfavoritesScreenState extends State<MyfavoritesScreen> {
   }
 
   // 내 여행 불러와서 다가오는 여행, 지난 여행 구분후 myTrips에 index 0,1로 추가
-  Future<void> _loadMyTripData() async {
+  Future<void> _loadMyFavoriteData() async {
     try {
       LoadingOverlay.show(context);
       Map<String, dynamic> result = await _mypageModel.getMyTripData(context);
       print("result: $result");
-      print(result['futureTrips']);
-      print(result['pastTrips']);
+
       setState(() {
-        _myTrips[0] = result['futureTrips'];
-        _myTrips[1] = result['pastTrips'];
-        print("mytrips: $_myTrips");
-        print("mytrips1: ${_myTrips[0]}");
-        print("mytrips1: ${_myTrips[0]}[0]['title]");
-        // print("mytrips2: ${_myTrips[0][title]}");
+        _myFavorites[0] = result['futureTrips'];
+        _myFavorites[1] = result['pastTrips'];
+        print("myFavorites: $_myFavorites");
+        print("myFavorites1: ${_myFavorites[0]}");
+        print("_myFavorites1title: ${_myFavorites[0]}[0]['title]");
         _isLoading = false;
       });
     } catch (e) {
       print("!!!!!!!!!!!!!!!!!!마이 트립 로드 중 에러 발생 : $e");
       setState(() {
-        _myTrips = [[], []];
+        _myFavorites = [[], []];
       });
     } finally {
       LoadingOverlay.hide();
     }
   }
 
+  void _updateFavoriteStatus(bool isFavorite, Place place) {
+    setState(() {
+      _favoriteStatus[place.name] = isFavorite;
+    });
+  }
+
+  Future<void> toggleFavoriteStatus(Place place, bool isFavorite) async {
+    _toggleFavorite.toggleFavoriteStatus(place, isFavorite, context,
+        () => _updateFavoriteStatus(isFavorite, place));
+  }
+
   @override
   void initState() {
     super.initState();
-    // 백에서 불러오기
+    _loadMyFavoriteData();
   }
 
   @override
@@ -83,12 +99,13 @@ class _MyfavoritesScreenState extends State<MyfavoritesScreen> {
                 padding: EdgeInsets.fromLTRB(0, 1, 0, 1),
                 child: SingleChildScrollView(
                   child: IntrinsicHeight(
-                      /*child: MytripListTileWidget(
+                    child: MyfavoritesListTileWidget(
                       selectedIndex: _selectedIndex,
-                      myTrips: _myTrips,
-                      deleteTrip: deleteTrip,
-                    ),*/
-                      ),
+                      myFavorites: _myFavorites,
+                      updateFavoriteStatus: _updateFavoriteStatus,
+                      toggleFavoriteStatus: toggleFavoriteStatus,
+                    ),
+                  ),
                 ),
               ),
             ),

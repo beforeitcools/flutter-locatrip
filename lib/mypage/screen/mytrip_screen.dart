@@ -4,6 +4,7 @@ import 'package:flutter_locatrip/common/widget/loading_screen.dart';
 import 'package:flutter_locatrip/mypage/model/mypage_model.dart';
 import 'package:flutter_locatrip/mypage/widget/category_tab_menu_widget.dart';
 import 'package:flutter_locatrip/mypage/widget/mytrip_list_tile_widget.dart';
+import 'package:flutter_locatrip/trip/screen/trip_view_screen.dart';
 
 class MytripScreen extends StatefulWidget {
   const MytripScreen({super.key});
@@ -49,6 +50,18 @@ class _MytripScreenState extends State<MytripScreen> {
       });
     } finally {
       LoadingOverlay.hide();
+    }
+  }
+
+  Future<void> navigateToTripViewScreen(int tripId) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TripViewScreen(tripId: tripId)),
+    );
+
+    // 기다리다가 프로필 수정 후 돌아오면 트리거
+    if (result == true) {
+      _loadMyTripData();
     }
   }
 
@@ -110,6 +123,7 @@ class _MytripScreenState extends State<MytripScreen> {
                       selectedIndex: _selectedIndex,
                       myTrips: _myTrips,
                       deleteTrip: deleteTrip,
+                      navigateToTripViewScreen: navigateToTripViewScreen,
                     ),
                   ),
                 ),
