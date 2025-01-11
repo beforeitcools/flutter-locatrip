@@ -177,6 +177,7 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
     try {
       Map<String, dynamic> result =
           await _placeApiModel.getViewPorts(LatLng(latitude!, longitude!));
+      print('viewport result $result');
 
       viewPortMap = {
         "locationBias": {
@@ -1030,8 +1031,9 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                                                             "place":
                                                                 _nearByPlacesList[
                                                                     index],
-                                                            "day":
-                                                                _tripInfo["day"]
+                                                            "day": _tripInfo[
+                                                                "day"],
+                                                            "dateIndex": index
                                                           };
                                                           Navigator.pop(context,
                                                               selected);

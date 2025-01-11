@@ -109,7 +109,7 @@ class PlaceApiModel {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': apiKey,
           'X-Goog-FieldMask':
-              "internationalPhoneNumber,rating,reviews,googleMapsUri",
+              "internationalPhoneNumber,rating,reviews,googleMapsUri,photos",
         }),
       );
 

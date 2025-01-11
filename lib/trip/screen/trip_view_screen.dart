@@ -2,12 +2,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
+import 'package:flutter_locatrip/main/screen/main_screen.dart';
+import 'package:flutter_locatrip/trip/model/trip_day_model.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import '../../map/model/place.dart';
 import '../model/trip_model.dart';
 import '../widget/drag_bottom_sheet.dart';
 
@@ -28,6 +31,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
   Map<String, dynamic> tripInfo = {};
 
   TripModel _tripModel = TripModel();
+  TripDayModel _tripDayModel = TripDayModel();
   bool isLoading = true;
 
   double? latitude;
@@ -44,13 +48,20 @@ class _TripViewScreenState extends State<TripViewScreen> {
   double _animatedPositionedOffset = 0;
   bool _isTop = false;
 
+  bool _isInfoLoaded = false;
+
+  List<Map<String, dynamic>> tripDayAllList = [];
+
   @override
   void initState() {
     super.initState();
 
     initializeDateFormatting('ko_KR', null).then((_) {
       Intl.defaultLocale = 'ko_KR';
-      _loadInfo();
+      if (!_isInfoLoaded) {
+        _isInfoLoaded = true;
+        _loadInfo();
+      }
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -80,11 +91,11 @@ class _TripViewScreenState extends State<TripViewScreen> {
     try {
       Map<String, dynamic> result =
           await _tripModel.selectTrip(widget.tripId, context);
+
       if (result.isNotEmpty) {
         setState(() {
           tripInfo.addAll(result);
 
-          // print('tripInfo ${tripInfo['selectedRegions']}');
           address = tripInfo['selectedRegions'][0]['region'];
 
           isLoading = false;
@@ -96,6 +107,8 @@ class _TripViewScreenState extends State<TripViewScreen> {
         if (address.isNotEmpty) {
           _getCoordinatesFromAddress();
         }
+
+        await _loadTripDayLocation();
       } else {
         setState(() {
           isLoading = false;
@@ -107,6 +120,77 @@ class _TripViewScreenState extends State<TripViewScreen> {
         isLoading = false;
       });
     }
+  }
+
+  Future<void> _loadTripDayLocation() async {
+    print('이거 실행되는지?');
+    // 일정Id로 조회하기
+    int tripId = tripInfo["id"];
+    print('tripId $tripId');
+    try {
+      List<Map<String, dynamic>> result =
+          await _tripDayModel.getTripDay(tripId, context);
+      print('result조회 $result');
+      if (result != null && result.isNotEmpty) {
+        setState(() {
+          for (Map<String, dynamic> resultItem in result) {
+            Map<String, dynamic> resultMap = {
+              "id": resultItem["id"],
+              "tripId": resultItem["tripId"],
+              "locationId": resultItem["locationId"],
+              "date": resultItem["date"],
+              "visitTime": resultItem["visitTime"],
+              "orderIndex": resultItem["orderIndex"],
+              "memo": resultItem["memo"],
+              "expenseId": resultItem["expenseId"],
+              "dateIndex": resultItem["dateIndex"],
+              "isChecked": false,
+              "place": Place(
+                  id: resultItem["location"]["googleId"],
+                  name: resultItem["location"]["name"],
+                  address: resultItem["location"]["address"],
+                  category: resultItem["location"]["category"],
+                  photoUrl: null,
+                  location: LatLng(resultItem["location"]["latitude"],
+                      resultItem["location"]["longitude"]),
+                  icon: BitmapDescriptor.defaultMarker)
+            };
+            tripDayAllList.add(resultMap);
+          }
+
+          print('resultList $tripDayAllList');
+// 그룹화 실행
+          var groupedTripDayAllList = groupByDate(tripDayAllList);
+
+// 결과 출력
+          groupedTripDayAllList.forEach((key, value) {
+            print("Date: $key");
+            print("Items: $value\n");
+          });
+        });
+      } else {
+        print('결과가 없거나 null입니다.');
+      }
+    } catch (e) {
+      print('에러메시지 $e');
+    }
+  }
+
+  Map<int, List<Map<String, dynamic>>> groupByDate(
+      List<Map<String, dynamic>> list) {
+    // 빈 Map 생성
+    Map<int, List<Map<String, dynamic>>> groupedMap = {};
+
+    for (var item in list) {
+      print('item1 $item');
+      int date = item['dateIndex'];
+      if (!groupedMap.containsKey(date)) {
+        groupedMap[date] = []; // 새로운 그룹 생성
+      }
+      groupedMap[date]!.add(item); // 그룹에 데이터 추가
+    }
+    print('groupedMap $groupedMap');
+    return groupedMap;
   }
 
   _getCoordinatesFromAddress() async {
@@ -198,10 +282,13 @@ class _TripViewScreenState extends State<TripViewScreen> {
               // **추가해야함 ! 뒤로 가기 클릭했을 때 마이페이지 or 홈으로 이동 시키기...!!!
               // Navigator.pushAndRemoveUntil(
               //   context,
-              //   MaterialPageRoute(builder: (context) => MyPage()),
-              //       (Route<dynamic> route) => false,
+              //   MaterialPageRoute(
+              //     builder: (context) => MainScreen(),
+              //     fullscreenDialog: false,
+              //   ),
+              //   (Route<dynamic> route) => false,
               // );
-              Navigator.pop(context);
+              Navigator.popUntil(context, (route) => route.isFirst);
             },
             icon: Icon(Icons.arrow_back)),
         title: _isTop
@@ -474,7 +561,6 @@ class _TripViewScreenState extends State<TripViewScreen> {
             //     context,
             //     MaterialPageRoute(
             //       builder: (context) => TripScreen(),
-            //       fullscreenDialog: true,
             //     ));
           },
           child: Column(
