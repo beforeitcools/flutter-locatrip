@@ -34,14 +34,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   final FlutterSecureStorage _storage = FlutterSecureStorage();
   late final int myUserId;
-
+  late int unreadCount;
 
 
   Future<void> _getUserId() async{
     final dynamic stringId = await _storage.read(key: 'userId');
     myUserId = int.tryParse(stringId) ?? 0; // 현재 유저 아이디
   }
-
 
   void _loadChatsById() async {
     List<dynamic> chatData = await _chatModel.fetchChatRoomData(widget.chatroomId, context);
@@ -59,11 +58,30 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     }
   }
 
+  void _updateLastReadMessageId() async{
+    try{
+      await _chatModel.updateLastReadMessage(context, widget.chatroomId);
+      print("you updated message id");
+    }catch(e){
+      print("what is the problem that you have?  : $e");
+    }
+  }
+
+  void _getUnreadMessageCount() async{
+    try{
+      unreadCount = await _chatModel.getUnreadMessageCount(context, widget.chatroomId);
+      print("************************************************* $unreadCount");
+    }catch(e){
+      print("failllllllllllllllllllllllllled");
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _getUserId();
     try {
+      _getUnreadMessageCount();
       _channel = WebSocketChannel.connect(uri);
     } catch (e) {
       print('Failed to connect to $uri: $e');
@@ -83,7 +101,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           "messageContents": _textController.text,
           "sendTime": DateTime.now().toIso8601String(),
           "read": false,
-          "readCount": 1};
+                                    "readCount": 1};
 
        final jsonMessage = json.encode(message);
         _channel.sink.add(jsonMessage);
@@ -105,6 +123,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   @override
   void dispose() {
+    //_updateLastReadMessageId();
     _channel.sink.close();
     _textController.dispose();
     super.dispose();

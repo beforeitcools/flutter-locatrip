@@ -120,4 +120,45 @@ class ChatModel{
       throw Exception ("Error  $e");
     }
   }
+
+
+  Future<dynamic> getUnreadMessageCount(BuildContext context, int chatroomId) async{
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    print("did you come here?");
+    try{
+      final response = await dio.get("$backUrl/unread/count");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print("UPDATE GET MY UNREAD COUNT!");
+      }
+      else {
+        throw Exception("FAILED TO UPDATE LAST MESSAGE ID : ${response.statusCode}");
+      }
+    }catch(e){
+      print("failed to get your unread message count");
+      throw Exception("Error  $e");
+    }
+  }
+
+  Future<void> updateLastReadMessage(BuildContext context, int chatroomId) async{
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    print("updateLastReadMessage --- this is my chatroom Id: $chatroomId");
+    try{
+      final response = await dio.post("$backUrl/updateLastMessage/$chatroomId");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print("UPDATE LAST MESSAGE ID!");
+      }
+      else {
+        throw Exception("FAILED TO UPDATE LAST MESSAGE ID : ${response.statusCode}");
+      }
+    }catch(e){
+      print("failed to update your last read message id");
+      throw Exception("Error   $e");
+    }
+  }
 }
