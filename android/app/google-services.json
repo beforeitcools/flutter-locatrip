@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1017619094314",
+    "project_id": "locat-5e4ce",
+    "storage_bucket": "locat-5e4ce.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1017619094314:android:9eb04511d9743720379c53",
+        "android_client_info": {
+          "package_name": "com.beforeitcools.flutter_locatrip"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAyRFCOngszReVW5xfh90eLWmrZDNqiqFo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
