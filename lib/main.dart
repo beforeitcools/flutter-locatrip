@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/Auth/model/auth_model.dart';
 import 'package:flutter_locatrip/Auth/screen/login_screen.dart';
 import 'package:flutter_locatrip/Auth/screen/signup_screen.dart';
-import 'package:flutter_locatrip/common/widget/url.dart';
 import 'package:flutter_locatrip/notification/init_noti.dart';
 import 'package:flutter_locatrip/notification/show_noti.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -48,7 +47,8 @@ void main() async{
   // 서버로 토큰을 전송하는 함수
   Future<void> sendTokenToServer(String token) async{
     final response = await http.post(
-      Uri.parse(backUrl),
+
+      Uri.parse("내 주소"),
       headers: {"Contents-Type" : "application/json"},
       body: '{"token":"$token"}',
     );
