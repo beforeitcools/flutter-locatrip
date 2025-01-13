@@ -178,6 +178,7 @@ class ExpenseModel {
           return {
             'id': user['id'],
             'nickname': user['nickname'],
+            'profile_pic': user['profile_pic'],
             'isChecked': false,
             'isPaid': false,
           };
@@ -191,5 +192,19 @@ class ExpenseModel {
     }
   }
 
+  Future<List<dynamic>> getRegionByTripId(int tripId, BuildContext context) async {
+    dio.interceptors.add(AuthInterceptor(dio, context));
+    try {
+      final response = await dio.get('$baseUrl/trip/$tripId/region');
+      if (response.statusCode == 200) {
+        return response.data as List<dynamic>;
+      } else {
+        throw Exception('Failed to fetch region');
+      }
+    } catch (e) {
+      print('Error fetching region: $e');
+      throw Exception('Error: $e');
+    }
+  }
 
 }
