@@ -54,6 +54,7 @@ class _MypageScreenState extends State<MypageScreen> {
     try {
       LoadingOverlay.show(context);
       Map<String, dynamic> result = await _mypageModel.getMyPageData(context);
+      print(result);
       setState(() {
         _userData = result['user'];
         _selectedAdviceCount = result['selectedAdviceCount'].toString();
@@ -240,227 +241,223 @@ class _MypageScreenState extends State<MypageScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        child: ConstrainedBox(
+        /*child: ConstrainedBox(
           constraints: BoxConstraints(
             minHeight: MediaQuery.of(context).size.height - 165,
-          ),
-          child: IntrinsicHeight(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 16),
-              child: Center(
-                child: Column(
-                  children: [
-                    Container(
-                      height: 148,
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: lightGrayColor,
-                            width: 1.0,
-                          )),
-                      child: Column(
-                        children: [
-                          // 프로필
-                          Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: _navigateToProfileUpdatePage,
-                              splashColor: Color.fromARGB(50, 43, 192, 228),
-                              highlightColor: Color.fromARGB(30, 43, 192, 228),
-                              borderRadius: BorderRadius.circular(10),
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 16),
-                                child: Row(
-                                  children: [
-                                    // 프로필 이미지
-                                    CircleAvatar(
-                                      radius: 30,
-                                      child: _profileImage != null
-                                          ? ClipOval(
-                                              child: CachedNetworkImage(
-                                                imageUrl: _profileImage!,
-                                                placeholder: (context, url) =>
-                                                    SizedBox(
-                                                  width: 30,
-                                                  height: 30,
-                                                  child: Center(
-                                                    child:
-                                                        CircularProgressIndicator(),
-                                                  ),
-                                                ),
-                                                errorWidget:
-                                                    (context, url, error) =>
-                                                        Icon(
-                                                  Icons.error_outline,
-                                                  size: 48,
-                                                ),
-                                                fit: BoxFit.cover,
-                                                width: 60,
-                                                height: 60,
-                                              ),
-                                            )
-                                          : CircleAvatar(
-                                              radius: 30,
-                                              backgroundImage: AssetImage(
-                                                      'assets/default_profile_image.png')
-                                                  as ImageProvider),
-                                    ),
-                                    SizedBox(
-                                      width: 16,
-                                    ),
-                                    // 닉네임
-                                    Expanded(
-                                      child: Text(
-                                        _nickname,
-                                        style: TextStyle(
-                                          color: blackColor,
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.w600,
-                                          fontFamily: 'NotoSansKR',
-                                        ),
-                                        overflow: TextOverflow
-                                            .ellipsis, // 텍스트 삐져나옴 방지(길면...)
-                                        maxLines: 1,
-                                      ),
-                                    ),
-
-                                    SizedBox(
-                                      width: 16,
-                                    ),
-                                    // 베지(있으면)
-                                    _ownBadge == 1
-                                        ? Icon(
-                                            Icons.verified_outlined,
-                                            color: pointBlueColor,
-                                          )
-                                        : SizedBox(),
-
-                                    Icon(Icons.chevron_right),
-                                  ],
-                                ),
-                              ),
-                              // ),
-                            ),
-                          ),
-                          Container(
-                            height: 54,
+          ),*/
+        child: IntrinsicHeight(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 16),
+            child: Center(
+              child: Column(
+                children: [
+                  Container(
+                    height: 148,
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: lightGrayColor,
+                          width: 1.0,
+                        )),
+                    child: Column(
+                      children: [
+                        // 프로필
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: _navigateToProfileUpdatePage,
+                            splashColor: Color.fromARGB(50, 43, 192, 228),
+                            highlightColor: Color.fromARGB(30, 43, 192, 228),
+                            borderRadius: BorderRadius.circular(10),
                             child: Padding(
                               padding: EdgeInsets.symmetric(
-                                horizontal: 16,
-                              ),
-                              child: Container(
-                                  decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      border: Border(
-                                        top: BorderSide(
-                                          color: lightGrayColor,
-                                          width: 1.0,
-                                        ),
-                                      )),
-                                  child: Align(
-                                    alignment: Alignment.center,
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Image.asset(
-                                          "assets/icon/editor_choice.png",
-                                          width: 24,
-                                          height: 24,
-                                          fit: BoxFit.cover,
-                                        ),
-                                        SizedBox(
-                                          width: 16,
-                                        ),
-                                        Text(
-                                          "내 첨삭 채택수",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium,
-                                        ),
-                                        SizedBox(
-                                          height: 16,
-                                          width: 40,
-                                          child: VerticalDivider(
-                                            color: grayColor,
-                                            thickness: 1.0,
-                                          ),
-                                        ),
-                                        Text(_selectedAdviceCount,
-                                            style: TextStyle(
-                                              color: pointBlueColor,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w800,
-                                            )),
-                                      ],
+                                  horizontal: 16, vertical: 16),
+                              child: Row(
+                                children: [
+                                  // 프로필 이미지
+                                  CircleAvatar(
+                                    radius: 30,
+                                    child: _profileImage != null
+                                        ? ClipOval(
+                                            child: CachedNetworkImage(
+                                              imageUrl: _profileImage!,
+                                              placeholder: (context, url) =>
+                                                  SizedBox(
+                                                width: 30,
+                                                height: 30,
+                                                child: Center(
+                                                  child:
+                                                      CircularProgressIndicator(),
+                                                ),
+                                              ),
+                                              errorWidget:
+                                                  (context, url, error) => Icon(
+                                                Icons.error_outline,
+                                                size: 48,
+                                              ),
+                                              fit: BoxFit.cover,
+                                              width: 60,
+                                              height: 60,
+                                            ),
+                                          )
+                                        : CircleAvatar(
+                                            radius: 30,
+                                            backgroundImage: AssetImage(
+                                                    'assets/default_profile_image.png')
+                                                as ImageProvider),
+                                  ),
+                                  SizedBox(
+                                    width: 16,
+                                  ),
+                                  // 닉네임
+                                  Expanded(
+                                    child: Text(
+                                      _nickname,
+                                      style: TextStyle(
+                                        color: blackColor,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'NotoSansKR',
+                                      ),
+                                      overflow: TextOverflow
+                                          .ellipsis, // 텍스트 삐져나옴 방지(길면...)
+                                      maxLines: 1,
                                     ),
-                                  )),
+                                  ),
+
+                                  SizedBox(
+                                    width: 16,
+                                  ),
+                                  // 베지(있으면)
+                                  _ownBadge == 1
+                                      ? Icon(
+                                          Icons.verified_outlined,
+                                          color: pointBlueColor,
+                                        )
+                                      : SizedBox(),
+
+                                  Icon(Icons.chevron_right),
+                                ],
+                              ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(
-                      height: 26,
-                    ),
-                    Container(
-                      height: 56,
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: lightGrayColor,
-                            width: 1.0,
-                          )),
-                      child: _materialCreator("assets/icon/home_pin.png",
-                          "현지인 인증하기", _navigateToLocalAreaAuthPage),
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Container(
-                      height: 226,
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: lightGrayColor,
-                            width: 1.0,
-                          )),
-                      child: Column(
-                        children: [
-                          _materialCreator("assets/icon/trip.png", "내 여행",
-                              _navigateToMyTripPage),
-                          _materialCreator(Icons.favorite_border_outlined,
-                              "내 저장", _navigateToMyFavoritesPage),
-                          _materialCreator(Icons.article_outlined, "내 포스트",
-                              _navigateToMyPostsPage),
-                          _materialCreator("assets/icon/rate_review.png",
-                              "내 첨삭", _navigateToMyAdvicesPage),
-                        ],
-                      ),
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Row(
-                      children: [
-                        Spacer(),
-                        TextButton(
-                            onPressed: () {},
-                            child: Text(
-                              "탈퇴하기",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(color: lightGrayColor),
-                            ))
+                        ),
+                        Container(
+                          height: 54,
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                            ),
+                            child: Container(
+                                decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    border: Border(
+                                      top: BorderSide(
+                                        color: lightGrayColor,
+                                        width: 1.0,
+                                      ),
+                                    )),
+                                child: Align(
+                                  alignment: Alignment.center,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Image.asset(
+                                        "assets/icon/editor_choice.png",
+                                        width: 24,
+                                        height: 24,
+                                        fit: BoxFit.cover,
+                                      ),
+                                      SizedBox(
+                                        width: 16,
+                                      ),
+                                      Text(
+                                        "내 첨삭 채택수",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium,
+                                      ),
+                                      SizedBox(
+                                        height: 16,
+                                        width: 40,
+                                        child: VerticalDivider(
+                                          color: grayColor,
+                                          thickness: 1.0,
+                                        ),
+                                      ),
+                                      Text(_selectedAdviceCount,
+                                          style: TextStyle(
+                                            color: pointBlueColor,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w800,
+                                          )),
+                                    ],
+                                  ),
+                                )),
+                          ),
+                        ),
                       ],
-                    )
-                  ],
-                ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 26,
+                  ),
+                  Container(
+                    height: 56,
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: lightGrayColor,
+                          width: 1.0,
+                        )),
+                    child: _materialCreator("assets/icon/home_pin.png",
+                        "현지인 인증하기", _navigateToLocalAreaAuthPage),
+                  ),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  Container(
+                    height: 226,
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: lightGrayColor,
+                          width: 1.0,
+                        )),
+                    child: Column(
+                      children: [
+                        _materialCreator("assets/icon/trip.png", "내 여행",
+                            _navigateToMyTripPage),
+                        _materialCreator(Icons.favorite_border_outlined, "내 저장",
+                            _navigateToMyFavoritesPage),
+                        _materialCreator(Icons.article_outlined, "내 포스트",
+                            _navigateToMyPostsPage),
+                        _materialCreator("assets/icon/rate_review.png", "내 첨삭",
+                            _navigateToMyAdvicesPage),
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  Row(
+                    children: [
+                      Spacer(),
+                      TextButton(
+                          onPressed: () {},
+                          child: Text(
+                            "탈퇴하기",
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: lightGrayColor),
+                          ))
+                    ],
+                  )
+                ],
               ),
             ),
           ),
