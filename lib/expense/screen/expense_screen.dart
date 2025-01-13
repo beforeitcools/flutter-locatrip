@@ -93,9 +93,6 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                 },
               ),
 
-
-
-
               // 날짜별 필터 옵션
 
               ...groupedExpenses.entries.map((entry) {
@@ -185,7 +182,6 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     }
   }
 
-
   void _navigateToUpdateExpense(int expenseId, String selectedDate) async {
     final result = await Navigator.push(
       context,
@@ -205,7 +201,6 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
       setState(() {});
     }
   }
-
 
   Future<void> _navigateToAddExpense(String selectedDate) async {
     final result = await Navigator.push(
@@ -234,7 +229,6 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         : {
       selectedPeriod: groupedExpenses[selectedPeriod],
     };
-
 
     return Scaffold(
       appBar: PreferredSize(
@@ -295,31 +289,73 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             children: [
-              ...(dayData['expenses'] as List).map((expense) {
-                final String category = expense['category'] ?? '기타';
-                final IconData icon = categoryIcons[category] ?? Icons.sms;
-
-                return ListTile(
-                  leading: isEditing
-                  ? IconButton(
-                    icon: const Icon(Icons.remove_circle, color: Colors.red),
-                    onPressed: () => _deleteExpense(expense['id'], day),
-                  )
-                  : Icon(icon, color: pointBlueColor),
-                  title: Text(expense['description']),
-                  trailing: isEditing
-                    ? const Icon(Icons.drag_handle)
-                    : Text('₩${expense['amount']}'),
-                  onTap: () {
-                    if (!isEditing) {
-                      final formattedDay = day == "preparation"
-                          ? '여행 준비'
-                          : '$day $date';
-                      _navigateToUpdateExpense(expense['id'], formattedDay);
+              ReorderableListView(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                onReorder: (oldIndex, newIndex) {
+                  // 드래그로 순서 변경
+                  setState(() {
+                    if (newIndex > oldIndex) {
+                      newIndex -= 1;
                     }
-                    },
-                );
-              }).toList(),
+                    final item = dayData['expenses'].removeAt(oldIndex);
+                    dayData['expenses'].insert(newIndex, item);
+                  });
+                },
+
+                children: [
+                  ...(dayData['expenses'] as List).map((expense) {
+                    final String category = expense['category'] ?? '기타';
+                    final IconData icon = categoryIcons[category] ?? Icons.sms;
+
+                    return ListTile(
+                      key: ValueKey(expense['id']),
+                      leading: isEditing
+                          ? IconButton(
+                        icon: const Icon(Icons.remove_circle, color: Colors.red),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text('삭제 확인'),
+                                content: const Text('이 항목을 삭제하시겠습니까?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop(); // 다이얼로그 닫기
+                                    },
+                                    child: const Text('취소'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop(); // 다이얼로그 닫기
+                                      _deleteExpense(expense['id'], day); // 삭제 처리
+                                    },
+                                    child: const Text('삭제',
+                                    style: TextStyle(color: Colors.red),),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      )
+                          : Icon(icon, color: pointBlueColor),
+                      title: Text(expense['description']),
+                      trailing: isEditing
+                          ? const Icon(Icons.drag_handle)
+                          : Text('₩${(expense['amount']).toInt()}'),
+                      onTap: () {
+                        if (!isEditing) {
+                          final formattedDay = day == "preparation" ? '여행 준비' : '$day $date';
+                          _navigateToUpdateExpense(expense['id'], formattedDay);
+                        }
+                      },
+                    );
+                  }).toList(),
+                ],
+              ),
               if (isEditing)
                 Positioned(
                   bottom: 0,
@@ -327,14 +363,15 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                   right: 0,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: pointBlueColor,
+                      foregroundColor: Colors.white,
                     ),
                     onPressed: () {
                       setState(() {
                         isEditing = false;
                       });
                     },
-                    child: const Text('편집 완료'),
+                    child: const Text('편집 완료')
                   ),
                 ),
               OutlinedButton(
@@ -349,8 +386,8 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                 ),
                 onPressed: () {
                   final formattedDay = day == "preparation" ? '여행 준비' : '$day $date';
-              _navigateToAddExpense(formattedDay);
-          },
+                  _navigateToAddExpense(formattedDay);
+                },
                 child: const Text('비용 추가'),
               ),
             ],

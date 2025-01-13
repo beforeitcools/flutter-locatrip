@@ -134,11 +134,11 @@ class _ExpenseUpdateCostScreen extends State<ExpenseUpdateCostScreen> {
                     formattedDate,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: _selectedDate == date ? Colors.blue : Colors.black,
+                      color: _selectedDate == date ? pointBlueColor : blackColor,
                     ),
                   ),
                   trailing: _selectedDate == date
-                      ? const Icon(Icons.check, color: Colors.blue)
+                      ? const Icon(Icons.check, color: pointBlueColor)
                       : null,
                   onTap: () {
                     setState(() {
@@ -398,7 +398,6 @@ class _ExpenseUpdateCostScreen extends State<ExpenseUpdateCostScreen> {
 
             Column(
               children: _participants.map((user) {
-                print(user);
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
