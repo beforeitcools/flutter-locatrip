@@ -10,6 +10,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import '../../map/model/custom_marker.dart';
 import '../../map/model/place.dart';
 import '../model/trip_model.dart';
 import '../widget/drag_bottom_sheet.dart';
@@ -27,6 +28,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
   final DraggableScrollableController sheetController =
       DraggableScrollableController();
   final ScrollController _singleScrollController = ScrollController();
+  final ScrollController bottomScrollController = ScrollController();
 
   Map<String, dynamic> tripInfo = {};
 
@@ -37,6 +39,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
   double? latitude;
   double? longitude;
   GoogleMapController? mapController;
+  final Set<Marker> _markers = {};
+  final Set<Polyline> _polylines = {};
+  final List<LatLng> _markerPositions = [];
 
   String address = "";
 
@@ -52,6 +57,14 @@ class _TripViewScreenState extends State<TripViewScreen> {
 
   List<Map<String, dynamic>> tripDayAllList = [];
   Map<int, List<Map<String, dynamic>>> groupedTripDayAllList = {};
+
+  final colors = [
+    pointBlueColor,
+    Colors.purple,
+    Colors.pink,
+    Colors.green,
+    Colors.red,
+  ];
 
   @override
   void initState() {
@@ -76,7 +89,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
       setState(() {
         _animatedPositionedOffset = _singleScrollController.offset;
         // print('_animatedPositionedOffset $_animatedPositionedOffset');
-        if (_animatedPositionedOffset > 0) {
+        if (_animatedPositionedOffset > 64) {
           _isTop = true;
         } else {
           _isTop = false;
@@ -123,8 +136,56 @@ class _TripViewScreenState extends State<TripViewScreen> {
     }
   }
 
+  Future<void> _addCustomTextMarker(
+      List<Map<String, dynamic>> tripDayAllList, int dateIndex) async {
+    print('마커 실행?');
+    for (Map<String, dynamic> tripDay in tripDayAllList) {
+      if (tripDay["dateIndex"] == dateIndex) {
+        if (tripDay["place"] != null) {
+          _markerPositions.add(tripDay["place"].location);
+        }
+
+        int orderIndex = tripDay["orderIndex"] ?? 1;
+        int colorIndex = (orderIndex - 1) % colors.length;
+        final ByteData byteData = await createCustomMarkerIconImage(
+            text: tripDay["orderIndex"].toString(),
+            size: Size(72, 72),
+            color: colors[colorIndex]);
+        final Uint8List imageData = byteData.buffer.asUint8List();
+        final BitmapDescriptor customMarker =
+            BitmapDescriptor.fromBytes(imageData);
+
+        setState(() {
+          if (tripDay["place"] != null) {
+            _markers.add(
+              Marker(
+                  markerId: MarkerId(tripDay["place"].id ?? ""),
+                  position: LatLng(tripDay["place"].location.latitude! ?? 0.0,
+                      tripDay["place"].location.longitude! ?? 0.0),
+                  icon: customMarker,
+                  onTap: () {}),
+            );
+            _polylines.add(
+              Polyline(
+                polylineId: PolylineId(
+                    "path_${tripDay["place"].id}_${tripDay["dateIndex"]}" ??
+                        ""),
+                points: _markerPositions,
+                color: grayColor,
+                width: 1,
+                patterns: [
+                  PatternItem.dash(20),
+                  PatternItem.gap(10),
+                ],
+              ),
+            );
+          }
+        });
+      }
+    }
+  }
+
   Future<void> _loadTripDayLocation() async {
-    // Future<Map<int, List<Map<String, dynamic>>>> _loadTripDayLocation() async {
     print('이거 실행되는지?');
 
     int tripId = tripInfo["id"];
@@ -156,11 +217,14 @@ class _TripViewScreenState extends State<TripViewScreen> {
                 photoUrl: null,
                 location: LatLng(resultItem["location"]["latitude"],
                     resultItem["location"]["longitude"]),
-                icon: BitmapDescriptor.defaultMarker)
+                icon: BitmapDescriptor.defaultMarker),
+            "sortIndex": resultItem["sortIndex"]
           };
           tripDayAllList.add(resultMap);
         }
-        await _seletMemo();
+        await _selectMemo();
+
+        await _addCustomTextMarker(tripDayAllList, 0);
 
         // 상태 변경 후 UI 갱신
         setState(() {
@@ -173,7 +237,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
         // return groupedTripDayAllList;
       } else {
         print('결과가 없거나 null입니다.');
-        await _seletMemo();
+        await _selectMemo();
 
         setState(() {
           groupedTripDayAllList =
@@ -207,7 +271,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
     return groupedMap;
   }
 
-  Future<void> _seletMemo() async {
+  Future<void> _selectMemo() async {
     try {
       List<Map<String, dynamic>> selectMemoList =
           await _tripModel.selectMemo(tripInfo["id"], context);
@@ -221,6 +285,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
           newDayPlace["isMemo"] = true;
           newDayPlace["memo"] = memo["content"];
           newDayPlace["dateIndex"] = memo["dateIndex"];
+          newDayPlace["sortIndex"] = memo["sortIndex"];
           tempList.add(newDayPlace);
         }
         // _dayPlaceList.addAll(tempList);
@@ -567,15 +632,17 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                 initialCameraPosition: CameraPosition(
                                     target:
                                         LatLng(latitude! - 0.005, longitude!),
-                                    zoom: 9),
+                                    zoom: 11),
                                 onMapCreated: (GoogleMapController controller) {
                                   mapController = controller; // 지도 컨트롤러 초기화
                                 },
+                                markers: _markers,
+                                polylines: _polylines,
                                 gestureRecognizers: //
                                     <Factory<OneSequenceGestureRecognizer>>{
                                   Factory<OneSequenceGestureRecognizer>(
-                                    // () => EagerGestureRecognizer(),
-                                    () => ScaleGestureRecognizer(),
+                                    () => EagerGestureRecognizer(),
+                                    // () => ScaleGestureRecognizer(),
                                   ),
                                 },
                               ),
@@ -592,13 +659,15 @@ class _TripViewScreenState extends State<TripViewScreen> {
                     // 슬라이드 컨텐츠
 
                     DragBottomSheet(
-                      dropDownDay: _dropDownDay,
-                      tripInfo: tripInfo,
-                      animatedPositionedOffset: _animatedPositionedOffset,
-                      containerHeight: _containerHeight,
-                      singleScrollController: _singleScrollController,
-                      groupedTripDayAllList: groupedTripDayAllList,
-                    )
+                        dropDownDay: _dropDownDay,
+                        tripInfo: tripInfo,
+                        animatedPositionedOffset: _animatedPositionedOffset,
+                        containerHeight: _containerHeight,
+                        singleScrollController: _singleScrollController,
+                        groupedTripDayAllList: groupedTripDayAllList,
+                        bottomScrollController: bottomScrollController,
+                        colors: colors,
+                        addCustomTextMarker: _addCustomTextMarker)
                   ],
                 ),
       floatingActionButton: Container(

@@ -17,6 +17,7 @@ class DayWidget extends StatefulWidget {
   final Map<String, dynamic> tripInfo;
   final int selectedIndex;
   final List<Map<String, dynamic>> dayPlaceList;
+  final List colors;
 
   const DayWidget(
       {super.key,
@@ -26,13 +27,17 @@ class DayWidget extends StatefulWidget {
       required this.onDateSelected,
       required this.tripInfo,
       required this.selectedIndex,
-      required this.dayPlaceList});
+      required this.dayPlaceList,
+      required this.colors});
 
   @override
   State<DayWidget> createState() => _DayWidgetState();
 }
 
 class _DayWidgetState extends State<DayWidget> {
+  Map<String, GlobalKey> _listKeys = {};
+  late double _itemHeight; // listTile height
+
   final TripDayModel _tripDayModel = TripDayModel();
   final TripModel _tripModel = TripModel();
   TextEditingController _memoController = TextEditingController();
@@ -43,6 +48,7 @@ class _DayWidgetState extends State<DayWidget> {
   late Map<String, dynamic> _tripInfo;
   late int _selectedIndex;
   late Map<int, List<Map<String, dynamic>>> _groupedTripDayAllList;
+  late List _colors;
 
   // 모든 day가 담김
   late List<Map<String, dynamic>> _dayPlaceList;
@@ -57,19 +63,60 @@ class _DayWidgetState extends State<DayWidget> {
     _tripInfo = widget.tripInfo;
     _selectedIndex = widget.selectedIndex;
     _dayPlaceList = widget.dayPlaceList;
-    // _seletMemo();
-    /* _groupedTripDayAllList.forEach((key, value) {
-      print("Date: $key");
-      print("Items: $value\n");
-    });*/
+    _colors = widget.colors;
 
-    /*
-    * tripInfo {id: 16, userId: 1, title: ㅇ허ㅣ, startDate: 2025-01-16, endDate: 2025-01-24, createdAt: 2025-01-09T21:31:54, updatedAt: 2025-01-09T21:31:54, chattingId: null, status: 1, selectedRegions: [{tripId: 16, region: 여수}]}
-    * */
+    sortDayPlaceListBySortIndex();
 
-    /*
-    * dropDownDayList [01.16/목, 01.17/금, 01.18/토, 01.19/일, 01.20/월, 01.21/화, 01.22/수, 01.23/목, 01.24/금]
-    * */
+    for (var i = 0; i < _dayPlaceList.length; i++) {
+      final key =
+          '${_dayPlaceList[i]["dateIndex"]}-${_dayPlaceList[i]["sortIndex"]}';
+      if (!_listKeys.containsKey(key)) {
+        _listKeys[key] = GlobalKey();
+      }
+    }
+
+    // 프레임 렌더링 이후 높이를 계산
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _calculateItemHeight();
+    });
+  }
+
+  // 높이 계산 함수
+  void _calculateItemHeight() {
+    print('_listKeys $_listKeys');
+    if (_listKeys.isNotEmpty) {
+      // 첫 번째 항목의 높이를 측정
+      final RenderBox? renderBox = _listKeys[
+              '${_dayPlaceList[0]["dateIndex"]}-${_dayPlaceList[0]["sortIndex"]}']
+          ?.currentContext
+          ?.findRenderObject() as RenderBox?;
+      if (renderBox != null) {
+        setState(() {
+          _itemHeight = renderBox.size.height;
+          print("Item height: $_itemHeight");
+        });
+      }
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant DayWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 상위 위젯에서 데이터가 변경된 후 이를 처리
+    if (widget.colors != oldWidget.colors) {
+      setState(() {
+        _colors = widget.colors;
+      });
+    }
+  }
+
+  // 정렬 순서로 정렬
+  void sortDayPlaceListBySortIndex() {
+    setState(() {
+      _dayPlaceList.sort((a, b) {
+        return (a["sortIndex"] ?? 0).compareTo(b["sortIndex"] ?? 0);
+      });
+    });
   }
 
   void _showBottomSheet(BuildContext context, dropDownDayList, index) {
@@ -197,7 +244,8 @@ class _DayWidgetState extends State<DayWidget> {
       "longitude": _dayPlace["place"].location.longitude,
       "category": _dayPlace["place"].category,
       "date": dates[_dayPlace["day"]].toIso8601String(),
-      "dateIndex": _dayPlace["day"]
+      "dateIndex": _dayPlace["day"],
+      "sortIndex": _dayPlaceList.length
     };
 
     try {
@@ -205,8 +253,6 @@ class _DayWidgetState extends State<DayWidget> {
           await _tripDayModel.saveTripDayLocation(data, context);
       print('saveTripDayLocation결과 $result');
       if (result.isNotEmpty) {
-        print('_dayPlace $_dayPlace');
-
         setState(() {
           if (!_dayPlaceList.any((place) => place["id"] == result["id"])) {
             _dayPlace["id"] = result["id"];
@@ -219,6 +265,8 @@ class _DayWidgetState extends State<DayWidget> {
             _dayPlace["expenseId"] = result["expenseId"];
             _dayPlace["isChecked"] = false;
             _dayPlace["dateIndex"] = result["dateIndex"];
+            _dayPlace["isMemo"] = false;
+            _dayPlace["sortIndex"] = result["sortIndex"];
 
             _dayPlaceList.add(_dayPlace);
           } else {
@@ -256,7 +304,6 @@ class _DayWidgetState extends State<DayWidget> {
                 )));
 
     setState(() {
-      print('receiver["day"] $receiver["day"');
       Place selectedPlace = receiver['place'];
       _dayPlace = {
         "place": selectedPlace,
@@ -274,12 +321,17 @@ class _DayWidgetState extends State<DayWidget> {
           await _tripModel.addMemo(data, context);
       if (addMemoResult.isNotEmpty) {
         print('메모 등록 성공');
-        print('addMemoResult $addMemoResult');
         setState(() {
-          _dayPlace["isMemo"] = true;
-          _dayPlace["memo"] = addMemoResult["content"];
-          _dayPlace["dateIndex"] = addMemoResult["dateIndex"];
-          _dayPlaceList.add({..._dayPlace});
+          Map<String, dynamic> newMemo = {
+            "isMemo": true,
+            "memo": addMemoResult["content"],
+            "dateIndex": addMemoResult["dateIndex"],
+            "isChecked": false,
+            "sortIndex": addMemoResult["sortIndex"]
+          };
+
+          // 기존 _dayPlaceList에 새로운 객체 추가
+          _dayPlaceList.add(newMemo);
         });
       }
     } catch (e) {
@@ -289,233 +341,35 @@ class _DayWidgetState extends State<DayWidget> {
 
   @override
   Widget build(BuildContext context) {
-    print('_dayPlaceList $_dayPlaceList 왔어??');
     return Column(
       children: [
         Padding(padding: EdgeInsets.all(16), child: getWidget(index)),
 
         // 여기에 장소 추가/ 메모 추가 되면 됨 !
-
-        // 편집 모드
         if (_dayPlaceList != null)
-          Container(
-            child: ReorderableListView(
-              physics: NeverScrollableScrollPhysics(),
-              shrinkWrap: true,
-              onReorder: (oldIndex, newIndex) {
-                setState(() {
-                  if (newIndex > oldIndex) newIndex -= 1;
-                  final item = _dayPlaceList.removeAt(oldIndex);
-                  _dayPlaceList.insert(newIndex, item);
-                  // orderIndex 업데이트
-                  for (int i = 0; i < _dayPlaceList.length; i++) {
-                    _dayPlaceList[i]["orderIndex"] = i + 1;
-                  }
-                });
-              },
-              children: [
-                // 메모 아닌 리스트
-                for (int i = 0; i < _dayPlaceList.length; i++)
-                  if (_dayPlaceList[i]["isMemo"] == null ||
-                      _dayPlaceList[i]["isMemo"] == false)
-                    ListTile(
-                        key: ValueKey(_dayPlaceList[i]),
-                        contentPadding:
-                            EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                        horizontalTitleGap: 0,
-                        leading: IconButton(
-                          onPressed: () {
-                            setState(() {
-                              if (_dayPlaceList[i]["isChecked"] != null) {
-                                _dayPlaceList[i]["isChecked"] =
-                                    !_dayPlaceList[i]["isChecked"];
-                              }
-                            });
-                          },
-                          icon: Container(
-                            width: 24,
-                            height: 24,
-                            decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: _dayPlaceList[i]["isChecked"] != null &&
-                                        _dayPlaceList[i]["isChecked"]!
-                                    ? pointBlueColor
-                                    : Colors.white,
-                                border: Border.all(
-                                    color:
-                                        _dayPlaceList[i]["isChecked"] != null &&
-                                                _dayPlaceList[i]["isChecked"]!
-                                            ? pointBlueColor
-                                            : grayColor,
-                                    width: 1)),
-                            child: _dayPlaceList[i]["isChecked"] != null &&
-                                    _dayPlaceList[i]["isChecked"]!
-                                ? Icon(
-                                    Icons.check,
-                                    color: Colors.white,
-                                    size: 20,
-                                  )
-                                : null,
-                          ),
-                          padding: EdgeInsets.zero,
-                          constraints: BoxConstraints(),
-                        ),
-                        title: Container(
-                          // width: double.infinity,
+          ..._dayPlaceList.map((item) {
+            if (item["isMemo"] == true) {
+              // 메모일 경우
+              return Padding(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 4.0, horizontal: 16.0),
+                  child: ListTile(
+                    key: _listKeys['${item["dateIndex"]}-${item["sortIndex"]}'],
+                    contentPadding: EdgeInsets.only(left: 14),
+                    horizontalTitleGap: 6,
+                    leading: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: pointBlueColor,
+                      ),
+                      width: 8,
+                      height: 8,
+                    ),
+                    title: FractionallySizedBox(
+                        widthFactor: 1,
+                        child: Container(
                           padding: EdgeInsets.symmetric(
                               vertical: 10, horizontal: 16),
-                          decoration: BoxDecoration(
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  offset: Offset(1, 1),
-                                  blurRadius: 4,
-                                ),
-                              ],
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(6)),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  // 순서
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: grayColor, //임시
-                                    ),
-                                    width: 20,
-                                    height: 20,
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      _dayPlaceList[i]["orderIndex"]
-                                              ?.toString() ??
-                                          "",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelSmall
-                                          ?.copyWith(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w500),
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: 10,
-                                  ),
-                                  // 텍스트
-                                  Container(
-                                    width: MediaQuery.of(context).size.width *
-                                        0.45,
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          _dayPlaceList[i]["place"]?.name ?? "",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .titleSmall,
-                                        ),
-                                        Wrap(
-                                          spacing: 2,
-                                          children: [
-                                            Text(
-                                              _dayPlaceList[i]["place"]
-                                                      ?.category ??
-                                                  "",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .labelSmall
-                                                  ?.copyWith(color: grayColor),
-                                            ),
-                                            if (_dayPlaceList[i]["place"]
-                                                        ?.category !=
-                                                    null &&
-                                                _dayPlaceList[i]["place"]
-                                                        .address !=
-                                                    null)
-                                              Text(
-                                                "·",
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .labelSmall
-                                                    ?.copyWith(
-                                                        color: grayColor),
-                                              ),
-                                            Text(
-                                              _dayPlaceList[i]["place"]
-                                                      ?.address
-                                                      ?.split(" ")[0] ??
-                                                  "",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .labelSmall
-                                                  ?.copyWith(color: grayColor),
-                                            )
-                                          ],
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Icon(
-                                Icons.menu,
-                                color: grayColor,
-                              ),
-                            ],
-                          ),
-                        )),
-                // 메모 // 순서 항목과 메모 항목을 구분하여 리스트에 추가
-                for (int i = 0; i < _dayPlaceList.length; i++)
-                  if (_dayPlaceList[i]["isMemo"] != null &&
-                      _dayPlaceList[i]["isMemo"] == true)
-                    ListTile(
-                      key: ValueKey('memo_$i'),
-                      contentPadding:
-                          EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                      horizontalTitleGap: 0,
-                      leading: IconButton(
-                        onPressed: () {
-                          setState(() {
-                            if (_dayPlaceList[i]["isChecked"] != null) {
-                              _dayPlaceList[i]["isChecked"] =
-                                  !_dayPlaceList[i]["isChecked"];
-                            }
-                          });
-                        },
-                        icon: Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: _dayPlaceList[i]["isChecked"] != null &&
-                                      _dayPlaceList[i]["isChecked"]!
-                                  ? pointBlueColor
-                                  : Colors.white,
-                              border: Border.all(
-                                  color:
-                                      _dayPlaceList[i]["isChecked"] != null &&
-                                              _dayPlaceList[i]["isChecked"]!
-                                          ? pointBlueColor
-                                          : grayColor,
-                                  width: 1)),
-                          child: _dayPlaceList[i]["isChecked"] != null &&
-                                  _dayPlaceList[i]["isChecked"]!
-                              ? Icon(
-                                  Icons.check,
-                                  color: Colors.white,
-                                  size: 20,
-                                )
-                              : null,
-                        ),
-                        padding: EdgeInsets.zero,
-                        constraints: BoxConstraints(),
-                      ),
-                      title: Container(
-                          padding: EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(6),
@@ -527,28 +381,353 @@ class _DayWidgetState extends State<DayWidget> {
                               ),
                             ],
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          child: Text(
+                            item["memo"] ?? "메모가 없습니다.",
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        )),
+                  ));
+            } else {
+              int colorIndex = (item["orderIndex"] - 1) % _colors.length;
+              // 장소일 경우
+              return Padding(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 4.0, horizontal: 16.0),
+                  child: ListTile(
+                      key: ValueKey(item["sortIndex"]),
+                      contentPadding: EdgeInsets.only(left: 6),
+                      horizontalTitleGap: 16,
+                      leading: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _colors[colorIndex],
+                        ),
+                        width: 24,
+                        height: 24,
+                        alignment: Alignment.center,
+                        child: Text(
+                          item["orderIndex"]?.toString() ?? "",
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelSmall
+                              ?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                      title: Row(
+                        children: [
+                          Container(
+                            width: MediaQuery.of(context).size.width -
+                                (6 + 16 + 24 + 32),
+                            padding: EdgeInsets.symmetric(
+                                vertical: 10, horizontal: 16),
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  offset: Offset(1, 1),
+                                  blurRadius: 4,
+                                ),
+                              ],
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: FractionallySizedBox(
+                              widthFactor: 1,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item["place"]?.name ?? "",
+                                    style:
+                                        Theme.of(context).textTheme.titleSmall,
+                                  ),
+                                  Wrap(
+                                    spacing: 2,
+                                    children: [
+                                      Text(
+                                        item["place"]?.category ?? "",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(color: grayColor),
+                                      ),
+                                      if (item["place"]?.category != null &&
+                                          item["place"]?.address != null)
+                                        Text(
+                                          "·",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelSmall
+                                              ?.copyWith(color: grayColor),
+                                        ),
+                                      Text(
+                                        item["place"]?.address?.split(" ")[0] ??
+                                            "",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(color: grayColor),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          /*SizedBox(width: 10),*/
+                          // 텍스트
+                        ],
+                      )));
+            }
+          }).toList(),
+
+        // 편집 모드
+        /*if (_dayPlaceList != null)
+          Container(
+              child: ReorderableListView(
+            physics: NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            onReorder: (oldIndex, newIndex) {
+              setState(() {
+                if (newIndex > oldIndex) newIndex -= 1;
+
+                final item = _dayPlaceList.removeAt(oldIndex);
+                _dayPlaceList.insert(newIndex, item);
+
+                // orderIndex 업데이트 (메모는 제외)
+                int orderIndex = 1;
+                for (int i = 0; i < _dayPlaceList.length; i++) {
+                  if (_dayPlaceList[i]["isMemo"] != true) {
+                    _dayPlaceList[i]["orderIndex"] = orderIndex++;
+                  }
+                }
+                for (int i = 0; i < _dayPlaceList.length; i++) {
+                  _dayPlaceList[i]["sortIndex"] = i + 1;
+                }
+              });
+            },
+            children: [
+              for (int i = 0; i < _dayPlaceList.length; i++)
+                if (_dayPlaceList[i]["isMemo"] == true)
+                  // 메모 항목
+                  ListTile(
+                    key: ValueKey('memo_$i'),
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                    horizontalTitleGap: 0,
+                    leading: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          if (_dayPlaceList[i]["isChecked"] != null) {
+                            _dayPlaceList[i]["isChecked"] =
+                                !_dayPlaceList[i]["isChecked"];
+                          }
+                        });
+                      },
+                      icon: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _dayPlaceList[i]["isChecked"] == true
+                              ? pointBlueColor
+                              : Colors.white,
+                          border: Border.all(
+                            color: _dayPlaceList[i]["isChecked"] == true
+                                ? pointBlueColor
+                                : grayColor,
+                            width: 1,
+                          ),
+                        ),
+                        child: _dayPlaceList[i]["isChecked"] == true
+                            ? Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 20,
+                              )
+                            : null,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints(),
+                    ),
+                    title: Container(
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            offset: Offset(1, 1),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            width: MediaQuery.of(context).size.width * 0.545,
+                            child: Text(
+                              _dayPlaceList[i]["memo"] ?? "메모가 없습니다.",
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
+                          Icon(
+                            Icons.menu,
+                            color: grayColor,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  // 장소 항목
+                  ListTile(
+                    key: ValueKey(_dayPlaceList[i]),
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                    horizontalTitleGap: 0,
+                    leading: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          if (_dayPlaceList[i]["isChecked"] != null) {
+                            _dayPlaceList[i]["isChecked"] =
+                                !_dayPlaceList[i]["isChecked"];
+                          }
+                        });
+                      },
+                      icon: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _dayPlaceList[i]["isChecked"] == true
+                              ? pointBlueColor
+                              : Colors.white,
+                          border: Border.all(
+                            color: _dayPlaceList[i]["isChecked"] == true
+                                ? pointBlueColor
+                                : grayColor,
+                            width: 1,
+                          ),
+                        ),
+                        child: _dayPlaceList[i]["isChecked"] == true
+                            ? Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 20,
+                              )
+                            : null,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints(),
+                    ),
+                    title: Container(
+                      padding:
+                          EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            offset: Offset(1, 1),
+                            blurRadius: 4,
+                          ),
+                        ],
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
                             children: [
+                              // 순서
                               Container(
-                                width:
-                                    MediaQuery.of(context).size.width * 0.545,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: grayColor,
+                                ),
+                                width: 20,
+                                height: 20,
+                                alignment: Alignment.center,
                                 child: Text(
-                                  _dayPlaceList[i]["memo"] ?? "메모가 없습니다.",
-                                  style: Theme.of(context).textTheme.bodySmall,
+                                  _dayPlaceList[i]["orderIndex"]?.toString() ??
+                                      "",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelSmall
+                                      ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w500),
                                 ),
                               ),
-                              Icon(
-                                Icons.menu,
-                                color: grayColor,
+                              SizedBox(width: 10),
+                              // 텍스트
+                              Container(
+                                width: MediaQuery.of(context).size.width * 0.45,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _dayPlaceList[i]["place"]?.name ?? "",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall,
+                                    ),
+                                    Wrap(
+                                      spacing: 2,
+                                      children: [
+                                        Text(
+                                          _dayPlaceList[i]["place"]?.category ??
+                                              "",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelSmall
+                                              ?.copyWith(color: grayColor),
+                                        ),
+                                        if (_dayPlaceList[i]["place"]
+                                                    ?.category !=
+                                                null &&
+                                            _dayPlaceList[i]["place"]
+                                                    ?.address !=
+                                                null)
+                                          Text(
+                                            "·",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .labelSmall
+                                                ?.copyWith(color: grayColor),
+                                          ),
+                                        Text(
+                                          _dayPlaceList[i]["place"]
+                                                  ?.address
+                                                  ?.split(" ")[0] ??
+                                              "",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelSmall
+                                              ?.copyWith(color: grayColor),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
-                          )),
+                          ),
+                          Icon(
+                            Icons.menu,
+                            color: grayColor,
+                          ),
+                        ],
+                      ),
                     ),
-              ],
-            ),
-          ),
+                  ),
+            ],
+          )),*/
 
         Row(
           children: [
@@ -626,13 +805,16 @@ class _DayWidgetState extends State<DayWidget> {
                                   String memoText = _memoController.text;
                                   // 확인 버튼 클릭 시 처리할 로직
                                   print("입력된 메모: $memoText");
+                                  print(
+                                      ' 메모_dayPlaceList.length ${_dayPlaceList.length}');
 
                                   Map<String, dynamic> data = {
                                     "id": _tripInfo["id"],
                                     "content": memoText,
-                                    "dateIndex": index
+                                    "dateIndex": index,
+                                    "sortIndex": _dayPlaceList.length
                                   };
-                                  print('값이 있나????');
+
                                   _addMemo(data);
 
                                   _memoController.clear();

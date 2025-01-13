@@ -9,6 +9,10 @@ class DragBottomSheet extends StatefulWidget {
   final double containerHeight;
   final ScrollController singleScrollController;
   final Map<int, List<Map<String, dynamic>>> groupedTripDayAllList;
+  final ScrollController bottomScrollController;
+  final List colors;
+  final Future<void> Function(List<Map<String, dynamic>>, int)
+      addCustomTextMarker;
 
   const DragBottomSheet(
       {super.key,
@@ -17,14 +21,16 @@ class DragBottomSheet extends StatefulWidget {
       required this.animatedPositionedOffset,
       required this.containerHeight,
       required this.singleScrollController,
-      required this.groupedTripDayAllList});
+      required this.groupedTripDayAllList,
+      required this.bottomScrollController,
+      required this.colors,
+      required this.addCustomTextMarker});
 
   @override
   State<DragBottomSheet> createState() => _DragBottomSheetState();
 }
 
 class _DragBottomSheetState extends State<DragBottomSheet> {
-  final ScrollController _scrollController = ScrollController();
   final Map<int, GlobalKey> _itemKeys = {}; // 각 DayWidget의 key 저장
 
   late List<String> _dropDownDay;
@@ -38,10 +44,13 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
   late double _expandedHeight;
   late double _collapsedHeight;
   late ScrollController _singleScrollController;
-  bool _isExpanded = false;
+  late ScrollController _scrollController; // 바텀시트 내부
+  late bool _isExpanded = false;
   int _selectedIndex = 0;
   late Map<int, List<Map<String, dynamic>>> _groupedTripDayAllList;
   late List<int> sortedKeys;
+  late Future<void> Function(List<Map<String, dynamic>>, int)
+      _addCustomTextMarker;
 
   @override
   void initState() {
@@ -52,8 +61,9 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
     _singleScrollController = widget.singleScrollController;
     _animatedPositionedOffset = widget.animatedPositionedOffset;
     _groupedTripDayAllList = widget.groupedTripDayAllList;
-    print('21_groupedTripDayAllList $_groupedTripDayAllList');
-    // sortedKeys = _groupedTripDayAllList.keys.toList()..sort();
+
+    _scrollController = widget.bottomScrollController;
+    _addCustomTextMarker = widget.addCustomTextMarker;
 
     // 각 아이템에 GlobalKey 부여
     for (int i = 0; i < _dropDownDay.length; i++) {
@@ -73,6 +83,24 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
         _animatedPositionedOffset = _singleScrollController.offset;
       });
     });
+
+    _scrollController.addListener(() {
+      setState(() {
+        double scrollOffset = _scrollController.offset;
+        double offset = 0;
+        for (int i = 0; i < _dropDownDay.length; i++) {
+          final key = _itemKeys[i];
+          final context = key?.currentContext;
+          if (context != null) {
+            final box = context.findRenderObject() as RenderBox;
+            offset += box.size.height;
+            if (scrollOffset == offset) {
+              // _addCustomTextMarker;
+            }
+          }
+        }
+      });
+    });
   }
 
   @override
@@ -87,6 +115,13 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
     }
   }
 
+  @override
+  void dispose() {
+    _singleScrollController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   void _toggleContainer() {
     setState(() {
       _isExpanded = !_isExpanded;
@@ -98,7 +133,6 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
   void _scrollToSelectedItem(int index) {
     setState(() {
       _selectedIndex = index;
-      print('__selectedIndex $_selectedIndex');
     });
     double offset = 0;
     for (int i = 0; i < index; i++) {
@@ -190,18 +224,10 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
                         physics: BouncingScrollPhysics(),
                         itemCount: _dropDownDay.length,
                         itemBuilder: (context, index) {
-                          print(
-                              '2groupedTripDayAllList $_groupedTripDayAllList');
-
-                          // List<Map<String, dynamic>> dayPlaceList = [];
-                          // if (_groupedTripDayAllList.length != 0) {
                           int key =
                               _groupedTripDayAllList.keys.elementAt(index);
                           List<Map<String, dynamic>> dayPlaceList =
                               _groupedTripDayAllList[key] ?? [];
-                          // } else {
-                          //   dayPlaceList = [];
-                          // }
 
                           return Container(
                             key: _itemKeys[index],
@@ -212,7 +238,8 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
                                 onDateSelected: _scrollToSelectedItem,
                                 selectedIndex: _selectedIndex,
                                 tripInfo: _tripInfo,
-                                dayPlaceList: dayPlaceList),
+                                dayPlaceList: dayPlaceList,
+                                colors: widget.colors),
                           );
                         },
                       ),
