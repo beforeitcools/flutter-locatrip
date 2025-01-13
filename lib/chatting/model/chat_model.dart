@@ -113,7 +113,7 @@ class ChatModel{
 
     try{
       final response = await dio.post(
-        "$backUrl/",
+        "$backUrl/newChat",
         data: chatroomName);
     }catch(e){
       print("Failed to make new room");
@@ -128,16 +128,22 @@ class ChatModel{
 
     print("did you come here?");
     try{
-      final response = await dio.get("$backUrl/unread/count");
+      final response = await dio.get("$backUrl/unread/count",
+        queryParameters: {"chatroomId": chatroomId});
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print("UPDATE GET MY UNREAD COUNT!");
+        final unreadCount = response.data as int;
+        print("UPDATE GET MY UNREAD COUNT : $unreadCount");
+        return unreadCount;
+      }
+      else if (response.statusCode == 204) {
+        print("No unread messages for chatroom ID: $chatroomId.");
       }
       else {
-        throw Exception("FAILED TO UPDATE LAST MESSAGE ID : ${response.statusCode}");
+        throw Exception("FAILED TO GET MY UNREAD COUNT! : ${response.statusCode}");
       }
-    }catch(e){
-      print("failed to get your unread message count");
+    }catch(e, stackTrace){
+      print("failed to get your unread message count $e, Stack Trace: $stackTrace");
       throw Exception("Error  $e");
     }
   }

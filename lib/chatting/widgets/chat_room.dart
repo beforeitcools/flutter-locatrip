@@ -8,7 +8,6 @@ import 'package:flutter_locatrip/chatting/ui/reply_message_ui.dart';
 import 'package:flutter_locatrip/chatting/widgets//chat_room_setting.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ChatRoomPage extends StatefulWidget {
@@ -72,7 +71,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       unreadCount = await _chatModel.getUnreadMessageCount(context, widget.chatroomId);
       print("************************************************* $unreadCount");
     }catch(e){
-      print("failllllllllllllllllllllllllled");
+      print("failllllllllllllllllllllllllled cuz of => $e");
     }
   }
 
@@ -101,7 +100,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           "messageContents": _textController.text,
           "sendTime": DateTime.now().toIso8601String(),
           "read": false,
-                                    "readCount": 1};
+          "readCount": 1};
 
        final jsonMessage = json.encode(message);
         _channel.sink.add(jsonMessage);
@@ -123,7 +122,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   @override
   void dispose() {
-    //_updateLastReadMessageId();
+    _updateLastReadMessageId();
     _channel.sink.close();
     _textController.dispose();
     super.dispose();
