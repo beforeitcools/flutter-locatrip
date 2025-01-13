@@ -573,8 +573,8 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                   height: MediaQuery.of(context).size.height - 80,
                   child: GoogleMap(
                     initialCameraPosition: CameraPosition(
-                        target: LatLng(_mapCenter.latitude - 0.008,
-                            _mapCenter.longitude - 0.008),
+                        target: LatLng(
+                            _mapCenter.latitude - 0.05, _mapCenter.longitude),
                         zoom: 11),
                     myLocationEnabled: true,
                     myLocationButtonEnabled: true,
