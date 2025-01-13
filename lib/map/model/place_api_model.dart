@@ -149,6 +149,35 @@ class PlaceApiModel {
     }
   }
 
+  Future<Map<String, dynamic>> getViewPortsInKorean(
+      LatLng latlng, String language) async {
+    final dio = Dio();
+    String? apiKey = await ApiKeyLoader.getApiKey2('GEOCODING_API_KEY');
+    print('apiKey $apiKey');
+    double lat = latlng.latitude;
+    double lng = latlng.longitude;
+    try {
+      final responses = await dio.get(
+        "https://maps.googleapis.com/maps/api/geocode/json",
+        queryParameters: {
+          'key': apiKey,
+          'latlng': "$lat,$lng",
+          'language': language
+        },
+      );
+
+      if (responses.statusCode == 200) {
+        print('response $responses.data');
+        return responses.data as Map<String, dynamic>;
+      } else {
+        throw Exception("로드 실패");
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error : $e");
+    }
+  }
+
 // Google Places API에서 마커 아이콘 가져오기
 /* Future<BitmapDescriptor> getMarkerIcon(String category) async {
     final dio = Dio();

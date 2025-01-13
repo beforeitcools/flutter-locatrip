@@ -137,4 +137,129 @@ class MypageModel {
       throw Exception("Error: $e");
     }
   }
+
+  Future<Map<String, dynamic>> getMyFavoriteData(BuildContext context) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    final FlutterSecureStorage storage = FlutterSecureStorage();
+    final dynamic stringId = await storage.read(key: 'userId');
+    final int userId = int.tryParse(stringId) ?? 0;
+
+    try {
+      final response = await dio.get("$backUrl/mypage/myFavorite/$userId");
+
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception("내 저장 데이터 로드 실패");
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error: $e");
+    }
+  }
+
+  Future<dynamic> insertFavoritePost(BuildContext context, int postId) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    final FlutterSecureStorage storage = FlutterSecureStorage();
+    final dynamic stringId = await storage.read(key: 'userId');
+    final int userId = int.tryParse(stringId) ?? 0;
+    Map<String, dynamic> favoritePostData = {
+      "postId": postId,
+      "userId": userId,
+    };
+
+    try {
+      final responses = await dio.post("$backUrl/mypage/insertFavoritePost",
+          data: favoritePostData);
+      if (responses.statusCode == 200) {
+        return responses.data as Map<String, dynamic>;
+      } else {
+        return "장소 좋아요 저장에 실패했습니다. ${responses.data['message']}";
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error : $e");
+    }
+  }
+
+  Future<String> deleteFavoritePost(BuildContext context, int postId) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    final FlutterSecureStorage storage = FlutterSecureStorage();
+    final dynamic stringId = await storage.read(key: 'userId');
+    final int userId = int.tryParse(stringId) ?? 0;
+    Map<String, dynamic> favoritePostData = {
+      "postId": postId,
+      "userId": userId,
+    };
+
+    try {
+      final response = await dio.post("$backUrl/mypage/deleteFavoritePost",
+          data: favoritePostData);
+      if (response.statusCode == 200) {
+        return response.data['message'];
+      } else {
+        return "장소 좋아요 삭제에 실패했습니다. ${response.data['message']}";
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error : $e");
+    }
+  }
+
+  Future<Map<String, dynamic>> getMyLocalAreaAuthData(
+      BuildContext context) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    final FlutterSecureStorage storage = FlutterSecureStorage();
+    final dynamic stringId = await storage.read(key: 'userId');
+    final int userId = int.tryParse(stringId) ?? 0;
+
+    try {
+      final response = await dio.get("$backUrl/mypage/myLocalArea/$userId");
+
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception("내 현지인 인증 데이터 로드 실패");
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error: $e");
+    }
+  }
+
+  Future<Map<String, dynamic>> updateLocalAreaAuthentication(
+      BuildContext context, String region) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    final FlutterSecureStorage storage = FlutterSecureStorage();
+    final dynamic stringId = await storage.read(key: 'userId');
+    final int userId = int.tryParse(stringId) ?? 0;
+    Map<String, dynamic> localAreaAuthData = {
+      "localArea": region,
+      "id": userId,
+    };
+
+    try {
+      final response = await dio.post("$backUrl/mypage/updateMyLocalArea",
+          data: localAreaAuthData);
+
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception("내 현지인 인증 업데이트 실패");
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error: $e");
+    }
+  }
 }

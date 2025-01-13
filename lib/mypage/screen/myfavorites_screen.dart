@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/loading_screen.dart';
 import 'package:flutter_locatrip/map/model/place.dart';
 import 'package:flutter_locatrip/map/model/toggle_favorite.dart';
+import 'package:flutter_locatrip/map/screen/location_detail_screen.dart';
 import 'package:flutter_locatrip/mypage/model/mypage_model.dart';
+import 'package:flutter_locatrip/mypage/model/toggle_post_favorite.dart';
 import 'package:flutter_locatrip/mypage/widget/category_tab_menu_widget.dart';
 import 'package:flutter_locatrip/mypage/widget/myfavorites_list_tile_widget.dart';
 
@@ -22,7 +24,7 @@ class _MyfavoritesScreenState extends State<MyfavoritesScreen> {
 
   // like/unlike 토글과 location_detail_screen으로 보내기 위해서 필요한
   final ToggleFavorite _toggleFavorite = ToggleFavorite();
-  Map<String, bool> _favoriteStatus = {};
+  final TogglePostFavorite _togglePostFavorite = TogglePostFavorite();
 
   void _categoryOnTabHandler(int categoryIndex) {
     setState(() {
@@ -30,23 +32,38 @@ class _MyfavoritesScreenState extends State<MyfavoritesScreen> {
     });
   }
 
+  Future<void> navigateToLocationDetailScreen(Place place) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => LocationDetailScreen(
+                place: place,
+              )),
+    );
+
+    // 기다리다가 프로필 수정 후 돌아오면 트리거
+    if (result == true) {
+      _loadMyFavoriteData();
+    }
+  }
+
   // 내 여행 불러와서 다가오는 여행, 지난 여행 구분후 myTrips에 index 0,1로 추가
   Future<void> _loadMyFavoriteData() async {
     try {
       LoadingOverlay.show(context);
-      Map<String, dynamic> result = await _mypageModel.getMyTripData(context);
+      Map<String, dynamic> result =
+          await _mypageModel.getMyFavoriteData(context);
       print("result: $result");
 
       setState(() {
-        _myFavorites[0] = result['futureTrips'];
-        _myFavorites[1] = result['pastTrips'];
+        _myFavorites[0] = result['locations'];
+        _myFavorites[1] = result['posts'];
         print("myFavorites: $_myFavorites");
         print("myFavorites1: ${_myFavorites[0]}");
-        print("_myFavorites1title: ${_myFavorites[0]}[0]['title]");
         _isLoading = false;
       });
     } catch (e) {
-      print("!!!!!!!!!!!!!!!!!!마이 트립 로드 중 에러 발생 : $e");
+      print("!!!!!!!!!!!!!!!!!!내저장 로드 중 에러 발생 : $e");
       setState(() {
         _myFavorites = [[], []];
       });
@@ -55,15 +72,34 @@ class _MyfavoritesScreenState extends State<MyfavoritesScreen> {
     }
   }
 
-  void _updateFavoriteStatus(bool isFavorite, Place place) {
+  // 장소 좋아요
+  void _updateFavoriteStatus(
+      bool isFavorite, Place place, int selectedIndex, int index) {
     setState(() {
-      _favoriteStatus[place.name] = isFavorite;
+      _myFavorites[selectedIndex][index]['isFavorite'] =
+          !_myFavorites[selectedIndex][index]['isFavorite'];
     });
   }
 
-  Future<void> toggleFavoriteStatus(Place place, bool isFavorite) async {
+  Future<void> toggleFavoriteStatus(
+      Place place, bool isFavorite, int selectedIndex, int index) async {
     _toggleFavorite.toggleFavoriteStatus(place, isFavorite, context,
-        () => _updateFavoriteStatus(isFavorite, place));
+        () => _updateFavoriteStatus(isFavorite, place, selectedIndex, index));
+  }
+
+  // 게시글 좋아요
+  void _updatePostFavoriteStatus(
+      bool isFavorite, int selectedIndex, int index) {
+    setState(() {
+      _myFavorites[selectedIndex][index]['isFavorite'] =
+          !_myFavorites[selectedIndex][index]['isFavorite'];
+    });
+  }
+
+  Future<void> togglePostFavoriteStatus(
+      bool isFavorite, int selectedIndex, int index, int postId) async {
+    _togglePostFavorite.toggleFavoriteStatus(isFavorite, postId, context,
+        () => _updatePostFavoriteStatus(isFavorite, selectedIndex, index));
   }
 
   @override
@@ -104,6 +140,10 @@ class _MyfavoritesScreenState extends State<MyfavoritesScreen> {
                       myFavorites: _myFavorites,
                       updateFavoriteStatus: _updateFavoriteStatus,
                       toggleFavoriteStatus: toggleFavoriteStatus,
+                      navigateToLocationDetailScreen:
+                          navigateToLocationDetailScreen,
+                      updatePostFavoriteStatus: _updatePostFavoriteStatus,
+                      togglePostFavoriteStatus: togglePostFavoriteStatus,
                     ),
                   ),
                 ),

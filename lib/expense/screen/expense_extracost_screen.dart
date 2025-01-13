@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/expense/model/expense_model.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ExpenseExtracostScreen extends StatefulWidget {
   final int tripId;
@@ -38,14 +39,18 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
     {'label': '쇼핑', 'icon': Icons.shopping_bag},
     {'label': '기타', 'icon': Icons.sms},
   ];
-  // 날짜 옵션
 
   List<Map<String, dynamic>> _participants = [];
+  final FlutterSecureStorage _storage = FlutterSecureStorage();
+  late int currentUserId;
+
 
   @override
   void initState() {
     super.initState();
     _fetchParticipants();
+    _getCurrentUserId();
+
     if (widget.selectedDate == 'preparation') {
       _selectedDate = '여행 준비';
     } else if (widget.groupedExpenses.containsKey(widget.selectedDate)) {
@@ -54,7 +59,13 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
     } else {
       _selectedDate = widget.selectedDate; // fallback: 원래 값 사용
     }
+  }
 
+  Future<void> _getCurrentUserId() async {
+    final stringId = await _storage.read(key: 'userId');
+    setState(() {
+      currentUserId = int.tryParse(stringId ?? '') ?? 0;
+    });
   }
 
   Future<void> _fetchParticipants() async {
@@ -105,11 +116,11 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
                     formattedDate,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: _selectedDate == date ? Colors.blue : Colors.black,
+                      color: _selectedDate == date ? pointBlueColor : blackColor,
                     ),
                   ),
                   trailing: _selectedDate == date
-                      ? const Icon(Icons.check, color: Colors.blue)
+                      ? const Icon(Icons.check, color: pointBlueColor)
                       : null,
                   onTap: () {
                     setState(() {
@@ -140,9 +151,14 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
               ),
               ..._paymentMethods.map((method) {
                 return ListTile(
-                  title: Text(method),
+                  title: Text(method,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _selectedPaymentMethod == method ? pointBlueColor : blackColor,
+                    ),
+                  ),
                   trailing: _selectedPaymentMethod == method
-                      ? const Icon(Icons.check, color: Colors.blue)
+                      ? const Icon(Icons.check, color: pointBlueColor)
                       : null,
                   onTap: () {
                     setState(() {
@@ -186,7 +202,6 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
         ? "${parsedDate.year}-${parsedDate.month.toString().padLeft(2, '0')}-${parsedDate.day.toString().padLeft(2, '0')}"
         : null;
 
-    // userId를 Integer로 변환
     final expenseData = {
       'date': formattedDate,
       'category': _selectedCategory,
@@ -211,6 +226,7 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
           .toList(),
     };
 
+
     try {
       final expenseModel = ExpenseModel();
       await expenseModel.createExpense(expenseData, context);
@@ -227,6 +243,12 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.close),  // X 아이콘
+          onPressed: () {
+            Navigator.pop(context); // X 아이콘을 눌렀을 때 이전 화면으로 돌아갑니다.
+          },
+        ),
         title: const Text('비용 추가'),
       ),
       body: SingleChildScrollView(
@@ -237,9 +259,34 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
             // 금액 입력
             TextField(
               controller: _amountController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                hintText : '금액 입력',
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                filled: true,  // 배경 색상 채우기
+                fillColor: lightGrayColor,  // 배경 색상 (흰색)
+                hintText: '금액 입력',  // 힌트 텍스트
+                hintStyle: TextStyle(
+                  color: grayColor, // 힌트 텍스트 색상
+                  fontSize: 25,
+                ),
+                contentPadding: EdgeInsets.symmetric(vertical: 60, horizontal: 16),  // 안쪽 여백 조정
+                border: OutlineInputBorder(// 둥근 모서리
+                  borderSide: BorderSide(
+                    color: lightGrayColor,  // 연한 회색 테두리
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: lightGrayColor,  // 기본 테두리 색상
+                    width: 1,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: lightGrayColor,  // 포커스된 상태에서 테두리 색상
+                    width: 1,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -299,6 +346,10 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
               controller: _descriptionController,
               decoration: const InputDecoration(
                 hintText: '내용을 입력해주세요.',
+                hintStyle: TextStyle(
+                  color: grayColor, // 힌트 텍스트 색상
+                  fontSize: 20,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -369,26 +420,41 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
 
             Column(
               children: _participants.map((user) {
-                print(user);
+
+                bool isCurrentUser = user['id'] == currentUserId;
+
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     // 사용자 ID 표시
                     Expanded(
-                      child: Text(
-                        user['nickname'], // userId를 UI에 표시
+                      child: Row(
+                        children:[
+                          user['profile_pic'] != null && user['profile_pic'].isNotEmpty
+                              ? CircleAvatar(
+                            backgroundImage: NetworkImage(user['profile_pic']),  // 프로필 이미지
+                            radius: 20,  // 아이콘 크기
+                          )
+                              : Icon(Icons.person, color: pointBlueColor),
+                          Text(
+                        user['nickname'] + (isCurrentUser ? '(나)' : ''), // userId를 UI에 표시
                         style: const TextStyle(fontSize: 14),
                       ),
+                      ],
+                    ),
                     ),
                     // 결제 체크박스
                     Column(
                       children: [
                         const Text('결제'),
-                        Checkbox(
-                          value: user['isPaid'] ?? false,
-                          onChanged: (value) {
+                        IconButton(
+                          icon: Icon(
+                            user['isPaid'] ?? false ? Icons.check_circle : Icons.check_circle,
+                            color: user['isPaid'] ?? false ? pointBlueColor : grayColor, // 체크 여부에 따른 색상
+                          ),
+                          onPressed: () {
                             setState(() {
-                              user['isPaid'] = value!;
+                              user['isPaid'] = !(user['isPaid'] ?? false);
                             });
                           },
                         ),
@@ -398,11 +464,14 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
                     Column(
                       children: [
                         const Text('함께'),
-                        Checkbox(
-                          value: user['isChecked'] ?? false,
-                          onChanged: (value) {
+                        IconButton(
+                          icon: Icon(
+                            user['isChecked'] ?? false ? Icons.check_circle : Icons.check_circle,
+                            color: user['isChecked'] ?? false ? pointBlueColor : grayColor,
+                          ),
+                          onPressed: () {
                             setState(() {
-                              user['isChecked'] = value!;
+                              user['isChecked'] = !(user['isChecked'] ?? false);
                             });
                           },
                         ),
@@ -415,12 +484,25 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
             const SizedBox(height: 16),
 
             // 완료 버튼
-            const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: pointBlueColor, // 배경 색상
+                  foregroundColor: Colors.white, // 텍스트 색상
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10), // 모서리 둥글게 처리
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 10), // 버튼 높이 조정
+                ),
                 onPressed: _saveExpense,
-                child: const Text('완료'),
+                child: const Text(
+                  '완료',
+                  style: TextStyle(
+                    fontSize: 16, // 글꼴 크기
+                    fontWeight: FontWeight.bold, // 텍스트 굵기
+                  ),
+                ),
               ),
             ),
           ],
