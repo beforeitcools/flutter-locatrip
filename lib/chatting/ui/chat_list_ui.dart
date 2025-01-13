@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/chatting/model/chat_model.dart';
 import 'package:flutter_locatrip/chatting/widgets/chat_room.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -20,6 +21,8 @@ class ChatListUi extends StatefulWidget {
 class _ChatListUiState extends State<ChatListUi> {
   int _unreadCount = 0;  // 안 읽은 메세지 보여줄 거
   late String token;
+  final ChatModel _chatModel = ChatModel();
+
   final FlutterSecureStorage _storage = FlutterSecureStorage();
   final _channel =  WebSocketChannel.connect(Uri.parse("ws://localhost:8082"));
   List<dynamic> _unreadCounts = [];
@@ -29,31 +32,34 @@ class _ChatListUiState extends State<ChatListUi> {
     token = getToken.toString();
   }
 
+  Future<void> _getUnreadMessageCount() async{
+    try{
+      int result = await _chatModel.getUnreadMessageCount(context, widget.chatroomId);
+     setState(() {
+       _unreadCount = result;
+     });
+    }catch(e){
+      print("faiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiled cuz of => $e");
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _getToken();
-    
+    _getUnreadMessageCount();
     // // 실시간으로 확인하기 위해 websocket 채널 구독
-    // _channel.stream.listen((message) {
-    //   final data = jsonDecode(message);
-    //   setState(() {
-    //     _unreadCounts[data['chatroomId']] = data['unreadCount'];
-    //   });
-    // });
-  }
+    _channel.stream.listen((message) {
+      final data = jsonDecode(message);
+      setState(() {
 
-  void _setUnreadCount() {
-    // 이녀석은 내가 채팅방에서 나가고 오는 모든 메세지를 unreadCount로 세어야 한다
-    // 그럼 계속 백이랑 왓다갓다 해야하는 ....? 100넘어가면 100+로 처리하자
-
-    setState(() {
-      _unreadCount = 1;
+      });
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    // 실시간으로 참조해야 됨 ...? 이거 때문에 websocket 채널 연결한 거였는데 하
     return ListTile(
       hoverColor: Color.fromRGBO(170, 170, 170, 0.1),
       onTap: (){Navigator.push(context, MaterialPageRoute(builder: (context)=> ChatRoomPage(token: token,chatroomId: widget.chatroomId, chatroomName: widget.chatroomName)));},

@@ -33,7 +33,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   final FlutterSecureStorage _storage = FlutterSecureStorage();
   late final int myUserId;
-  late int unreadCount;
 
 
   Future<void> _getUserId() async{
@@ -66,21 +65,11 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     }
   }
 
-  void _getUnreadMessageCount() async{
-    try{
-      unreadCount = await _chatModel.getUnreadMessageCount(context, widget.chatroomId);
-      print("************************************************* $unreadCount");
-    }catch(e){
-      print("failllllllllllllllllllllllllled cuz of => $e");
-    }
-  }
-
   @override
   void initState() {
     super.initState();
     _getUserId();
     try {
-      _getUnreadMessageCount();
       _channel = WebSocketChannel.connect(uri);
     } catch (e) {
       print('Failed to connect to $uri: $e');
