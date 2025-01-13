@@ -5,7 +5,7 @@ class Place {
   final String name;
   final String address;
   final String category;
-  final List? photoUrl;
+  List? photoUrl;
   final LatLng location;
   final BitmapDescriptor icon;
 

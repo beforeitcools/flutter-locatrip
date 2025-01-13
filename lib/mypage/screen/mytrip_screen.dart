@@ -3,7 +3,8 @@ import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/common/widget/loading_screen.dart';
 import 'package:flutter_locatrip/mypage/model/mypage_model.dart';
 import 'package:flutter_locatrip/mypage/widget/category_tab_menu_widget.dart';
-import 'package:flutter_locatrip/mypage/widget/list_tile_widget.dart';
+import 'package:flutter_locatrip/mypage/widget/mytrip_list_tile_widget.dart';
+import 'package:flutter_locatrip/trip/screen/trip_view_screen.dart';
 
 class MytripScreen extends StatefulWidget {
   const MytripScreen({super.key});
@@ -15,7 +16,7 @@ class MytripScreen extends StatefulWidget {
 class _MytripScreenState extends State<MytripScreen> {
   final MypageModel _mypageModel = MypageModel();
   int _selectedIndex = 0; // 탭한 index(default: 0)
-  late List<Map<String, dynamic>> _myTrips = List.filled(2, {});
+  late List<List<dynamic>> _myTrips = List.filled(2, []);
   List<String> _categories = ["다가오는 여행", "지난 여행"];
   bool _isLoading = true;
 
@@ -26,23 +27,61 @@ class _MytripScreenState extends State<MytripScreen> {
   }
 
   // 내 여행 불러와서 다가오는 여행, 지난 여행 구분후 myTrips에 index 0,1로 추가
-  void _loadMyTripData() async {
+  Future<void> _loadMyTripData() async {
     try {
       LoadingOverlay.show(context);
       Map<String, dynamic> result = await _mypageModel.getMyTripData(context);
+      print("result: $result");
+      print(result['futureTrips']);
+      print(result['pastTrips']);
       setState(() {
         _myTrips[0] = result['futureTrips'];
         _myTrips[1] = result['pastTrips'];
-        print("result: $result");
         print("mytrips: $_myTrips");
+        print("mytrips1: ${_myTrips[0]}");
+        print("mytrips1: ${_myTrips[0]}[0]['title]");
+        // print("mytrips2: ${_myTrips[0][title]}");
         _isLoading = false;
       });
     } catch (e) {
-      print("!!!!!!!!!!!!!!!!!!로드 중 에러 발생 : $e");
+      print("!!!!!!!!!!!!!!!!!!마이 트립 로드 중 에러 발생 : $e");
       setState(() {
-        _myTrips = [{}, {}];
+        _myTrips = [[], []];
       });
     } finally {
+      LoadingOverlay.hide();
+    }
+  }
+
+  Future<void> navigateToTripViewScreen(int tripId) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TripViewScreen(tripId: tripId)),
+    );
+
+    // 기다리다가 프로필 수정 후 돌아오면 트리거
+    if (result == true) {
+      _loadMyTripData();
+    }
+  }
+
+  Future<void> deleteTrip(int tripId) async {
+    try {
+      LoadingOverlay.show(context);
+      String result = await _mypageModel.deleteTrip(context, tripId);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(result)));
+
+      setState(() {
+        _myTrips[_selectedIndex]
+            .removeWhere((trip) => trip['tripId'] == tripId);
+      });
+    } catch (e) {
+      print("!!!!!!!!!!!!!!!!!!트립 삭제중  에러 발생 : $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('트립 삭제 중 오류가 발생했습니다. 다시 시도해주세요.')));
+    } finally {
+      await _loadMyTripData();
       LoadingOverlay.hide();
     }
   }
@@ -56,7 +95,6 @@ class _MytripScreenState extends State<MytripScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      // Show loading screen while data is fetching
       return Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
@@ -68,61 +106,30 @@ class _MytripScreenState extends State<MytripScreen> {
       appBar: AppBar(
         title: Text("내 여행", style: Theme.of(context).textTheme.headlineLarge),
       ),
-      body: SingleChildScrollView(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: MediaQuery.of(context).size.height - 165,
-          ),
-          child: IntrinsicHeight(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(0, 0, 0, 16),
-              child: Center(
-                child: Column(
-                  children: [
-                    CategoryTabMenuWidget(
-                      categoryOnTabHandler: _categoryOnTabHandler,
-                      selectedIndex: _selectedIndex,
-                      categories: _categories,
-                    ),
-                    SizedBox(
-                      height: 4,
-                    ),
-                    ListTileWidget(
+      body: Center(
+        child: Column(
+          children: [
+            CategoryTabMenuWidget(
+              categoryOnTabHandler: _categoryOnTabHandler,
+              selectedIndex: _selectedIndex,
+              categories: _categories,
+            ),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(0, 1, 0, 1),
+                child: SingleChildScrollView(
+                  child: IntrinsicHeight(
+                    child: MytripListTileWidget(
                       selectedIndex: _selectedIndex,
                       myTrips: _myTrips,
+                      deleteTrip: deleteTrip,
+                      navigateToTripViewScreen: navigateToTripViewScreen,
                     ),
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-                      child: TextButton(
-                        onPressed: () {},
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "현재 위치로 현지인 인증하기",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelLarge
-                                  ?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white),
-                            ),
-                          ],
-                        ),
-                        style: TextButton.styleFrom(
-                          minimumSize: Size(380, 60),
-                          backgroundColor: pointBlueColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

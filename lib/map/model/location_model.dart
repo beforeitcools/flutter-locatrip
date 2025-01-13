@@ -7,13 +7,14 @@ import '../../common/Auth/auth_dio_interceptor.dart';
 import '../../common/widget/url.dart';
 
 class LocationModel {
-  Future<dynamic> insertLocation(
+  Future<dynamic> insertFavorite(
       Map<String, dynamic> place, BuildContext context) async {
     final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
-      final responses = await dio.post("$backUrl/location/insert", data: place);
+      final responses =
+          await dio.post("$backUrl/location/insertFavorite", data: place);
       if (responses.statusCode == 200) {
         return responses.data as Map<String, dynamic>;
       } else {
@@ -25,14 +26,13 @@ class LocationModel {
     }
   }
 
-  Future<String> deleteFavorite(
-      Map<String, dynamic> place, BuildContext context) async {
+  Future<String> deleteFavorite(String googleId, BuildContext context) async {
     final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
       final responses =
-          await dio.post("$backUrl/location/deleteFavorite", data: place);
+          await dio.post("$backUrl/location/deleteFavorite", data: googleId);
       if (responses.statusCode == 200) {
         return responses.data as String;
       } else {

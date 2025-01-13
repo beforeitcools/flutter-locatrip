@@ -60,14 +60,6 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
       selectedRegionList.add(item["name"].toString());
     }
 
-    // String startDateString = _dateRangeModel.startDate != null
-    //     ? _dateRangeModel.startDate!.toIso8601String()
-    //     : "";
-    //
-    // String endDateString = _dateRangeModel.endDate != null
-    //     ? _dateRangeModel.endDate!.toIso8601String()
-    //     : "";
-
     Map<String, dynamic> tripData = {
       "title": _titleInputController.text.toString(),
       "startDate":
@@ -291,20 +283,11 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                                               Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          TripViewScreen(
-                                                              tripId:
-                                                                  newTripId ??
-                                                                      0)));
-                                              // Navigator.pushAndRemoveUntil(
-                                              //   context,
-                                              //   MaterialPageRoute(
-                                              //       builder: (context) =>
-                                              //           TripViewScreen(tripId: newTripId)),
-                                              //
-                                              //   (Route<dynamic> route) =>
-                                              //       false, // 이전 페이지 들을 모두 제거
-                                              // );
+                                                    builder: (context) =>
+                                                        TripViewScreen(
+                                                            tripId:
+                                                                newTripId ?? 0),
+                                                  ));
                                             }
                                           }
                                         : null,

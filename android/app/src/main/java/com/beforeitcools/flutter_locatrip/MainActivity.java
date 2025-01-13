@@ -20,9 +20,12 @@ public class MainActivity extends FlutterActivity {
                 .setMethodCallHandler(
                         (call, result) -> {
                             if (call.method.equals("getApiKey")) {
-                                String apiKey = BuildConfig.PLACES_API_KEY; // Replace with PLACES_API_KEY if needed
+                                String apiKey = BuildConfig.PLACES_API_KEY;
                                 result.success(apiKey);
-                            } else {
+                            } else if (call.method.equals("getApiKey2")) {
+                                String apiKey = BuildConfig.GEOCODING_API_KEY;
+                                result.success(apiKey);
+                            }else {
                                 result.notImplemented();
                             }
                         }

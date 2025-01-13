@@ -6,9 +6,11 @@ import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/common/widget/loading_screen.dart';
 import 'package:flutter_locatrip/mypage/model/mypage_model.dart';
 import 'package:flutter_locatrip/mypage/screen/local_area_auth_screen.dart';
+import 'package:flutter_locatrip/mypage/screen/myadvices_screen.dart';
+import 'package:flutter_locatrip/mypage/screen/myfavorites_screen.dart';
+import 'package:flutter_locatrip/mypage/screen/myposts_screen.dart';
 import 'package:flutter_locatrip/mypage/screen/mytrip_screen.dart';
 import 'package:flutter_locatrip/mypage/screen/profile_update_screen.dart';
-import 'package:flutter_locatrip/mypage/widget/cusotom_dialog.dart';
 
 class MypageScreen extends StatefulWidget {
   const MypageScreen({super.key});
@@ -27,7 +29,7 @@ class _MypageScreenState extends State<MypageScreen> {
   late String _selectedAdviceCount;
   bool _isLoading = true;
 
-  void _logout() async {
+  Future<void> _logout() async {
     try {
       String result = await _authModel.logout();
       ScaffoldMessenger.of(context)
@@ -48,7 +50,7 @@ class _MypageScreenState extends State<MypageScreen> {
     }
   }
 
-  void _loadMypageData() async {
+  Future<void> _loadMypageData() async {
     try {
       LoadingOverlay.show(context);
       Map<String, dynamic> result = await _mypageModel.getMyPageData(context);
@@ -57,12 +59,11 @@ class _MypageScreenState extends State<MypageScreen> {
         _selectedAdviceCount = result['selectedAdviceCount'].toString();
         _profileImage = _userData['profilePic'];
         _nickname = _userData['nickname'] ?? '닉네임 없음';
-        _nickname = _truncateWithEllipsis(_nickname, _getMaxLength(context));
         _ownBadge = _userData['ownBadge'];
         _isLoading = false;
       });
     } catch (e) {
-      print("!!!!!!!!!!!!!!!!!!로드 중 에러 발생 : $e");
+      print("!!!!!!!!!!!!!!!!!!마이페이지 로드 중 에러 발생 : $e");
     } finally {
       LoadingOverlay.hide();
     }
@@ -102,21 +103,36 @@ class _MypageScreenState extends State<MypageScreen> {
     }
   }
 
-  // 디바이스 사이즈에 맞춰서 텍스트 정리(...처리)
-  String _truncateWithEllipsis(String text, int maxLength) {
-    return (text.length > maxLength)
-        ? '${text.substring(0, maxLength)}...'
-        : text;
+  Future<void> _navigateToMyFavoritesPage() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MyfavoritesScreen()),
+    );
+
+    if (result == true) {
+      _loadMypageData();
+    }
   }
 
-  int _getMaxLength(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    if (screenWidth > 600) {
-      // Tablet - wider screen
-      return 14;
-    } else {
-      // Mobile - narrower screen
-      return 7;
+  Future<void> _navigateToMyPostsPage() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MypostsScreen()),
+    );
+
+    if (result == true) {
+      _loadMypageData();
+    }
+  }
+
+  Future<void> _navigateToMyAdvicesPage() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MyadvicesScreen()),
+    );
+
+    if (result == true) {
+      _loadMypageData();
     }
   }
 
@@ -141,7 +157,8 @@ class _MypageScreenState extends State<MypageScreen> {
     }
   }
 
-  Widget _materialCreator(dynamic icon, String title, Future navigateTo()) {
+  Widget _materialCreator(
+      dynamic icon, String title, Future Function() navigateTo) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -173,7 +190,6 @@ class _MypageScreenState extends State<MypageScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      // Show loading screen while data is fetching
       return Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
@@ -218,6 +234,9 @@ class _MypageScreenState extends State<MypageScreen> {
             splashColor: Color.fromARGB(70, 43, 192, 228),
             highlightColor: Color.fromARGB(50, 43, 192, 228),
           ),
+          SizedBox(
+            width: 10,
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -250,51 +269,50 @@ class _MypageScreenState extends State<MypageScreen> {
                               splashColor: Color.fromARGB(50, 43, 192, 228),
                               highlightColor: Color.fromARGB(30, 43, 192, 228),
                               borderRadius: BorderRadius.circular(10),
-                              child: Container(
-                                height: 92,
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 16),
-                                  child: Row(
-                                    children: [
-                                      // 프로필 이미지
-                                      CircleAvatar(
-                                        radius: 30,
-                                        child: _profileImage != null
-                                            ? ClipOval(
-                                                child: CachedNetworkImage(
-                                                  imageUrl: _profileImage!,
-                                                  placeholder: (context, url) =>
-                                                      SizedBox(
-                                                    width: 30,
-                                                    height: 30,
-                                                    child: Center(
-                                                      child:
-                                                          CircularProgressIndicator(),
-                                                    ),
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 16),
+                                child: Row(
+                                  children: [
+                                    // 프로필 이미지
+                                    CircleAvatar(
+                                      radius: 30,
+                                      child: _profileImage != null
+                                          ? ClipOval(
+                                              child: CachedNetworkImage(
+                                                imageUrl: _profileImage!,
+                                                placeholder: (context, url) =>
+                                                    SizedBox(
+                                                  width: 30,
+                                                  height: 30,
+                                                  child: Center(
+                                                    child:
+                                                        CircularProgressIndicator(),
                                                   ),
-                                                  errorWidget:
-                                                      (context, url, error) =>
-                                                          Icon(
-                                                    Icons.error_outline,
-                                                    size: 48,
-                                                  ),
-                                                  fit: BoxFit.cover,
-                                                  width: 60,
-                                                  height: 60,
                                                 ),
-                                              )
-                                            : CircleAvatar(
-                                                radius: 30,
-                                                backgroundImage: AssetImage(
-                                                        'assets/default_profile_image.png')
-                                                    as ImageProvider),
-                                      ),
-                                      SizedBox(
-                                        width: 16,
-                                      ),
-                                      // 닉네임
-                                      Text(
+                                                errorWidget:
+                                                    (context, url, error) =>
+                                                        Icon(
+                                                  Icons.error_outline,
+                                                  size: 48,
+                                                ),
+                                                fit: BoxFit.cover,
+                                                width: 60,
+                                                height: 60,
+                                              ),
+                                            )
+                                          : CircleAvatar(
+                                              radius: 30,
+                                              backgroundImage: AssetImage(
+                                                      'assets/default_profile_image.png')
+                                                  as ImageProvider),
+                                    ),
+                                    SizedBox(
+                                      width: 16,
+                                    ),
+                                    // 닉네임
+                                    Expanded(
+                                      child: Text(
                                         _nickname,
                                         style: TextStyle(
                                           color: blackColor,
@@ -302,23 +320,28 @@ class _MypageScreenState extends State<MypageScreen> {
                                           fontWeight: FontWeight.w600,
                                           fontFamily: 'NotoSansKR',
                                         ),
+                                        overflow: TextOverflow
+                                            .ellipsis, // 텍스트 삐져나옴 방지(길면...)
+                                        maxLines: 1,
                                       ),
-                                      SizedBox(
-                                        width: 16,
-                                      ),
-                                      // 베지(있으면)
-                                      _ownBadge == 1
-                                          ? Icon(
-                                              Icons.verified_outlined,
-                                              color: pointBlueColor,
-                                            )
-                                          : SizedBox(),
-                                      Spacer(),
-                                      Icon(Icons.chevron_right),
-                                    ],
-                                  ),
+                                    ),
+
+                                    SizedBox(
+                                      width: 16,
+                                    ),
+                                    // 베지(있으면)
+                                    _ownBadge == 1
+                                        ? Icon(
+                                            Icons.verified_outlined,
+                                            color: pointBlueColor,
+                                          )
+                                        : SizedBox(),
+
+                                    Icon(Icons.chevron_right),
+                                  ],
                                 ),
                               ),
+                              // ),
                             ),
                           ),
                           Container(
@@ -410,11 +433,12 @@ class _MypageScreenState extends State<MypageScreen> {
                         children: [
                           _materialCreator("assets/icon/trip.png", "내 여행",
                               _navigateToMyTripPage),
-                          /*_materialCreator(
-                              Icons.favorite_border_outlined, "내 저장"),
-                          _materialCreator(Icons.article_outlined, "내 포스트"),
-                          _materialCreator(
-                              "assets/icon/rate_review.png", "내 첨삭"),*/
+                          _materialCreator(Icons.favorite_border_outlined,
+                              "내 저장", _navigateToMyFavoritesPage),
+                          _materialCreator(Icons.article_outlined, "내 포스트",
+                              _navigateToMyPostsPage),
+                          _materialCreator("assets/icon/rate_review.png",
+                              "내 첨삭", _navigateToMyAdvicesPage),
                         ],
                       ),
                     ),

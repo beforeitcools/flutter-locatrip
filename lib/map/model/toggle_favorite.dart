@@ -7,11 +7,12 @@ class ToggleFavorite {
 
   Future<void> insertLocation(
       Place place,
-      Map<String, bool> favoriteStatus,
+      // Map<String, bool> favoriteStatus,
       // List<Map<String, bool>> favoriteStatusList,
       BuildContext context,
       VoidCallback onUpdate) async {
     Map<String, dynamic> placeData = {
+      "googleId": place.id,
       "name": place.name,
       "address": place.address,
       "latitude": place.location.latitude,
@@ -21,7 +22,7 @@ class ToggleFavorite {
 
     try {
       Map<String, dynamic> result =
-          await _locationModel.insertLocation(placeData, context);
+          await _locationModel.insertFavorite(placeData, context);
       print('result $result');
 
       if ((result != null && result is Map<String, dynamic>)) {
@@ -36,17 +37,18 @@ class ToggleFavorite {
 
   Future<void> removeFavorite(
       Place place,
-      Map<String, bool> favoriteStatus,
+      // Map<String, bool> favoriteStatus,
       // List<Map<String, bool>> favoriteStatusList,
       BuildContext context,
       VoidCallback onUpdate) async {
-    Map<String, dynamic> placeData = {
+    /*Map<String, dynamic> placeData = {
       "name": place.name,
       "address": place.address
-    };
+    };*/
+    String googleId = place.id;
 
     try {
-      String result = await _locationModel.deleteFavorite(placeData, context);
+      String result = await _locationModel.deleteFavorite(googleId, context);
 
       if (result != null) {
         /*favoriteStatus[place.name] = false;
@@ -63,17 +65,18 @@ class ToggleFavorite {
 
   void toggleFavoriteStatus(
       Place place,
-      Map<String, bool> favoriteStatus,
+      // Map<String, bool> favoriteStatus,
       // List<Map<String, bool>> favoriteStatusList,
+      bool isFavorite,
       BuildContext context,
       VoidCallback onUpdate) {
-    bool isFavorite = favoriteStatus[place.name] ?? false;
-    print('현재 상태: $isFavorite');
+    bool _isFavorite = isFavorite ?? false;
+    print('현재 상태: $_isFavorite');
 
-    if (isFavorite) {
-      removeFavorite(place, favoriteStatus, context, onUpdate);
+    if (_isFavorite) {
+      removeFavorite(place, context, onUpdate);
     } else {
-      insertLocation(place, favoriteStatus, context, onUpdate);
+      insertLocation(place, context, onUpdate);
     }
   }
 }

@@ -14,9 +14,9 @@
             android:value="${PLACES_API_KEY}" />
 
 
-        <!--<meta-data
+        <meta-data
             android:name="com.google.android.geocoding.API_KEY"
-            android:value="${GEOCODING_API_KEY}" />-->
+            android:value="${GEOCODING_API_KEY}" />
 
 
         <activity
