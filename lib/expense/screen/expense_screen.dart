@@ -4,6 +4,7 @@ import 'package:flutter_locatrip/expense/model/expense_model.dart';
 import 'package:flutter_locatrip/expense/screen/expense_extracost_screen.dart';
 import 'package:flutter_locatrip/expense/screen/expense_settlement_screen.dart';
 import 'package:flutter_locatrip/expense/screen/expense_updatecost_screen.dart';
+import 'package:intl/intl.dart';
 
 class ExpenseScreen extends StatefulWidget {
   final int tripId;
@@ -22,6 +23,8 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
 
   String selectedPeriod = '기간전체';
 
+  String region = '지역을 불러오는 중...';
+
   final Map<String, IconData> categoryIcons = {
     '숙소': Icons.night_shelter,
     '식비': Icons.restaurant,
@@ -31,10 +34,14 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     '기타': Icons.sms,
   };
 
+  final NumberFormat currencyFormat =
+  NumberFormat('#,##0', 'ko_KR');
+
   @override
   void initState() {
     super.initState();
     loadExpensesGroupedByDays();
+    loadRegion();
   }
 
   Future<void> loadExpensesGroupedByDays() async {
@@ -50,6 +57,21 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         isLoading = false;
       });
     }
+  }
+
+  Future<void> loadRegion() async {
+    try {
+      final regionData = await expenseModel.getRegionByTripId(widget.tripId, context);
+      // regionData가 List<dynamic>일 때 첫 번째 요소를 가져옵니다.
+      setState(() {
+        region = regionData[0][0].toString();
+      });
+    } catch (e) {
+      setState(() {
+        region = '지역 정보 불러오기 실패';
+      });
+    }
+    print(region);
   }
 
   void _navigateToSettlementScreen() {
@@ -234,7 +256,19 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(110),
         child: AppBar(
-          title: const Text('가계부'),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "가계부",
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                region == '지역을 불러오는 중...' ? '지역을 불러오는 중...' : '$region 여행',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: grayColor),
+              ),
+            ],
+          ),
           actions: [
             IconButton(
               icon: const Icon(Icons.calculate),
@@ -283,12 +317,18 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
           final dayData = entry.value as Map<String, dynamic>;
           final date = dayData['date'];
 
-          return ExpansionTile(
-            title: Text(
-              day == "preparation" ? '여행 준비' : '$day $date',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 날짜 제목
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  day == "preparation" ? '여행 준비' : '$day $date',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              // 비용 목록 (ReorderableListView 사용)
               ReorderableListView(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -302,7 +342,6 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                     dayData['expenses'].insert(newIndex, item);
                   });
                 },
-
                 children: [
                   ...(dayData['expenses'] as List).map((expense) {
                     final String category = expense['category'] ?? '기타';
@@ -332,8 +371,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                                       Navigator.of(context).pop(); // 다이얼로그 닫기
                                       _deleteExpense(expense['id'], day); // 삭제 처리
                                     },
-                                    child: const Text('삭제',
-                                    style: TextStyle(color: Colors.red),),
+                                    child: const Text('삭제', style: TextStyle(color: Colors.red)),
                                   ),
                                 ],
                               );
@@ -345,7 +383,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                       title: Text(expense['description']),
                       trailing: isEditing
                           ? const Icon(Icons.drag_handle)
-                          : Text('₩${(expense['amount']).toInt()}'),
+                          : Text('₩${currencyFormat.format(expense['amount'])}'),
                       onTap: () {
                         if (!isEditing) {
                           final formattedDay = day == "preparation" ? '여행 준비' : '$day $date';
@@ -357,43 +395,47 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                 ],
               ),
               if (isEditing)
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
+                Center(
                   child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: pointBlueColor,
-                      foregroundColor: Colors.white,
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        backgroundColor: pointBlueColor,
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          isEditing = false;
+                        });
+                      },
+                      child: const Text('편집 완료')
+                  ),
+                ),
+              // 비용 추가 버튼
+              Padding(
+                padding: const EdgeInsets.only(left: 15.0), // 왼쪽 여백을 제목의 첫 글자에 맞춰 설정
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: blackColor,
+                    side: const BorderSide(color: grayColor),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    onPressed: () {
-                      setState(() {
-                        isEditing = false;
-                      });
-                    },
-                    child: const Text('편집 완료')
+                    padding: const EdgeInsets.symmetric(horizontal: 160, vertical: 8),
+                    textStyle: const TextStyle(fontSize: 16),
                   ),
+                  onPressed: () {
+                    final formattedDay = day == "preparation" ? '여행 준비' : '$day $date';
+                    _navigateToAddExpense(formattedDay);
+                  },
+                  child: const Text('비용 추가'),
                 ),
-              OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: blackColor,
-                  side: const BorderSide(color: grayColor),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(0),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 160, vertical: 8),
-                  textStyle: const TextStyle(fontSize: 16),
-                ),
-                onPressed: () {
-                  final formattedDay = day == "preparation" ? '여행 준비' : '$day $date';
-                  _navigateToAddExpense(formattedDay);
-                },
-                child: const Text('비용 추가'),
               ),
             ],
           );
         }).toList(),
-      ),
+      )
     );
   }
 }

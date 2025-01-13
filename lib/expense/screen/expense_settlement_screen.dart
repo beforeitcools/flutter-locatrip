@@ -182,10 +182,12 @@ class _ExpenseSettlementScreenState extends State<ExpenseSettlementScreen> {
                       horizontal: 12.0, vertical: 6.0),
                   child: ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: Icon(
-                      Icons.person,
-                      color: Colors.blue,
-                    ),
+                    leading: user['profile_pic'] != null && user['profile_pic'].isNotEmpty
+                        ? CircleAvatar(
+                      backgroundImage: NetworkImage(user['profile_pic']),  // 프로필 이미지
+                      radius: 20,  // 아이콘 크기
+                    )
+                        : Icon(Icons.person, color: pointBlueColor),
                     title: Text(
                       '${user['nickname']}',
                       style: TextStyle(fontSize: 16),

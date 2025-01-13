@@ -39,11 +39,11 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
     {'label': '쇼핑', 'icon': Icons.shopping_bag},
     {'label': '기타', 'icon': Icons.sms},
   ];
-  // 날짜 옵션
 
   List<Map<String, dynamic>> _participants = [];
   final FlutterSecureStorage _storage = FlutterSecureStorage();
   late int currentUserId;
+
 
   @override
   void initState() {
@@ -63,9 +63,8 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
 
   Future<void> _getCurrentUserId() async {
     final stringId = await _storage.read(key: 'userId');
-    print(stringId);
     setState(() {
-      currentUserId = int.tryParse(stringId ?? '') ?? 1;
+      currentUserId = int.tryParse(stringId ?? '') ?? 0;
     });
   }
 
@@ -422,7 +421,6 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
             Column(
               children: _participants.map((user) {
 
-
                 bool isCurrentUser = user['id'] == currentUserId;
 
                 return Row(
@@ -432,7 +430,12 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
                     Expanded(
                       child: Row(
                         children:[
-                          Icon(Icons.person, color: pointBlueColor),
+                          user['profile_pic'] != null && user['profile_pic'].isNotEmpty
+                              ? CircleAvatar(
+                            backgroundImage: NetworkImage(user['profile_pic']),  // 프로필 이미지
+                            radius: 20,  // 아이콘 크기
+                          )
+                              : Icon(Icons.person, color: pointBlueColor),
                           Text(
                         user['nickname'] + (isCurrentUser ? '(나)' : ''), // userId를 UI에 표시
                         style: const TextStyle(fontSize: 14),
