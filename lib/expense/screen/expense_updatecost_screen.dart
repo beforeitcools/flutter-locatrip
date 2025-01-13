@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/expense/model/expense_model.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ExpenseUpdateCostScreen extends StatefulWidget {
   final int expenseId;
@@ -40,16 +41,19 @@ class _ExpenseUpdateCostScreen extends State<ExpenseUpdateCostScreen> {
     {'label': '쇼핑', 'icon': Icons.shopping_bag},
     {'label': '기타', 'icon': Icons.sms},
   ];
-  // 날짜 옵션
 
   List<Map<String, dynamic>> _participants = [];
   bool isLoading = true;
+
+  final FlutterSecureStorage _storage = FlutterSecureStorage();
+  late int currentUserId;
 
   @override
   void initState() {
     super.initState();
     _fetchParticipants();
     _fetchExpenseDetails();
+    _getCurrentUserId();
     if (widget.selectedDate == 'preparation') {
       _selectedDate = '여행 준비';
     } else if (widget.groupedExpenses.containsKey(widget.selectedDate)) {
@@ -59,6 +63,13 @@ class _ExpenseUpdateCostScreen extends State<ExpenseUpdateCostScreen> {
       _selectedDate = widget.selectedDate; // fallback: 원래 값 사용
     }
 
+  }
+
+  Future<void> _getCurrentUserId() async {
+    final stringId = await _storage.read(key: 'userId');
+    setState(() {
+      currentUserId = int.tryParse(stringId ?? '') ?? 0;
+    });
   }
 
   Future<void> _fetchParticipants() async {
@@ -134,11 +145,11 @@ class _ExpenseUpdateCostScreen extends State<ExpenseUpdateCostScreen> {
                     formattedDate,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: _selectedDate == date ? Colors.blue : Colors.black,
+                      color: _selectedDate == date ? pointBlueColor : blackColor,
                     ),
                   ),
                   trailing: _selectedDate == date
-                      ? const Icon(Icons.check, color: Colors.blue)
+                      ? const Icon(Icons.check, color: pointBlueColor)
                       : null,
                   onTap: () {
                     setState(() {
@@ -169,7 +180,12 @@ class _ExpenseUpdateCostScreen extends State<ExpenseUpdateCostScreen> {
               ),
               ..._paymentMethods.map((method) {
                 return ListTile(
-                  title: Text(method),
+                  title: Text(method,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _selectedPaymentMethod == method ? pointBlueColor : blackColor,
+                    ),
+                  ),
                   trailing: _selectedPaymentMethod == method
                       ? const Icon(Icons.check, color: Colors.blue)
                       : null,
@@ -256,7 +272,13 @@ class _ExpenseUpdateCostScreen extends State<ExpenseUpdateCostScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('비용 추가'),
+        leading: IconButton(
+          icon: Icon(Icons.close),  // X 아이콘
+          onPressed: () {
+            Navigator.pop(context); // X 아이콘을 눌렀을 때 이전 화면으로 돌아갑니다.
+          },
+        ),
+        title: const Text('비용 수정'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -398,26 +420,41 @@ class _ExpenseUpdateCostScreen extends State<ExpenseUpdateCostScreen> {
 
             Column(
               children: _participants.map((user) {
-                print(user);
+
+                bool isCurrentUser = user['id'] == currentUserId;
+
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     // 사용자 ID 표시
                     Expanded(
-                      child: Text(
-                        user['nickname'], // userId를 UI에 표시
-                        style: const TextStyle(fontSize: 14),
+                      child: Row(
+                        children:[
+                          user['profile_pic'] != null && user['profile_pic'].isNotEmpty
+                              ? CircleAvatar(
+                            backgroundImage: NetworkImage(user['profile_pic']),  // 프로필 이미지
+                            radius: 20,  // 아이콘 크기
+                          )
+                              : Icon(Icons.person, color: pointBlueColor),
+                          Text(
+                            user['nickname'] + (isCurrentUser ? '(나)' : ''), // userId를 UI에 표시
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ],
                       ),
                     ),
                     // 결제 체크박스
                     Column(
                       children: [
                         const Text('결제'),
-                        Checkbox(
-                          value: user['isPaid'] ?? false,
-                          onChanged: (value) {
+                        IconButton(
+                          icon: Icon(
+                            user['isPaid'] ?? false ? Icons.check_circle : Icons.check_circle,
+                            color: user['isPaid'] ?? false ? pointBlueColor : grayColor, // 체크 여부에 따른 색상
+                          ),
+                          onPressed: () {
                             setState(() {
-                              user['isPaid'] = value!;
+                              user['isPaid'] = !(user['isPaid'] ?? false);
                             });
                           },
                         ),
@@ -427,11 +464,14 @@ class _ExpenseUpdateCostScreen extends State<ExpenseUpdateCostScreen> {
                     Column(
                       children: [
                         const Text('함께'),
-                        Checkbox(
-                          value: user['isChecked'] ?? false,
-                          onChanged: (value) {
+                        IconButton(
+                          icon: Icon(
+                            user['isChecked'] ?? false ? Icons.check_circle : Icons.check_circle,
+                            color: user['isChecked'] ?? false ? pointBlueColor : grayColor,
+                          ),
+                          onPressed: () {
                             setState(() {
-                              user['isChecked'] = value!;
+                              user['isChecked'] = !(user['isChecked'] ?? false);
                             });
                           },
                         ),
