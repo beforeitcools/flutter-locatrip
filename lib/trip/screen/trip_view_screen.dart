@@ -2,12 +2,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
+import 'package:flutter_locatrip/main/screen/main_screen.dart';
+import 'package:flutter_locatrip/trip/model/trip_day_model.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import '../../map/model/place.dart';
 import '../model/trip_model.dart';
 import '../widget/drag_bottom_sheet.dart';
 
@@ -28,6 +31,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
   Map<String, dynamic> tripInfo = {};
 
   TripModel _tripModel = TripModel();
+  TripDayModel _tripDayModel = TripDayModel();
   bool isLoading = true;
 
   double? latitude;
@@ -44,13 +48,21 @@ class _TripViewScreenState extends State<TripViewScreen> {
   double _animatedPositionedOffset = 0;
   bool _isTop = false;
 
+  bool _isInfoLoaded = false;
+
+  List<Map<String, dynamic>> tripDayAllList = [];
+  Map<int, List<Map<String, dynamic>>> groupedTripDayAllList = {};
+
   @override
   void initState() {
     super.initState();
 
     initializeDateFormatting('ko_KR', null).then((_) {
       Intl.defaultLocale = 'ko_KR';
-      _loadInfo();
+      if (!_isInfoLoaded) {
+        _isInfoLoaded = true;
+        _loadInfo();
+      }
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -80,11 +92,11 @@ class _TripViewScreenState extends State<TripViewScreen> {
     try {
       Map<String, dynamic> result =
           await _tripModel.selectTrip(widget.tripId, context);
+
       if (result.isNotEmpty) {
         setState(() {
           tripInfo.addAll(result);
 
-          // print('tripInfo ${tripInfo['selectedRegions']}');
           address = tripInfo['selectedRegions'][0]['region'];
 
           isLoading = false;
@@ -96,6 +108,8 @@ class _TripViewScreenState extends State<TripViewScreen> {
         if (address.isNotEmpty) {
           _getCoordinatesFromAddress();
         }
+
+        await _loadTripDayLocation();
       } else {
         setState(() {
           isLoading = false;
@@ -106,6 +120,115 @@ class _TripViewScreenState extends State<TripViewScreen> {
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  Future<void> _loadTripDayLocation() async {
+    // Future<Map<int, List<Map<String, dynamic>>>> _loadTripDayLocation() async {
+    print('이거 실행되는지?');
+
+    int tripId = tripInfo["id"];
+    print('tripId $tripId');
+    try {
+      List<Map<String, dynamic>> result =
+          await _tripDayModel.getTripDay(tripId, context);
+      print('result조회 $result');
+      if (result != null && result.isNotEmpty) {
+        // 상태 변경 전에 데이터를 완전히 업데이트
+        tripDayAllList.clear();
+        for (Map<String, dynamic> resultItem in result) {
+          Map<String, dynamic> resultMap = {
+            "id": resultItem["id"],
+            "tripId": resultItem["tripId"],
+            "locationId": resultItem["locationId"],
+            "date": resultItem["date"],
+            "visitTime": resultItem["visitTime"],
+            "orderIndex": resultItem["orderIndex"],
+            "memo": resultItem["memo"],
+            "expenseId": resultItem["expenseId"],
+            "dateIndex": resultItem["dateIndex"],
+            "isChecked": false,
+            "place": Place(
+                id: resultItem["location"]["googleId"],
+                name: resultItem["location"]["name"],
+                address: resultItem["location"]["address"],
+                category: resultItem["location"]["category"],
+                photoUrl: null,
+                location: LatLng(resultItem["location"]["latitude"],
+                    resultItem["location"]["longitude"]),
+                icon: BitmapDescriptor.defaultMarker)
+          };
+          tripDayAllList.add(resultMap);
+        }
+        await _seletMemo();
+
+        // 상태 변경 후 UI 갱신
+        setState(() {
+          groupedTripDayAllList =
+              groupByDate(tripDayAllList, _dropDownDay.length);
+        });
+
+        print('resultList $tripDayAllList');
+        print('groupedTripDayAllList $groupedTripDayAllList');
+        // return groupedTripDayAllList;
+      } else {
+        print('결과가 없거나 null입니다.');
+        await _seletMemo();
+
+        setState(() {
+          groupedTripDayAllList =
+              groupByDate(tripDayAllList, _dropDownDay.length);
+        });
+      }
+    } catch (e) {
+      print('에러메시지 $e');
+      // return {};
+    }
+  }
+
+  Map<int, List<Map<String, dynamic>>> groupByDate(
+      List<Map<String, dynamic>> list, int totalDays) {
+    // 빈 Map 생성
+    Map<int, List<Map<String, dynamic>>> groupedMap = {};
+
+    // 초기화: 모든 인덱스를 빈 리스트로 설정
+    for (int i = 0; i < totalDays; i++) {
+      groupedMap[i] = [];
+    }
+
+    // 리스트의 데이터를 그룹화
+    for (var item in list) {
+      print('item $item');
+      int dateIndex = item['dateIndex']; // dateIndex를 키로 사용
+      groupedMap[dateIndex]?.add(item); // 해당 키에 데이터 추가
+    }
+
+    print('groupedMap $groupedMap');
+    return groupedMap;
+  }
+
+  Future<void> _seletMemo() async {
+    try {
+      List<Map<String, dynamic>> selectMemoList =
+          await _tripModel.selectMemo(tripInfo["id"], context);
+      if (selectMemoList != null) {
+        print('메모 조회 성공');
+        print('selectMemoList $selectMemoList');
+
+        List<Map<String, dynamic>> tempList = [];
+        for (Map<String, dynamic> memo in selectMemoList) {
+          Map<String, dynamic> newDayPlace = {};
+          newDayPlace["isMemo"] = true;
+          newDayPlace["memo"] = memo["content"];
+          newDayPlace["dateIndex"] = memo["dateIndex"];
+          tempList.add(newDayPlace);
+        }
+        // _dayPlaceList.addAll(tempList);
+        tripDayAllList.addAll(tempList);
+        print('new tripDayAllList $tripDayAllList');
+      }
+    } catch (e) {
+      print("에러메시지 $e");
     }
   }
 
@@ -198,10 +321,13 @@ class _TripViewScreenState extends State<TripViewScreen> {
               // **추가해야함 ! 뒤로 가기 클릭했을 때 마이페이지 or 홈으로 이동 시키기...!!!
               // Navigator.pushAndRemoveUntil(
               //   context,
-              //   MaterialPageRoute(builder: (context) => MyPage()),
-              //       (Route<dynamic> route) => false,
+              //   MaterialPageRoute(
+              //     builder: (context) => MainScreen(),
+              //     fullscreenDialog: false,
+              //   ),
+              //   (Route<dynamic> route) => false,
               // );
-              Navigator.pop(context);
+              Navigator.popUntil(context, (route) => route.isFirst);
             },
             icon: Icon(Icons.arrow_back)),
         title: _isTop
@@ -257,12 +383,22 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.end,
                                             children: [
-                                              Text(
-                                                tripInfo["title"] ?? "제목 없음",
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .titleLarge,
+                                              Container(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.5,
+                                                child: Text(
+                                                  tripInfo["title"] ?? "제목 없음",
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .titleLarge,
+                                                  overflow:
+                                                      TextOverflow.visible,
+                                                  softWrap: true,
+                                                ),
                                               ),
+
                                               SizedBox(
                                                 width: 16,
                                               ),
@@ -461,6 +597,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
                       animatedPositionedOffset: _animatedPositionedOffset,
                       containerHeight: _containerHeight,
                       singleScrollController: _singleScrollController,
+                      groupedTripDayAllList: groupedTripDayAllList,
                     )
                   ],
                 ),
@@ -474,7 +611,6 @@ class _TripViewScreenState extends State<TripViewScreen> {
             //     context,
             //     MaterialPageRoute(
             //       builder: (context) => TripScreen(),
-            //       fullscreenDialog: true,
             //     ));
           },
           child: Column(

@@ -6,11 +6,11 @@ import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/common/widget/loading_screen.dart';
 import 'package:flutter_locatrip/mypage/model/mypage_model.dart';
 import 'package:flutter_locatrip/mypage/screen/local_area_auth_screen.dart';
+import 'package:flutter_locatrip/mypage/screen/myadvices_screen.dart';
 import 'package:flutter_locatrip/mypage/screen/myfavorites_screen.dart';
+import 'package:flutter_locatrip/mypage/screen/myposts_screen.dart';
 import 'package:flutter_locatrip/mypage/screen/mytrip_screen.dart';
 import 'package:flutter_locatrip/mypage/screen/profile_update_screen.dart';
-import 'package:flutter_locatrip/mypage/widget/custom_dialog.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class MypageScreen extends StatefulWidget {
   const MypageScreen({super.key});
@@ -114,6 +114,28 @@ class _MypageScreenState extends State<MypageScreen> {
     }
   }
 
+  Future<void> _navigateToMyPostsPage() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MypostsScreen()),
+    );
+
+    if (result == true) {
+      _loadMypageData();
+    }
+  }
+
+  Future<void> _navigateToMyAdvicesPage() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MyadvicesScreen()),
+    );
+
+    if (result == true) {
+      _loadMypageData();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -135,7 +157,8 @@ class _MypageScreenState extends State<MypageScreen> {
     }
   }
 
-  Widget _materialCreator(dynamic icon, String title, Future navigateTo()) {
+  Widget _materialCreator(
+      dynamic icon, String title, Future Function() navigateTo) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -211,6 +234,9 @@ class _MypageScreenState extends State<MypageScreen> {
             splashColor: Color.fromARGB(70, 43, 192, 228),
             highlightColor: Color.fromARGB(50, 43, 192, 228),
           ),
+          SizedBox(
+            width: 10,
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -243,8 +269,6 @@ class _MypageScreenState extends State<MypageScreen> {
                               splashColor: Color.fromARGB(50, 43, 192, 228),
                               highlightColor: Color.fromARGB(30, 43, 192, 228),
                               borderRadius: BorderRadius.circular(10),
-                              /*child: Expanded(*/
-                              // height: 92,
                               child: Padding(
                                 padding: EdgeInsets.symmetric(
                                     horizontal: 16, vertical: 16),
@@ -411,9 +435,10 @@ class _MypageScreenState extends State<MypageScreen> {
                               _navigateToMyTripPage),
                           _materialCreator(Icons.favorite_border_outlined,
                               "내 저장", _navigateToMyFavoritesPage),
-                          /*_materialCreator(Icons.article_outlined, "내 포스트"),
-                          _materialCreator(
-                              "assets/icon/rate_review.png", "내 첨삭"),*/
+                          _materialCreator(Icons.article_outlined, "내 포스트",
+                              _navigateToMyPostsPage),
+                          _materialCreator("assets/icon/rate_review.png",
+                              "내 첨삭", _navigateToMyAdvicesPage),
                         ],
                       ),
                     ),
