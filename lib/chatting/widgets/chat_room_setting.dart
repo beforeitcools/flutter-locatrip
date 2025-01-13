@@ -68,7 +68,8 @@ class _ChatRoomSettingState extends State<ChatRoomSetting> {
                                                   controller: _controller,
                                                   decoration: InputDecoration(
                                                     enabledBorder: InputBorder.none,
-                                                      hintText: widget.chatRoom
+                                                      hintText: widget.chatRoom,
+                                                      hintStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(color: grayColor),
                                                   ),
                                                 )),
                                                 TextButton(onPressed: (){
