@@ -40,10 +40,11 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
     {'label': '기타', 'icon': Icons.sms},
   ];
 
+  final ExpenseModel expenseModel = ExpenseModel();
+
   List<Map<String, dynamic>> _participants = [];
   final FlutterSecureStorage _storage = FlutterSecureStorage();
   late int currentUserId;
-
 
   @override
   void initState() {
@@ -70,7 +71,7 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
 
   Future<void> _fetchParticipants() async {
     try {
-      final users = await ExpenseModel().getUsersByTripId(widget.tripId, context);
+      final users = await expenseModel.getUsersByTripId(widget.tripId, context);
       setState(() {
         _participants = users.map((user) {
           return {
@@ -178,6 +179,7 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
   void _saveExpense() async {
     DateTime? parsedDate;
 
+
     try {
       if (widget.selectedDate == '여행 준비') {
         parsedDate = null;
@@ -203,6 +205,7 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
         : null;
 
     final expenseData = {
+      'tripId': widget.tripId,
       'date': formattedDate,
       'category': _selectedCategory,
       'description': _descriptionController.text,
@@ -225,10 +228,7 @@ class _ExpenseExtracostScreenState extends State<ExpenseExtracostScreen> {
       })
           .toList(),
     };
-
-
     try {
-      final expenseModel = ExpenseModel();
       await expenseModel.createExpense(expenseData, context);
       print('Expense saved successfully');
       Navigator.pop(context, true); // 이전 화면으로 돌아가기

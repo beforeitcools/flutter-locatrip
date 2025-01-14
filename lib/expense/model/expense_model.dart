@@ -13,6 +13,7 @@ class ExpenseModel {
       final response = await dio.post(
         '$baseUrl/insert',
         data: {
+          "tripId": expenseData['tripId'],
           "date": expenseData['date'],
           "category": expenseData['category'],
           "description": expenseData['description'],
@@ -203,6 +204,21 @@ class ExpenseModel {
       }
     } catch (e) {
       print('Error fetching region: $e');
+      throw Exception('Error: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getTripDetails(int tripId, BuildContext context) async {
+    dio.interceptors.add(AuthInterceptor(dio, context));
+    try {
+      final response = await dio.get('$baseUrl/trip/$tripId/details');
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to fetch trip details');
+      }
+    } catch(e) {
+      print('Error fetching trip details: $e');
       throw Exception('Error: $e');
     }
   }

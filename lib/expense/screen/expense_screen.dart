@@ -4,6 +4,7 @@ import 'package:flutter_locatrip/expense/model/expense_model.dart';
 import 'package:flutter_locatrip/expense/screen/expense_extracost_screen.dart';
 import 'package:flutter_locatrip/expense/screen/expense_settlement_screen.dart';
 import 'package:flutter_locatrip/expense/screen/expense_updatecost_screen.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 
 class ExpenseScreen extends StatefulWidget {
@@ -62,7 +63,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   Future<void> loadRegion() async {
     try {
       final regionData = await expenseModel.getRegionByTripId(widget.tripId, context);
-      // regionData가 List<dynamic>일 때 첫 번째 요소를 가져옵니다.
+
       setState(() {
         region = regionData[0][0].toString();
       });
@@ -71,14 +72,13 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         region = '지역 정보 불러오기 실패';
       });
     }
-    print(region);
   }
 
   void _navigateToSettlementScreen() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ExpenseSettlementScreen(),
+        builder: (context) => ExpenseSettlementScreen(tripId: widget.tripId),
       ),
     );
   }
