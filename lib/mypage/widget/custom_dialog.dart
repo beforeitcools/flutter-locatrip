@@ -20,23 +20,26 @@ class CustomDialog {
               children: [
                 Container(
                   padding: EdgeInsets.symmetric(vertical: 20),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        color: pointBlueColor,
-                        size: 50,
-                      ),
-                      SizedBox(height: 16),
-                      Text(
-                        contentMessage,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(color: blackColor),
-                      ),
-                    ],
+                  child: Padding(
+                    padding: EdgeInsets.all(10),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          color: pointBlueColor,
+                          size: 50,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          contentMessage,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(color: blackColor),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 SizedBox(

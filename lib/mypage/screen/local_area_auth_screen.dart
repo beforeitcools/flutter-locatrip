@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/common/model/local_area_auth_controller.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/common/widget/loading_screen.dart';
+import 'package:flutter_locatrip/common/widget/url.dart';
 import 'package:flutter_locatrip/map/model/place_api_model.dart';
 import 'package:flutter_locatrip/mypage/model/mypage_model.dart';
 import 'package:flutter_locatrip/mypage/widget/custom_dialog.dart';
@@ -10,13 +12,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class LocalAreaAuthScreen extends StatefulWidget {
-  /*final String localArea;
-  final String localAreaAuthDate;*/
-
   const LocalAreaAuthScreen({
     super.key,
-    /*required this.localArea,
-    required this.localAreaAuthDate,*/
   });
 
   @override
@@ -35,12 +32,14 @@ class _LocalAreaAuthScreenState extends State<LocalAreaAuthScreen> {
   final MypageModel _mypageModel = MypageModel();
   String authenticatedLocalArea = '현지인 인증된 지역 없음';
   String authenticatedDate = '현지인 인증된 날짜 없음';
-  String daysLeftUntilAuthExpire = '';
+  int daysLeftUntilAuthExpire = 0;
+  bool _isButtonEnabled = false;
 
   // 지도에서 현위치 때 사용
   _getGeoDataAndAuthData() async {
     setState(() {
       _isLoading = true;
+      _isButtonEnabled = false;
     });
 
     try {
@@ -58,7 +57,16 @@ class _LocalAreaAuthScreenState extends State<LocalAreaAuthScreen> {
       print(result);
       setState(() {
         authenticatedLocalArea = result['localArea'] ?? '현지인 인증된 지역 없음';
-        authenticatedDate = result['localAreaAuthDate'] ?? '현지인 인증된 날짜 없음';
+        if (result['localAreaAuthDate'] == null) {
+          authenticatedDate = '현지인 인증된 날짜 없음';
+          daysLeftUntilAuthExpire = 0;
+        } else {
+          authenticatedDate =
+              "${result['localAreaAuthDate'][0]}-${result['localAreaAuthDate'][1]}-${result['localAreaAuthDate'][2]}";
+          daysLeftUntilAuthExpire =
+              LocalAreaAuthController.calculateDaysLeftUntilExpiration(
+                  result['localAreaAuthDate']);
+        }
       });
     } catch (e) {
       _showPermissionDialog();
@@ -80,7 +88,11 @@ class _LocalAreaAuthScreenState extends State<LocalAreaAuthScreen> {
 
       setState(() {
         authenticatedLocalArea = result['localArea'];
-        authenticatedDate = result['localAreaAuthDate']!;
+        authenticatedDate =
+            "${result['localAreaAuthDate'][0]}-${result['localAreaAuthDate'][1]}-${result['localAreaAuthDate'][2]}";
+        daysLeftUntilAuthExpire =
+            LocalAreaAuthController.calculateDaysLeftUntilExpiration(
+                result['localAreaAuthDate']);
       });
     } catch (e) {
       print("!!!!!!!!!!!!!!!!!!현지인 인증중  에러 발생 : $e");
@@ -111,14 +123,29 @@ class _LocalAreaAuthScreenState extends State<LocalAreaAuthScreen> {
 
         for (var component in addressComponents) {
           print(component);
-          if (component['types'].contains('administrative_area_level_1')) {
+          if (component['types'].contains('administrative_area_level_1') &&
+              component['long_name'].toString().endsWith("시")) {
             setState(() {
               administrativeDistrict = component['long_name'];
+              _isButtonEnabled = true;
+            });
+            print("Administrative District: $administrativeDistrict");
+            break;
+          } else if (component['types'].contains('locality') &&
+              (component['long_name'].toString().endsWith("시") ||
+                  component['long_name'].toString().endsWith("군"))) {
+            setState(() {
+              administrativeDistrict = component['long_name'];
+              _isButtonEnabled = true;
             });
             print("Administrative District: $administrativeDistrict");
             break;
           }
         }
+      } else {
+        setState(() {
+          administrativeDistrict = "주소를 가져오는중 에러 발생";
+        });
       }
     } catch (e) {
       print(
@@ -211,16 +238,23 @@ class _LocalAreaAuthScreenState extends State<LocalAreaAuthScreen> {
                       SizedBox(
                         height: 16,
                       ),
-                      Text("마지막 인증 날짜: $authenticatedDate"),
+                      Text("마지막 인증: $authenticatedDate"),
+                      SizedBox(
+                        height: 16,
+                      ),
+                      Text("남은 인증 유효기간: $daysLeftUntilAuthExpire 일"),
+                      SizedBox(
+                        height: 16,
+                      ),
                       Padding(
                         padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
                         child: TextButton(
-                          onPressed: administrativeDistrict.isEmpty
+                          onPressed: !_isButtonEnabled
                               ? null
                               : () {
                                   CustomDialog.show(
                                       context,
-                                      "현재 위치 : $administrativeDistrict 로 현지인 인증 하시겠습니까?",
+                                      "현재 위치 : $administrativeDistrict로 현지인 인증 하시겠습니까?",
                                       "인증하기",
                                       () => updateLocalAreaAuthentication(
                                           administrativeDistrict));
@@ -241,7 +275,8 @@ class _LocalAreaAuthScreenState extends State<LocalAreaAuthScreen> {
                           ),
                           style: TextButton.styleFrom(
                             minimumSize: Size(380, 60),
-                            backgroundColor: pointBlueColor,
+                            backgroundColor:
+                                _isButtonEnabled ? pointBlueColor : grayColor,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
