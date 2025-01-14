@@ -1,1 +1,1 @@
-String backUrl = "http://112.221.66.174:1234";
+String backUrl = "http://192.168.45.90:8082";
