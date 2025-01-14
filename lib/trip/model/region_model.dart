@@ -75,7 +75,7 @@ class RegionModel {
               map[formattedName] = {
                 "name": formattedName,
                 "sub": item['name']!.split(' ')[0], // 앞단어 만 남기기
-                "imageUrl": "assets/imgPlaceholder.png"
+                "imageUrl": "assets/ imgPlaceholder.png"
               };
               return map;
             })

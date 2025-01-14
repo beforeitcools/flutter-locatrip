@@ -262,4 +262,45 @@ class MypageModel {
       throw Exception("Error: $e");
     }
   }
+
+  Future<Map<String, dynamic>> getUserPageData(
+      BuildContext context, int userId) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    try {
+      final response = await dio.get("$backUrl/mypage/userpage/$userId");
+
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception("유저페이지 데이터 로드 실패");
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error: $e");
+    }
+  }
+
+  Future<List<dynamic>> getMyAlarmData(BuildContext context) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    final FlutterSecureStorage storage = FlutterSecureStorage();
+    final dynamic stringId = await storage.read(key: 'userId');
+    final int userId = int.tryParse(stringId) ?? 0;
+
+    try {
+      final response = await dio.get("$backUrl/mypage/alarm/$userId");
+
+      if (response.statusCode == 200) {
+        return response.data as List<dynamic>;
+      } else {
+        throw Exception("알림 데이터 로드 실패");
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error: $e");
+    }
+  }
 }

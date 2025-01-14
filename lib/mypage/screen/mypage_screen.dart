@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/Auth/model/auth_model.dart';
 import 'package:flutter_locatrip/Auth/screen/login_screen.dart';
+import 'package:flutter_locatrip/common/screen/alarm_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/common/widget/loading_screen.dart';
 import 'package:flutter_locatrip/mypage/model/mypage_model.dart';
@@ -11,6 +12,7 @@ import 'package:flutter_locatrip/mypage/screen/myfavorites_screen.dart';
 import 'package:flutter_locatrip/mypage/screen/myposts_screen.dart';
 import 'package:flutter_locatrip/mypage/screen/mytrip_screen.dart';
 import 'package:flutter_locatrip/mypage/screen/profile_update_screen.dart';
+import 'package:flutter_locatrip/common/screen/userpage_screen.dart';
 
 class MypageScreen extends StatefulWidget {
   const MypageScreen({super.key});
@@ -27,6 +29,7 @@ class _MypageScreenState extends State<MypageScreen> {
   late String _nickname;
   late int _ownBadge;
   late String _selectedAdviceCount;
+  late bool _unreadAlarmExists;
   bool _isLoading = true;
 
   Future<void> _logout() async {
@@ -51,6 +54,9 @@ class _MypageScreenState extends State<MypageScreen> {
   }
 
   Future<void> _loadMypageData() async {
+    setState(() {
+      _isLoading = true;
+    });
     try {
       LoadingOverlay.show(context);
       Map<String, dynamic> result = await _mypageModel.getMyPageData(context);
@@ -58,11 +64,13 @@ class _MypageScreenState extends State<MypageScreen> {
       setState(() {
         _userData = result['user'];
         _selectedAdviceCount = result['selectedAdviceCount'].toString();
+        _unreadAlarmExists = result['unreadAlarmExists'];
         _profileImage = _userData['profilePic'];
         _nickname = _userData['nickname'] ?? '닉네임 없음';
         _ownBadge = _userData['ownBadge'];
         _isLoading = false;
       });
+      print(_unreadAlarmExists);
     } catch (e) {
       print("!!!!!!!!!!!!!!!!!!마이페이지 로드 중 에러 발생 : $e");
     } finally {
@@ -130,6 +138,17 @@ class _MypageScreenState extends State<MypageScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => MyadvicesScreen()),
+    );
+
+    if (result == true) {
+      _loadMypageData();
+    }
+  }
+
+  Future<void> _navigateToAlarmPage() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AlarmScreen()),
     );
 
     if (result == true) {
@@ -206,9 +225,7 @@ class _MypageScreenState extends State<MypageScreen> {
         ),
         actions: [
           IconButton(
-              onPressed: () {
-                // 알림창으로 이동
-              },
+              onPressed: _navigateToAlarmPage,
               splashRadius: 24,
               splashColor: Color.fromARGB(70, 43, 192, 228),
               highlightColor: Color.fromARGB(50, 43, 192, 228),
@@ -216,16 +233,17 @@ class _MypageScreenState extends State<MypageScreen> {
                 clipBehavior: Clip.none,
                 children: [
                   Icon(Icons.notifications_outlined),
-                  // 새로운 알림 여부 ?
-                  Positioned(
-                    right: -1,
-                    top: 1,
-                    child: Container(
-                      padding: EdgeInsets.all(3),
-                      decoration: BoxDecoration(
-                          color: Colors.red, shape: BoxShape.circle),
-                    ),
-                  )
+                  // 새로운 알림 여부
+                  if (_unreadAlarmExists)
+                    Positioned(
+                      right: -1,
+                      top: 1,
+                      child: Container(
+                        padding: EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                            color: Colors.red, shape: BoxShape.circle),
+                      ),
+                    )
                 ],
               )),
           IconButton(
@@ -294,7 +312,7 @@ class _MypageScreenState extends State<MypageScreen> {
                                               errorWidget:
                                                   (context, url, error) => Icon(
                                                 Icons.error_outline,
-                                                size: 48,
+                                                size: 28,
                                               ),
                                               fit: BoxFit.cover,
                                               width: 60,
@@ -325,15 +343,14 @@ class _MypageScreenState extends State<MypageScreen> {
                                       maxLines: 1,
                                     ),
                                   ),
-
-                                  SizedBox(
-                                    width: 16,
-                                  ),
                                   // 베지(있으면)
                                   _ownBadge == 1
-                                      ? Icon(
-                                          Icons.verified_outlined,
-                                          color: pointBlueColor,
+                                      ? Padding(
+                                          padding: EdgeInsets.only(left: 8),
+                                          child: Icon(
+                                            Icons.verified_outlined,
+                                            color: pointBlueColor,
+                                          ),
                                         )
                                       : SizedBox(),
 
@@ -456,7 +473,50 @@ class _MypageScreenState extends State<MypageScreen> {
                                 ?.copyWith(color: lightGrayColor),
                           ))
                     ],
-                  )
+                  ),
+                  // 임시 테스팅 용도
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => UserpageScreen(userId: 1)),
+                      );
+                    },
+                    child: CircleAvatar(
+                        radius: 60,
+                        backgroundImage:
+                            AssetImage('assets/default_profile_image.png')
+                                as ImageProvider),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => UserpageScreen(userId: 2)),
+                      );
+                    },
+                    child: CircleAvatar(
+                        radius: 60,
+                        backgroundImage:
+                            AssetImage('assets/default_profile_image.png')
+                                as ImageProvider),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => UserpageScreen(userId: 3)),
+                      );
+                    },
+                    child: CircleAvatar(
+                        radius: 60,
+                        backgroundImage:
+                            AssetImage('assets/default_profile_image.png')
+                                as ImageProvider),
+                  ),
                 ],
               ),
             ),
