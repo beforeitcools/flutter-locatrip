@@ -22,6 +22,12 @@ class DayWidget extends StatefulWidget {
   final Function(double) onHeightCalculated;
   final Future<void> Function(List<Map<String, dynamic>>, int)
       updateMarkersAndPolylines;
+  /*final Function(int, int) onTileScrolledTo;
+  final Function(int, int, double) onTileHeightCalculated; // ListTile 높이 전달 콜백*/
+  // final GlobalKey listTileKey;
+  final List<GlobalKey> listTileKeys;
+  final int focusedTileIndex;
+  final bool isAddLoading;
 
   const DayWidget(
       {required this.selectedItem,
@@ -34,16 +40,18 @@ class DayWidget extends StatefulWidget {
       required this.dayPlaceList,
       required this.colors,
       required this.scrollController,
-      required this.updateMarkersAndPolylines});
+      required this.updateMarkersAndPolylines,
+      /*required this.onTileScrolledTo,
+    required this.onTileHeightCalculated,*/
+      required this.listTileKeys,
+      required this.focusedTileIndex,
+      required this.isAddLoading});
 
   @override
   State<DayWidget> createState() => _DayWidgetState();
 }
 
 class _DayWidgetState extends State<DayWidget> {
-  Map<String, GlobalKey> _listKeys = {};
-  late double _itemHeight; // listTile height
-
   final TripDayModel _tripDayModel = TripDayModel();
   final TripModel _tripModel = TripModel();
   TextEditingController _memoController = TextEditingController();
@@ -52,15 +60,12 @@ class _DayWidgetState extends State<DayWidget> {
   dynamic _selectedItem;
   late int index;
   late Map<String, dynamic> _tripInfo;
-  late int _selectedIndex;
-  late Map<int, List<Map<String, dynamic>>> _groupedTripDayAllList;
+
   late List _colors;
 
   // 모든 day가 담김
   late List<Map<String, dynamic>> _dayPlaceList;
   Map<String, dynamic> _dayPlace = {};
-
-  late ScrollController _scrollController;
 
   @override
   void initState() {
@@ -69,59 +74,21 @@ class _DayWidgetState extends State<DayWidget> {
     dropDownDayList = widget.dropDownDay;
     index = widget.index;
     _tripInfo = widget.tripInfo;
-    _selectedIndex = widget.selectedIndex;
     _dayPlaceList = widget.dayPlaceList;
     _colors = widget.colors;
-    _scrollController = widget.scrollController;
 
     sortDayPlaceListBySortIndex();
-
-    for (var i = 0; i < _dayPlaceList.length; i++) {
-      final key =
-          '${_dayPlaceList[i]["dateIndex"]}-${_dayPlaceList[i]["sortIndex"]}';
-      if (!_listKeys.containsKey(key)) {
-        _listKeys[key] = GlobalKey();
-      }
-    }
+    print('_dayPlaceList $_dayPlaceList');
 
     // 프레임 렌더링 이후 높이를 계산
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _calculateItemHeight();
+      // _calculateItemHeight();
       final RenderBox renderBox = context.findRenderObject() as RenderBox;
       final size = renderBox.size;
       widget.onHeightCalculated(size.height); // 부모로 높이 값 전달
     });
 
-    _initialScrollController();
-  }
-
-  void _initialScrollController() {
-    _scrollController.addListener(() {
-      /* print('scrollOffset ${_scrollController.offset}');
-      if (_dayPlaceList != null) {
-        print('dateIndex $index');
-      }*/
-    });
-  }
-
-  // 높이 계산 함수
-  void _calculateItemHeight() {
-    print('_listKeys $_listKeys');
-    if (_dayPlaceList.isNotEmpty && _listKeys.isNotEmpty) {
-      // 첫 번째 항목의 높이를 측정
-      for (var i = 0; i < _dayPlaceList.length; i++) {
-        final RenderBox? renderBox = _listKeys[
-                '${_dayPlaceList[i]["dateIndex"]}-${_dayPlaceList[i]["sortIndex"]}']
-            ?.currentContext
-            ?.findRenderObject() as RenderBox?;
-        if (renderBox != null) {
-          setState(() {
-            _itemHeight = renderBox.size.height;
-            print("Item height: $_itemHeight");
-          });
-        }
-      }
-    }
+    // widget.scrollController.addListener(_onScroll);
   }
 
   @override
@@ -133,6 +100,12 @@ class _DayWidgetState extends State<DayWidget> {
         _colors = widget.colors;
       });
     }
+  }
+
+  @override
+  void dispose() {
+    // widget.scrollController.removeListener(_onScroll);
+    super.dispose();
   }
 
   // 정렬 순서로 정렬
@@ -360,6 +333,8 @@ class _DayWidgetState extends State<DayWidget> {
 
           // 기존 _dayPlaceList에 새로운 객체 추가
           _dayPlaceList.add(newMemo);
+          // 메모에 대한 GlobalKey 추가
+          widget.listTileKeys.add(GlobalKey());
         });
       }
     } catch (e) {
@@ -376,53 +351,69 @@ class _DayWidgetState extends State<DayWidget> {
         // 여기에 장소 추가/ 메모 추가 되면 됨 !
         if (_dayPlaceList != null)
           ..._dayPlaceList.map((item) {
+            final int index = widget.dayPlaceList.indexOf(item);
+
+            print('focusedTileIndex ${widget.focusedTileIndex}');
+            /*print('listKey ${widget.listTileKeys}');
+            print("index $index");*/
+
             if (item["isMemo"] == true) {
               // 메모일 경우
-              return Padding(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 4.0, horizontal: 16.0),
-                  child: ListTile(
-                    key: _listKeys['${item["dateIndex"]}-${item["sortIndex"]}'],
-                    contentPadding: EdgeInsets.only(left: 14),
-                    horizontalTitleGap: 6,
-                    leading: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: pointBlueColor,
-                      ),
-                      width: 8,
-                      height: 8,
-                    ),
-                    title: FractionallySizedBox(
-                        widthFactor: 1,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                              vertical: 10, horizontal: 16),
+              return widget.isAddLoading
+                  ? Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  : Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 4.0, horizontal: 16.0),
+                      color: widget.focusedTileIndex == index
+                          ? Color(0xffE9EADA).withOpacity(0.2)
+                          : Colors.white,
+                      child: ListTile(
+                        key: widget.listTileKeys[index],
+                        contentPadding: EdgeInsets.only(left: 14),
+                        horizontalTitleGap: 6,
+                        leading: Container(
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(6),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                offset: Offset(1, 1),
-                                blurRadius: 4,
+                            shape: BoxShape.circle,
+                            color: pointBlueColor,
+                          ),
+                          width: 8,
+                          height: 8,
+                        ),
+                        title: FractionallySizedBox(
+                            widthFactor: 1,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 10, horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    offset: Offset(1, 1),
+                                    blurRadius: 4,
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          child: Text(
-                            item["memo"] ?? "메모가 없습니다.",
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        )),
-                  ));
+                              child: Text(
+                                item["memo"] ?? "메모가 없습니다.",
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            )),
+                      ));
             } else {
               int colorIndex = (item["orderIndex"] - 1) % _colors.length;
               // 장소일 경우
-              return Padding(
+              return Container(
                   padding: const EdgeInsets.symmetric(
                       vertical: 4.0, horizontal: 16.0),
+                  color: widget.focusedTileIndex == index
+                      ? Color(0xffE9EADA).withOpacity(0.2)
+                      : Colors.white,
                   child: ListTile(
-                      key: ValueKey(item["sortIndex"]),
+                      key: widget.listTileKeys[index],
                       contentPadding: EdgeInsets.only(left: 6),
                       horizontalTitleGap: 16,
                       leading: Container(

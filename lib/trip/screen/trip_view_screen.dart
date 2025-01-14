@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/main/screen/main_screen.dart';
 import 'package:flutter_locatrip/trip/model/trip_day_model.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -25,6 +26,9 @@ class TripViewScreen extends StatefulWidget {
 }
 
 class _TripViewScreenState extends State<TripViewScreen> {
+  late final int userId;
+  bool isUserChecked = false;
+
   final DraggableScrollableController sheetController =
       DraggableScrollableController();
   final ScrollController _singleScrollController = ScrollController();
@@ -67,6 +71,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
   ];
 
   final Map<int, BitmapDescriptor> _iconCache = {};
+  String? _focusedMarkerId; // 현재 포커스된 마커 ID
 
   @override
   void initState() {
@@ -108,8 +113,14 @@ class _TripViewScreenState extends State<TripViewScreen> {
       Map<String, dynamic> result =
           await _tripModel.selectTrip(widget.tripId, context);
 
+      final FlutterSecureStorage _storage = FlutterSecureStorage();
+      final dynamic stringId = await _storage.read(key: 'userId');
+      userId = int.tryParse(stringId) ?? 0;
+      /*print('userId $userId');*/
+
       if (result.isNotEmpty) {
         setState(() {
+          if (userId == result["userId"]) isUserChecked = true;
           tripInfo.addAll(result);
 
           address = tripInfo['selectedRegions'][0]['region'];
@@ -148,7 +159,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
     }
   }
 
-  Future<BitmapDescriptor> _getCustomMarkerIcon(
+  /*Future<BitmapDescriptor> _getCustomMarkerIcon(
       int orderIndex, Color color) async {
     if (_iconCache.containsKey(orderIndex)) {
       return _iconCache[orderIndex]!;
@@ -165,6 +176,73 @@ class _TripViewScreenState extends State<TripViewScreen> {
 
     _iconCache[orderIndex] = customMarker;
     return customMarker;
+  }*/
+  Future<BitmapDescriptor> _getCustomMarkerIcon(int orderIndex, Color color,
+      {bool isFocused = false}) async {
+    // 캐싱 키 생성 (포커스 여부를 구분하기 위해 음수 변형)
+    final cacheKey = isFocused ? -orderIndex : orderIndex;
+
+    if (_iconCache.containsKey(cacheKey)) {
+      return _iconCache[cacheKey]!;
+    }
+
+    // 아이콘 생성 후 캐싱
+    final ByteData byteData = await createCustomMarkerIconImage(
+      text: orderIndex.toString(),
+      size: isFocused ? const Size(100, 100) : const Size(72, 72), // 크기 조정
+      color: color,
+    );
+    final Uint8List imageData = byteData.buffer.asUint8List();
+    final BitmapDescriptor customMarker = BitmapDescriptor.fromBytes(imageData);
+
+    _iconCache[cacheKey] = customMarker;
+    return customMarker;
+  }
+
+  void _onMarkerTap(String markerId, List<Map<String, dynamic>> tripDayAllList,
+      int dateIndex) async {
+    setState(() {
+      _focusedMarkerId = markerId; // 현재 선택된 마커 ID 업데이트
+    });
+
+    // 마커 업데이트
+    final List<Marker> updatedMarkers = [];
+    for (var tripDay in tripDayAllList) {
+      if (tripDay["dateIndex"] == dateIndex && tripDay["place"] != null) {
+        final bool isFocused = tripDay["place"].id == markerId;
+        int orderIndex = tripDay["orderIndex"] ?? 1;
+        int colorIndex = (orderIndex - 1) % colors.length;
+
+        final BitmapDescriptor icon = await _getCustomMarkerIcon(
+          orderIndex,
+          colors[colorIndex],
+          isFocused: isFocused,
+        );
+
+        updatedMarkers.add(
+          Marker(
+              markerId: MarkerId(tripDay["place"].id ?? ""),
+              position: LatLng(
+                tripDay["place"].location.latitude ?? 0.0,
+                tripDay["place"].location.longitude ?? 0.0,
+              ),
+              icon: icon,
+              onTap: () {
+                _onMarkerTap(tripDay["place"].id!, tripDayAllList, dateIndex);
+                mapController!.animateCamera(
+                  CameraUpdate.newLatLngZoom(
+                      LatLng(tripDay["place"].location.latitude,
+                          tripDay["place"].location.longitude),
+                      12.0),
+                );
+              }),
+        );
+      }
+    }
+
+    setState(() {
+      _markers = updatedMarkers.toSet(); // 마커 목록 갱신
+    });
   }
 
   Future<void> _loadTripDayLocation() async {
@@ -256,7 +334,10 @@ class _TripViewScreenState extends State<TripViewScreen> {
               tripDay["place"].location.longitude ?? 0.0,
             ),
             icon: customMarker,
-            onTap: () {},
+            onTap: () {
+              // _focusOnMarker(tripDay["dateIndex"], tripDay["orderIndex"] - 1);
+              _onMarkerTap(tripDay["place"].id, tripDayAllList, dateIndex);
+            },
           ),
         );
       }
@@ -478,18 +559,24 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                                 CrossAxisAlignment.end,
                                             children: [
                                               Container(
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    0.5,
-                                                child: Text(
-                                                  tripInfo["title"] ?? "제목 없음",
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .titleLarge,
-                                                  overflow:
-                                                      TextOverflow.visible,
-                                                  softWrap: true,
+                                                constraints: BoxConstraints(
+                                                  maxWidth:
+                                                      MediaQuery.of(context)
+                                                              .size
+                                                              .width *
+                                                          0.5, // 최대 너비 설정
+                                                ),
+                                                child: IntrinsicWidth(
+                                                  child: Text(
+                                                    tripInfo["title"] ??
+                                                        "제목 없음",
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .titleLarge,
+                                                    overflow:
+                                                        TextOverflow.visible,
+                                                    softWrap: true,
+                                                  ),
                                                 ),
                                               ),
 
@@ -498,30 +585,35 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                               ),
 
                                               // 권한 있는 사람만 편집가능 - 나중에 확인 !
-                                              TextButton(
-                                                  onPressed: () {},
-                                                  style: TextButton.styleFrom(
-                                                    padding: EdgeInsets.zero,
-                                                    minimumSize: Size(
-                                                      0,
-                                                      0,
-                                                    ),
-
-                                                    tapTargetSize:
-                                                        MaterialTapTargetSize
-                                                            .shrinkWrap, // 터치 영역 최소화
-                                                  ),
-                                                  child: Text(
-                                                    "편집",
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .bodySmall
-                                                        ?.copyWith(
-                                                          color: grayColor,
-                                                          fontWeight:
-                                                              FontWeight.w600,
+                                              isUserChecked
+                                                  ? TextButton(
+                                                      onPressed: () {},
+                                                      style:
+                                                          TextButton.styleFrom(
+                                                        padding:
+                                                            EdgeInsets.zero,
+                                                        minimumSize: Size(
+                                                          0,
+                                                          0,
                                                         ),
-                                                  )),
+
+                                                        tapTargetSize:
+                                                            MaterialTapTargetSize
+                                                                .shrinkWrap, // 터치 영역 최소화
+                                                      ),
+                                                      child: Text(
+                                                        "편집",
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .bodySmall
+                                                            ?.copyWith(
+                                                              color: grayColor,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                            ),
+                                                      ))
+                                                  : SizedBox.shrink(),
                                             ],
                                           ),
                                           SizedBox(height: 8),
@@ -696,7 +788,8 @@ class _TripViewScreenState extends State<TripViewScreen> {
                         groupedTripDayAllList: groupedTripDayAllList,
                         bottomScrollController: bottomScrollController,
                         colors: colors,
-                        updateMarkersAndPolylines: _updateMarkersAndPolylines)
+                        updateMarkersAndPolylines: _updateMarkersAndPolylines,
+                        onMarkerTap: _onMarkerTap)
                   ],
                 ),
       floatingActionButton: Container(
