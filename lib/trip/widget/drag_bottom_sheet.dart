@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'day_widget.dart';
@@ -12,7 +14,7 @@ class DragBottomSheet extends StatefulWidget {
   final ScrollController bottomScrollController;
   final List colors;
   final Future<void> Function(List<Map<String, dynamic>>, int)
-      addCustomTextMarker;
+      updateMarkersAndPolylines;
 
   const DragBottomSheet(
       {super.key,
@@ -24,7 +26,9 @@ class DragBottomSheet extends StatefulWidget {
       required this.groupedTripDayAllList,
       required this.bottomScrollController,
       required this.colors,
-      required this.addCustomTextMarker});
+      required this.updateMarkersAndPolylines
+      //required this.addCustomTextMarker
+      });
 
   @override
   State<DragBottomSheet> createState() => _DragBottomSheetState();
@@ -49,8 +53,8 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
   int _selectedIndex = 0;
   late Map<int, List<Map<String, dynamic>>> _groupedTripDayAllList;
   late List<int> sortedKeys;
-  late Future<void> Function(List<Map<String, dynamic>>, int)
-      _addCustomTextMarker;
+
+  final Map<int, double> itemOffsets = {};
 
   @override
   void initState() {
@@ -63,20 +67,12 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
     _groupedTripDayAllList = widget.groupedTripDayAllList;
 
     _scrollController = widget.bottomScrollController;
-    _addCustomTextMarker = widget.addCustomTextMarker;
+    //_addCustomTextMarker = widget.addCustomTextMarker;
 
     // 각 아이템에 GlobalKey 부여
     for (int i = 0; i < _dropDownDay.length; i++) {
       _itemKeys[i] = GlobalKey();
     }
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      setState(() {
-        final screenHeight = MediaQuery.of(context).size.height;
-        _expandedHeight = (screenHeight - 450) + 198; // 겹친값 62
-        _collapsedHeight = screenHeight - 450;
-      });
-    });
 
     _singleScrollController.addListener(() {
       setState(() {
@@ -84,23 +80,19 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
       });
     });
 
-    _scrollController.addListener(() {
-      setState(() {
-        double scrollOffset = _scrollController.offset;
-        double offset = 0;
-        for (int i = 0; i < _dropDownDay.length; i++) {
-          final key = _itemKeys[i];
-          final context = key?.currentContext;
-          if (context != null) {
-            final box = context.findRenderObject() as RenderBox;
-            offset += box.size.height;
-            if (scrollOffset == offset) {
-              // _addCustomTextMarker;
-            }
-          }
+    /*// 프레임 렌더링 이후 높이를 계산
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      for (int i = 0; i < _dropDownDay.length; i++) {
+        if (_itemKeys[i]?.currentContext == null) {
+          final RenderBox renderBox =
+              _itemKeys[i]?.currentContext!.findRenderObject() as RenderBox;
+          renderBox.size = (MediaQuery.of(context).size.width, 104) as Size;
         }
-      });
-    });
+      }
+    });*/
+
+    // _initializeScrollListener();
+    _scrollController.addListener(_onScroll);
   }
 
   @override
@@ -110,7 +102,6 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
     if (widget.groupedTripDayAllList != oldWidget.groupedTripDayAllList) {
       setState(() {
         _groupedTripDayAllList = widget.groupedTripDayAllList;
-        print('여기 왔어???');
       });
     }
   }
@@ -118,6 +109,8 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
   @override
   void dispose() {
     _singleScrollController.dispose();
+
+    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
   }
@@ -141,6 +134,7 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
       if (context != null) {
         final box = context.findRenderObject() as RenderBox;
         offset += box.size.height; // 각 DayWidget의 높이를 누적
+        print('offset $offset');
       }
     }
 
@@ -149,6 +143,37 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
       duration: Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
+  }
+
+  // 스크롤에 따라 지나고 있는 DayWidget 추적
+  void _onScroll() {
+    double totalOffset = _scrollController.offset;
+    double accumulatedOffset = 0;
+    List<Map<String, dynamic>> tripDayAllList =
+        _groupedTripDayAllList.values.expand((list) => list).toList();
+
+    for (int i = 0; i < _itemKeys.length; i++) {
+      accumulatedOffset += itemOffsets[i] ?? 104.0; // 기본값 104.0으로 설정
+      print('accumulatedOffest $accumulatedOffset');
+
+      if (accumulatedOffset > totalOffset) {
+        // 지나고 있는 DayWidget을 찾으면
+        if (_selectedIndex != i) {
+          setState(() {
+            _selectedIndex = i; // 현재 지나고 있는 DayWidget 인덱스 설정
+          });
+          widget.updateMarkersAndPolylines(tripDayAllList, _selectedIndex);
+        }
+        break; // 첫 번째로 지나고 있는 DayWidget을 찾으면 종료
+      }
+    }
+  }
+
+  // ListView에서 아이템의 높이를 전달받아 itemOffsets에 저장
+  void _updateItemHeight(int index, double height) {
+    setState(() {
+      itemOffsets[index] = height; // 해당 index의 높이를 업데이트
+    });
   }
 
   @override
@@ -232,14 +257,20 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
                           return Container(
                             key: _itemKeys[index],
                             child: DayWidget(
-                                selectedItem: _dropDownDay[index],
-                                dropDownDay: _dropDownDay,
-                                index: index,
-                                onDateSelected: _scrollToSelectedItem,
-                                selectedIndex: _selectedIndex,
-                                tripInfo: _tripInfo,
-                                dayPlaceList: dayPlaceList,
-                                colors: widget.colors),
+                              selectedItem: _dropDownDay[index],
+                              dropDownDay: _dropDownDay,
+                              index: index,
+                              onHeightCalculated: (height) =>
+                                  _updateItemHeight(index, height),
+                              onDateSelected: _scrollToSelectedItem,
+                              selectedIndex: _selectedIndex,
+                              tripInfo: _tripInfo,
+                              dayPlaceList: dayPlaceList,
+                              colors: widget.colors,
+                              scrollController: _scrollController,
+                              updateMarkersAndPolylines:
+                                  widget.updateMarkersAndPolylines,
+                            ),
                           );
                         },
                       ),

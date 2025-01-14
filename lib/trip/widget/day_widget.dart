@@ -18,17 +18,23 @@ class DayWidget extends StatefulWidget {
   final int selectedIndex;
   final List<Map<String, dynamic>> dayPlaceList;
   final List colors;
+  final ScrollController scrollController;
+  final Function(double) onHeightCalculated;
+  final Future<void> Function(List<Map<String, dynamic>>, int)
+      updateMarkersAndPolylines;
 
   const DayWidget(
-      {super.key,
-      required this.selectedItem,
+      {required this.selectedItem,
       required this.dropDownDay,
       required this.index,
+      required this.onHeightCalculated,
       required this.onDateSelected,
       required this.tripInfo,
       required this.selectedIndex,
       required this.dayPlaceList,
-      required this.colors});
+      required this.colors,
+      required this.scrollController,
+      required this.updateMarkersAndPolylines});
 
   @override
   State<DayWidget> createState() => _DayWidgetState();
@@ -54,6 +60,8 @@ class _DayWidgetState extends State<DayWidget> {
   late List<Map<String, dynamic>> _dayPlaceList;
   Map<String, dynamic> _dayPlace = {};
 
+  late ScrollController _scrollController;
+
   @override
   void initState() {
     super.initState();
@@ -64,6 +72,7 @@ class _DayWidgetState extends State<DayWidget> {
     _selectedIndex = widget.selectedIndex;
     _dayPlaceList = widget.dayPlaceList;
     _colors = widget.colors;
+    _scrollController = widget.scrollController;
 
     sortDayPlaceListBySortIndex();
 
@@ -78,23 +87,39 @@ class _DayWidgetState extends State<DayWidget> {
     // 프레임 렌더링 이후 높이를 계산
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _calculateItemHeight();
+      final RenderBox renderBox = context.findRenderObject() as RenderBox;
+      final size = renderBox.size;
+      widget.onHeightCalculated(size.height); // 부모로 높이 값 전달
+    });
+
+    _initialScrollController();
+  }
+
+  void _initialScrollController() {
+    _scrollController.addListener(() {
+      /* print('scrollOffset ${_scrollController.offset}');
+      if (_dayPlaceList != null) {
+        print('dateIndex $index');
+      }*/
     });
   }
 
   // 높이 계산 함수
   void _calculateItemHeight() {
     print('_listKeys $_listKeys');
-    if (_listKeys.isNotEmpty) {
+    if (_dayPlaceList.isNotEmpty && _listKeys.isNotEmpty) {
       // 첫 번째 항목의 높이를 측정
-      final RenderBox? renderBox = _listKeys[
-              '${_dayPlaceList[0]["dateIndex"]}-${_dayPlaceList[0]["sortIndex"]}']
-          ?.currentContext
-          ?.findRenderObject() as RenderBox?;
-      if (renderBox != null) {
-        setState(() {
-          _itemHeight = renderBox.size.height;
-          print("Item height: $_itemHeight");
-        });
+      for (var i = 0; i < _dayPlaceList.length; i++) {
+        final RenderBox? renderBox = _listKeys[
+                '${_dayPlaceList[i]["dateIndex"]}-${_dayPlaceList[i]["sortIndex"]}']
+            ?.currentContext
+            ?.findRenderObject() as RenderBox?;
+        if (renderBox != null) {
+          setState(() {
+            _itemHeight = renderBox.size.height;
+            print("Item height: $_itemHeight");
+          });
+        }
       }
     }
   }
@@ -269,6 +294,9 @@ class _DayWidgetState extends State<DayWidget> {
             _dayPlace["sortIndex"] = result["sortIndex"];
 
             _dayPlaceList.add(_dayPlace);
+
+            widget.updateMarkersAndPolylines(
+                _dayPlaceList, result["dateIndex"]);
           } else {
             print("이미 추가된 장소입니다.");
           }

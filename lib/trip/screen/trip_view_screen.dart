@@ -39,8 +39,8 @@ class _TripViewScreenState extends State<TripViewScreen> {
   double? latitude;
   double? longitude;
   GoogleMapController? mapController;
-  final Set<Marker> _markers = {};
-  final Set<Polyline> _polylines = {};
+  Set<Marker> _markers = {};
+  Set<Polyline> _polylines = {};
   final List<LatLng> _markerPositions = [];
 
   String address = "";
@@ -65,6 +65,8 @@ class _TripViewScreenState extends State<TripViewScreen> {
     Colors.green,
     Colors.red,
   ];
+
+  final Map<int, BitmapDescriptor> _iconCache = {};
 
   @override
   void initState() {
@@ -136,53 +138,33 @@ class _TripViewScreenState extends State<TripViewScreen> {
     }
   }
 
-  Future<void> _addCustomTextMarker(
-      List<Map<String, dynamic>> tripDayAllList, int dateIndex) async {
-    print('마커 실행?');
-    for (Map<String, dynamic> tripDay in tripDayAllList) {
-      if (tripDay["dateIndex"] == dateIndex) {
-        if (tripDay["place"] != null) {
-          _markerPositions.add(tripDay["place"].location);
-        }
-
+  void _preloadMarkers(List<Map<String, dynamic>> tripDayAllList) async {
+    for (var tripDay in tripDayAllList) {
+      if (tripDay["place"] != null) {
         int orderIndex = tripDay["orderIndex"] ?? 1;
         int colorIndex = (orderIndex - 1) % colors.length;
-        final ByteData byteData = await createCustomMarkerIconImage(
-            text: tripDay["orderIndex"].toString(),
-            size: Size(72, 72),
-            color: colors[colorIndex]);
-        final Uint8List imageData = byteData.buffer.asUint8List();
-        final BitmapDescriptor customMarker =
-            BitmapDescriptor.fromBytes(imageData);
-
-        setState(() {
-          if (tripDay["place"] != null) {
-            _markers.add(
-              Marker(
-                  markerId: MarkerId(tripDay["place"].id ?? ""),
-                  position: LatLng(tripDay["place"].location.latitude! ?? 0.0,
-                      tripDay["place"].location.longitude! ?? 0.0),
-                  icon: customMarker,
-                  onTap: () {}),
-            );
-            _polylines.add(
-              Polyline(
-                polylineId: PolylineId(
-                    "path_${tripDay["place"].id}_${tripDay["dateIndex"]}" ??
-                        ""),
-                points: _markerPositions,
-                color: grayColor,
-                width: 1,
-                patterns: [
-                  PatternItem.dash(20),
-                  PatternItem.gap(10),
-                ],
-              ),
-            );
-          }
-        });
+        await _getCustomMarkerIcon(orderIndex, colors[colorIndex]);
       }
     }
+  }
+
+  Future<BitmapDescriptor> _getCustomMarkerIcon(
+      int orderIndex, Color color) async {
+    if (_iconCache.containsKey(orderIndex)) {
+      return _iconCache[orderIndex]!;
+    }
+
+    // 아이콘 생성 후 캐싱
+    final ByteData byteData = await createCustomMarkerIconImage(
+      text: orderIndex.toString(),
+      size: const Size(72, 72),
+      color: color,
+    );
+    final Uint8List imageData = byteData.buffer.asUint8List();
+    final BitmapDescriptor customMarker = BitmapDescriptor.fromBytes(imageData);
+
+    _iconCache[orderIndex] = customMarker;
+    return customMarker;
   }
 
   Future<void> _loadTripDayLocation() async {
@@ -224,7 +206,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
         }
         await _selectMemo();
 
-        await _addCustomTextMarker(tripDayAllList, 0);
+        // 마커 캐싱
+        _preloadMarkers(tripDayAllList);
+        _updateMarkersAndPolylines(tripDayAllList, 0); // 첫째날 마커
 
         // 상태 변경 후 UI 갱신
         setState(() {
@@ -248,6 +232,51 @@ class _TripViewScreenState extends State<TripViewScreen> {
       print('에러메시지 $e');
       // return {};
     }
+  }
+
+  Future<void> _updateMarkersAndPolylines(
+      List<Map<String, dynamic>> tripDayAllList, int dateIndex) async {
+    final List<Marker> tempMarkers = [];
+    final List<LatLng> markerPositions = [];
+
+    for (var tripDay in tripDayAllList) {
+      if (tripDay["dateIndex"] == dateIndex && tripDay["place"] != null) {
+        markerPositions.add(tripDay["place"].location);
+
+        int orderIndex = tripDay["orderIndex"] ?? 1;
+        int colorIndex = (orderIndex - 1) % colors.length;
+        final BitmapDescriptor customMarker =
+            await _getCustomMarkerIcon(orderIndex, colors[colorIndex]);
+
+        tempMarkers.add(
+          Marker(
+            markerId: MarkerId(tripDay["place"].id ?? ""),
+            position: LatLng(
+              tripDay["place"].location.latitude ?? 0.0,
+              tripDay["place"].location.longitude ?? 0.0,
+            ),
+            icon: customMarker,
+            onTap: () {},
+          ),
+        );
+      }
+    }
+
+    final newPolylines = {
+      if (markerPositions.isNotEmpty)
+        Polyline(
+          polylineId: PolylineId("path_$dateIndex"),
+          points: markerPositions,
+          color: grayColor,
+          width: 1,
+          patterns: [PatternItem.dash(20), PatternItem.gap(10)],
+        ),
+    };
+
+    setState(() {
+      _markers = tempMarkers.toSet(); // 중복 제거 및 Set 변환
+      _polylines = newPolylines; // Set<Polyline>
+    });
   }
 
   Map<int, List<Map<String, dynamic>>> groupByDate(
@@ -667,7 +696,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
                         groupedTripDayAllList: groupedTripDayAllList,
                         bottomScrollController: bottomScrollController,
                         colors: colors,
-                        addCustomTextMarker: _addCustomTextMarker)
+                        updateMarkersAndPolylines: _updateMarkersAndPolylines)
                   ],
                 ),
       floatingActionButton: Container(
