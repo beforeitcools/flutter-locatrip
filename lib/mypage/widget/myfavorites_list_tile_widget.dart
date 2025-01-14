@@ -2,13 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/map/model/place.dart';
 import 'package:flutter_locatrip/map/model/toggle_favorite.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class MyfavoritesListTileWidget extends StatelessWidget {
   final int selectedIndex;
   final List<dynamic> myFavorites;
-  final Function(bool isFavorite, Place place) updateFavoriteStatus;
-  final Future<void> Function(Place place, bool isFavorite)
+  final Function(bool isFavorite, Place place, int selectedIndex, int index)
+      updateFavoriteStatus;
+  final Future<void> Function(
+          Place place, bool isFavorite, int selectedIndex, int index)
       toggleFavoriteStatus;
+  final Future<void> Function(Place place) navigateToLocationDetailScreen;
+  final Function(bool isFavorite, int selectedIndex, int index)
+      updatePostFavoriteStatus;
+  final Future<void> Function(
+          bool isFavorite, int selectedIndex, int index, int postId)
+      togglePostFavoriteStatus;
 
   const MyfavoritesListTileWidget({
     super.key,
@@ -16,6 +25,9 @@ class MyfavoritesListTileWidget extends StatelessWidget {
     required this.myFavorites,
     required this.updateFavoriteStatus,
     required this.toggleFavoriteStatus,
+    required this.navigateToLocationDetailScreen,
+    required this.updatePostFavoriteStatus,
+    required this.togglePostFavoriteStatus,
   });
 
   Widget _listTileCreator(int index, BuildContext context) {
@@ -23,8 +35,15 @@ class MyfavoritesListTileWidget extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         // 장소 상세 페이지 또는 게시글 페이지로 연결
-        onTap: () =>
-            {} /*navigateToTripViewScreen(myTrips[selectedIndex][index]['tripId'])*/,
+        // selectedIndex == 1 일 때 가는 게시글 페이지 경로 추가
+        onTap: () => navigateToLocationDetailScreen(Place(
+            id: myFavorites[selectedIndex][index]['googleId'],
+            name: myFavorites[selectedIndex][index]['name'],
+            address: myFavorites[selectedIndex][index]['address'],
+            category: '',
+            photoUrl: [],
+            location: LatLng(0, 0),
+            icon: BitmapDescriptor.defaultMarker)),
         splashColor: Color.fromARGB(50, 43, 192, 228),
         highlightColor: Color.fromARGB(30, 43, 192, 228),
         child: Padding(
@@ -36,31 +55,55 @@ class MyfavoritesListTileWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      myFavorites[selectedIndex][index]['title'],
-                      style: TextStyle(
-                        color: blackColor,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'NotoSansKR',
-                      ),
-                      overflow: TextOverflow.ellipsis, // 텍스트 삐져나옴 방지(길면...)
-                      maxLines: 1,
-                    ),
+                    selectedIndex == 0
+                        ? Text(
+                            myFavorites[selectedIndex][index]['name'],
+                            style: TextStyle(
+                              color: blackColor,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'NotoSansKR',
+                            ),
+                            overflow:
+                                TextOverflow.ellipsis, // 텍스트 삐져나옴 방지(길면...)
+                            maxLines: 1,
+                          )
+                        : Text(
+                            myFavorites[selectedIndex][index]['title'],
+                            style: TextStyle(
+                              color: blackColor,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'NotoSansKR',
+                            ),
+                            overflow:
+                                TextOverflow.ellipsis, // 텍스트 삐져나옴 방지(길면...)
+                            maxLines: 1,
+                          ),
                     SizedBox(
-                      height: 1,
+                      height: 5,
                     ),
                     selectedIndex == 0
                         ? Text(
                             "${myFavorites[selectedIndex][index]['address']}",
-                            style: Theme.of(context).textTheme.labelSmall,
+                            style: TextStyle(
+                              color: blackColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w300,
+                              fontFamily: 'NotoSansKR',
+                            ),
                             overflow:
                                 TextOverflow.ellipsis, // 텍스트 삐져나옴 방지(길면...)
                             maxLines: 1,
                           )
                         : Text(
                             "${myFavorites[selectedIndex][index]['nickname']}님의 일정  • ${myFavorites[selectedIndex][index]['startDate']} ~ ${myFavorites[selectedIndex][index]['endDate']}",
-                            style: Theme.of(context).textTheme.labelSmall,
+                            style: TextStyle(
+                              color: blackColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w300,
+                              fontFamily: 'NotoSansKR',
+                            ),
                             overflow:
                                 TextOverflow.ellipsis, // 텍스트 삐져나옴 방지(길면...)
                             maxLines: 1,
@@ -71,25 +114,40 @@ class MyfavoritesListTileWidget extends StatelessWidget {
               SizedBox(
                 width: 16,
               ),
-              /*IconButton(
-                onPressed: () {
-                  _toggleFavorite.toggleFavoriteStatus(
-                      place,
-                      isFavorite,
-                      // _favoriteStatus,
-                      // _favoriteStatusList,
-                      context,
-                      () => _updateFavoriteStatus(
-                          !(_favoriteStatus[_nearByPlacesList[index].name] ??
-                              false),
-                          _nearByPlacesList[index]));
-                },
+              IconButton(
+                onPressed: selectedIndex == 0
+                    ? () {
+                        toggleFavoriteStatus(
+                            Place(
+                                id: myFavorites[selectedIndex][index]
+                                    ['googleId'],
+                                name: '',
+                                address: '',
+                                category: '',
+                                photoUrl: [],
+                                location: LatLng(0, 0),
+                                icon: BitmapDescriptor.defaultMarker),
+                            myFavorites[selectedIndex][index]['isFavorite'],
+                            selectedIndex,
+                            index);
+                      }
+                    : () {
+                        togglePostFavoriteStatus(
+                            myFavorites[selectedIndex][index]['isFavorite'],
+                            selectedIndex,
+                            index,
+                            myFavorites[selectedIndex][index]['postId']);
+                      },
                 padding: EdgeInsets.zero,
                 icon: Icon(
-                  isFavorite ? Icons.favorite : Icons.favorite_outline_outlined,
-                  color: isFavorite ? Colors.red : null,
+                  myFavorites[selectedIndex][index]['isFavorite']
+                      ? Icons.favorite
+                      : Icons.favorite_outline_outlined,
+                  color: myFavorites[selectedIndex][index]['isFavorite']
+                      ? pointBlueColor
+                      : null,
                 ),
-              ),*/
+              ),
             ],
           ),
         ),
