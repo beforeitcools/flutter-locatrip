@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/chatting/model/chat_model.dart';
 import 'package:flutter_locatrip/chatting/ui/chat_list_ui.dart';
+import 'package:flutter_locatrip/chatting/widgets/test_editting_page.dart';
 import 'package:flutter_locatrip/chatting/widgets/websocket_page.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ChattingScreen extends StatefulWidget {
   const ChattingScreen({super.key});
@@ -73,7 +75,7 @@ class _ChattingScreenState extends State<ChattingScreen> {
                 return ChatListUi(chatroomId: chat["chatroomId"], chatroomName: chat["chatroomName"], currentMessage: chat["currentMessage"] ?? "");
               }),
       floatingActionButton: FloatingActionButton(onPressed: (){
-        Navigator.push(context,MaterialPageRoute(builder: (context) => WebsocketPage()));
+        Navigator.push(context,MaterialPageRoute(builder: (context) => TestEdittingPage(userId: 1)));
       }),
     );
   }
