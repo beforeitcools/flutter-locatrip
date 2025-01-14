@@ -66,7 +66,7 @@ class _MainScreenState extends State<MainScreen> {
                     MaterialPageRoute(
                         builder: (context) => TripViewScreen(tripId: 1)));
               },
-              child: Text("일정13번 불러오는지 테스트"))
+              child: Text("일정 불러오는지 테스트"))
         ],
       ),
       floatingActionButton: Container(
