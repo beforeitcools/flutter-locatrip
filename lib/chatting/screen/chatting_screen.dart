@@ -75,7 +75,7 @@ class _ChattingScreenState extends State<ChattingScreen> {
                 return ChatListUi(chatroomId: chat["chatroomId"], chatroomName: chat["chatroomName"], currentMessage: chat["currentMessage"] ?? "");
               }),
       floatingActionButton: FloatingActionButton(onPressed: (){
-        Navigator.push(context,MaterialPageRoute(builder: (context) => TestEdittingPage(userId: 1)));
+        Navigator.push(context,MaterialPageRoute(builder: (context) => TestEdittingPage(userId: 2)));
       }),
     );
   }
