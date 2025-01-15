@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 
@@ -72,7 +73,9 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
   bool isSearchLoaded = false;
 
   Map<String, dynamic> viewPortMap = {};
+  List<Map<String, dynamic>> viewPortMapList = [];
   int _viewCount = 2;
+  List<Map<String, double>> regions = [];
 
   @override
   void initState() {
@@ -127,7 +130,7 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
         print("TextField is focused");
         sheetController.animateTo(
           maxSize,
-          duration: Duration(milliseconds: 300),
+          duration: Duration(milliseconds: 100),
           curve: Curves.easeInOut,
         );
       } else {
@@ -135,14 +138,29 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
         print("TextField lost focus");
         sheetController.animateTo(
           minSize,
-          duration: Duration(milliseconds: 300),
+          duration: Duration(milliseconds: 100),
           curve: Curves.easeInOut,
         );
       }
     });
-    getViewport();
+
+    _initializeRegions();
 
     _getNearByPlaces(latitude!, longitude!, "POPULARITY", typeAll);
+  }
+
+  void _initializeRegions() async {
+    try {
+      List<Map<String, double>> coordinates =
+          await _getCoordinatesFromAddressList(_tripInfo["selectedRegions"]);
+      setState(() {
+        regions = coordinates;
+        print('regions $regions');
+      });
+      print('Initialized regions: $regions');
+    } catch (e) {
+      print('Error initializing regions: $e');
+    }
   }
 
   @override
@@ -173,22 +191,22 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
     return DateFormat('y년 M월 d일').format(date);
   }
 
-  void getViewport() async {
+  /*void getViewport(double lat, double lng) async {
     try {
       Map<String, dynamic> result =
-          await _placeApiModel.getViewPorts(LatLng(latitude!, longitude!));
+          await _placeApiModel.getViewPorts(LatLng(lat, lng));
       print('viewport result $result');
 
       viewPortMap = {
         "locationBias": {
           "rectangle": {
             "low": {
-              "latitude": result["southwest"]["lat"],
-              "longitude": result["southwest"]["lng"]
+              "latitude": result["southwest"]?["lat"] ?? 0.0,
+              "longitude": result["southwest"]?["lng"] ?? 0.0
             },
             "high": {
-              "latitude": result["northeast"]["lat"],
-              "longitude": result["northeast"]["lng"]
+              "latitude": result["northeast"]?["lat"] ?? 0.0,
+              "longitude": result["northeast"]?["lng"] ?? 0.0
             }
           }
         }
@@ -196,8 +214,83 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
 
       print('viewPort $result');
     } catch (e) {
-      print('에러메시지 $e');
+      print('에러메시지1 $e');
     }
+  }*/
+
+  Future<List<Map<String, double>>> _getCoordinatesFromAddressList(
+      List<dynamic> selectRegions) async {
+    List<Map<String, double>> regionCoordinates = [];
+
+    for (var region in selectRegions) {
+      try {
+        // Geocoding: Convert region name to coordinates
+        List<Location> locations = await locationFromAddress(region["region"]);
+
+        // Add the resulting coordinates to the list
+        regionCoordinates.add({
+          "latitude": locations.first.latitude,
+          "longitude": locations.first.longitude,
+        });
+      } catch (e) {
+        print('Geocoding error for region "$region": $e');
+      }
+    }
+
+    return regionCoordinates;
+  }
+
+  Future<void> getViewportsForRegions(List<Map<String, double>> regions) async {
+    viewPortMapList.clear();
+
+    for (var region in regions) {
+      try {
+        print('Fetching viewport for region: $region');
+
+        Map<String, dynamic> result = await _placeApiModel.getViewPorts(
+          LatLng(region['latitude']!, region['longitude']!),
+        );
+
+        if (result != null &&
+            result["results"][0]["geometry"]["viewport"]["southwest"] != null &&
+            result["results"][0]["geometry"]["viewport"]["northeast"] != null) {
+          print('Viewport result for region: $result');
+
+          viewPortMap = {
+            "locationBias": {
+              "rectangle": {
+                "low": {
+                  "latitude": result["results"][0]["geometry"]["viewport"]
+                          ["southwest"]?["lat"] ??
+                      0.0,
+                  "longitude": result["results"][0]["geometry"]["viewport"]
+                          ["southwest"]?["lng"] ??
+                      0.0
+                },
+                "high": {
+                  "latitude": result["results"][0]["geometry"]["viewport"]
+                          ["northeast"]?["lat"] ??
+                      0.0,
+                  "longitude": result["results"][0]["geometry"]["viewport"]
+                          ["northeast"]?["lng"] ??
+                      0.0
+                }
+              }
+            }
+          };
+
+          viewPortMapList.add(viewPortMap);
+          print('viewPortMap: $viewPortMap');
+        } else {
+          print('Invalid result received for region: $region');
+        }
+      } catch (e) {
+        print('Error while processing region: $e');
+      }
+    }
+
+    print('Final : $viewPortMapList');
+    await _getSearchResults(viewPortMapList);
   }
 
   // 근처 장소 검색
@@ -246,7 +339,7 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
         isSearchLoaded = true;
       }
     } catch (e) {
-      print("에러메시지 : $e");
+      print("에러메시지2 : $e");
     } finally {
       setState(() {
         _isLoadingMarkers = false;
@@ -339,8 +432,83 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
     });
   }
 
-  void _getSearchResults() async {
+  Future<void> _getSearchResults(
+      List<Map<String, dynamic>> viewPortMapList) async {
+    setState(() {
+      _isLoadingMarkers = true;
+      _nearByPlacesList.clear();
+      _markers.clear();
+      isSearchLoading = true;
+    });
+
+    List<dynamic> aggregatedResults = []; // List to collect all results
+
+    try {
+      for (var viewPortMap in viewPortMapList) {
+        print('Searching with viewPortMap: $viewPortMap');
+
+        Map<String, dynamic> data = {
+          "textQuery": _searchController.text.toString(),
+          "pageSize": "10",
+          "languageCode": "ko",
+          "regionCode": "KR",
+          ...viewPortMap,
+        };
+
+        // Fetch results for the current viewport
+        List<dynamic> resultList = await _placeApiModel.getSearchPlace(data);
+        print('ResultList for current viewport: $resultList');
+
+        if (resultList.isNotEmpty) {
+          List<dynamic> filteredResults = resultList.where((place) {
+            final double placeLat = place['location']['latitude'];
+            final double placeLng = place['location']['longitude'];
+
+            final double lowLat =
+                viewPortMap["locationBias"]["rectangle"]["low"]["latitude"];
+            final double lowLng =
+                viewPortMap["locationBias"]["rectangle"]["low"]["longitude"];
+            final double highLat =
+                viewPortMap["locationBias"]["rectangle"]["high"]["latitude"];
+            final double highLng =
+                viewPortMap["locationBias"]["rectangle"]["high"]["longitude"];
+
+            // Check if the place is within the bounds
+            return placeLat >= lowLat &&
+                placeLat <= highLat &&
+                placeLng >= lowLng &&
+                placeLng <= highLng;
+          }).toList();
+
+          aggregatedResults.addAll(filteredResults);
+
+          // Add markers for the filtered results
+          for (var place in filteredResults) {
+            _processAndAddPlace(place);
+          }
+        }
+      }
+
+      print('Aggregated Results: $aggregatedResults');
+    } catch (e) {
+      print("Error while processing viewports: $e");
+    } finally {
+      setState(() {
+        _isLoadingMarkers = false;
+      });
+    }
+
+    mapController!.animateCamera(
+      CameraUpdate.newLatLngZoom(
+          LatLng(aggregatedResults[0].location.latitude,
+              aggregatedResults[0].location.longitude),
+          15.0),
+    );
+  }
+
+  /*Future<void> _getSearchResults() async {
     print('_searchController ${_searchController.text}');
+    print('viewPortMap $viewPortMap');
 
     Map<String, dynamic> data = {
       "textQuery": _searchController.text.toString(),
@@ -377,13 +545,13 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
         }
       }
     } catch (e) {
-      print("에러메시지 : $e");
+      print("에러메시지3 : $e");
     } finally {
       setState(() {
         _isLoadingMarkers = false;
       });
     }
-  }
+  }*/
 
   void _toggleCategoryClick(Map<String, dynamic> category, LatLng _mapCenter) {
     if (isCategorySelected) {
@@ -414,7 +582,7 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               _categoryScrollController.animateTo(
                 _categoryScrollController.position.minScrollExtent,
-                duration: Duration(milliseconds: 300),
+                duration: Duration(milliseconds: 100),
                 curve: Curves.easeOut,
               );
             });
@@ -440,7 +608,7 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _categoryScrollController.animateTo(
             _categoryScrollController.position.minScrollExtent,
-            duration: Duration(milliseconds: 300),
+            duration: Duration(milliseconds: 100),
             curve: Curves.easeOut,
           );
         });
@@ -450,7 +618,7 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _categoryScrollController.animateTo(
             _categoryScrollController.position.maxScrollExtent,
-            duration: Duration(milliseconds: 300),
+            duration: Duration(milliseconds: 100),
             curve: Curves.easeOut,
           );
         });
@@ -683,7 +851,7 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                                   setState(() {
                                     sheetController.animateTo(
                                       maxSize,
-                                      duration: Duration(milliseconds: 300),
+                                      duration: Duration(milliseconds: 100),
                                       curve: Curves.easeInOut,
                                     );
                                   });
@@ -730,10 +898,10 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                                               sheetController.animateTo(
                                                 maxSize,
                                                 duration:
-                                                    Duration(milliseconds: 300),
+                                                    Duration(milliseconds: 100),
                                                 curve: Curves.easeInOut,
                                               );
-                                              _getSearchResults();
+                                              getViewportsForRegions(regions);
                                               // if(_searchController.text.isEmpty)
                                             },
                                             icon: Icon(Icons.search))

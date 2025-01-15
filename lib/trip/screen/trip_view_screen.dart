@@ -67,7 +67,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
     Colors.purple,
     Colors.pink,
     Colors.green,
-    Colors.red,
+    Colors.amber,
   ];
 
   final Map<int, BitmapDescriptor> _iconCache = {};
@@ -125,8 +125,18 @@ class _TripViewScreenState extends State<TripViewScreen> {
         setState(() {
           if (userId == result["userId"]) isUserChecked = true;
           tripInfo.addAll(result);
+          print('tripInfo $tripInfo');
 
-          address = tripInfo['selectedRegions'][0]['region'];
+          String? regionWithOrderIndexZero;
+
+          for (Map<String, dynamic> items in tripInfo['selectedRegions']) {
+            if (items['orderIndex'] == 0) {
+              regionWithOrderIndexZero = items['region'];
+              break;
+            }
+          }
+
+          address = regionWithOrderIndexZero!;
 
           isLoading = false;
 
@@ -145,7 +155,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
         });
       }
     } catch (e) {
-      print("에러메시지 : $e");
+      print("에러메시지1 : $e");
       setState(() {
         isLoading = false;
       });
@@ -193,6 +203,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
 
     // 마커 업데이트
     final List<Marker> updatedMarkers = [];
+    final List<LatLng> markerPositions = [];
     for (var tripDay in tripDayAllList) {
       if (tripDay["dateIndex"] == dateIndex && tripDay["place"] != null) {
         final bool isFocused = tripDay["place"].id == markerId;
@@ -204,6 +215,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
           colors[colorIndex],
           isFocused: isFocused,
         );
+        markerPositions.add(tripDay["place"].location);
 
         updatedMarkers.add(
           Marker(
@@ -224,11 +236,29 @@ class _TripViewScreenState extends State<TripViewScreen> {
                 );
               }),
         );
+
+        if (isFocused) {
+          latitude = tripDay["place"].location.latitude;
+          longitude = tripDay["place"].location.longitude;
+        }
+        _moveMapToCurrentLocation();
       }
     }
 
+    final newPolylines = {
+      if (markerPositions.isNotEmpty)
+        Polyline(
+          polylineId: PolylineId("path_$dateIndex"),
+          points: markerPositions,
+          color: grayColor,
+          width: 1,
+          patterns: [PatternItem.dash(20), PatternItem.gap(10)],
+        ),
+    };
+
     setState(() {
       _markers = updatedMarkers.toSet(); // 마커 목록 갱신
+      _polylines = newPolylines;
     });
   }
 
@@ -278,6 +308,11 @@ class _TripViewScreenState extends State<TripViewScreen> {
         setState(() {
           groupedTripDayAllList =
               groupByDate(tripDayAllList, _dropDownDay.length);
+
+          latitude = groupedTripDayAllList[0]?[0]["place"].location.latitude;
+          longitude = groupedTripDayAllList[0]?[0]["place"].location.longitude;
+          print("!!latitude: $latitude longitude: $longitude");
+          _moveMapToCurrentLocation();
         });
       } else {
         print('결과가 없거나 null입니다.');
@@ -289,7 +324,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
         });
       }
     } catch (e) {
-      print('에러메시지 $e');
+      print('에러메시지2 $e');
       // return {};
     }
   }
@@ -302,12 +337,11 @@ class _TripViewScreenState extends State<TripViewScreen> {
 
     for (var tripDay in tripDayAllList) {
       if (tripDay["dateIndex"] == dateIndex && tripDay["place"] != null) {
-        markerPositions.add(tripDay["place"].location);
-
         int orderIndex = tripDay["orderIndex"] ?? 1;
         int colorIndex = (orderIndex - 1) % colors.length;
         final BitmapDescriptor customMarker =
             await _getCustomMarkerIcon(orderIndex, colors[colorIndex]);
+        markerPositions.add(tripDay["place"].location);
 
         tempMarkers.add(
           Marker(
@@ -376,6 +410,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
         List<Map<String, dynamic>> tempList = [];
         for (Map<String, dynamic> memo in selectMemoList) {
           Map<String, dynamic> newDayPlace = {};
+          newDayPlace["id"] = memo["id"];
           newDayPlace["isMemo"] = true;
           newDayPlace["memo"] = memo["content"];
           newDayPlace["dateIndex"] = memo["dateIndex"];
@@ -388,7 +423,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
         print('new tripDayAllList $tripDayAllList');
       }
     } catch (e) {
-      print("에러메시지 $e");
+      print("에러메시지3 $e");
     }
   }
 
@@ -400,7 +435,6 @@ class _TripViewScreenState extends State<TripViewScreen> {
       setState(() {
         latitude = locations.first.latitude;
         longitude = locations.first.longitude;
-        // print("latitude: $latitude longitude: $longitude");
 
         tripInfo['latitude'] = locations.first.latitude;
         tripInfo['longitude'] = locations.first.longitude;
@@ -789,7 +823,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                 initialCameraPosition: CameraPosition(
                                     target:
                                         LatLng(latitude! - 0.005, longitude!),
-                                    zoom: 11),
+                                    zoom: 13),
                                 onMapCreated: (GoogleMapController controller) {
                                   mapController = controller; // 지도 컨트롤러 초기화
                                 },
@@ -828,37 +862,40 @@ class _TripViewScreenState extends State<TripViewScreen> {
                       onMarkerTap: _onMarkerTap,
                       isEditing: isEditing,
                       onEditingChange: updateEditingState,
+                      mapController: mapController,
                     )
                   ],
                 ),
-      floatingActionButton: Container(
-        width: 68,
-        height: 65,
-        child: FloatingActionButton(
-          onPressed: () {
-            // 첨삭받기로 이동 !!
-            // Navigator.push(
-            //     context,
-            //     MaterialPageRoute(
-            //       builder: (context) => TripScreen(),
-            //     ));
-          },
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.add,
-              ),
-              Text(
-                "첨삭받기",
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Colors.white,
+      floatingActionButton: isEditing
+          ? SizedBox.shrink()
+          : Container(
+              width: 68,
+              height: 65,
+              child: FloatingActionButton(
+                onPressed: () {
+                  // 첨삭받기로 이동 !!
+                  // Navigator.push(
+                  //     context,
+                  //     MaterialPageRoute(
+                  //       builder: (context) => TripScreen(),
+                  //     ));
+                },
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.add,
                     ),
+                    Text(
+                      "첨삭받기",
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: Colors.white,
+                          ),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }

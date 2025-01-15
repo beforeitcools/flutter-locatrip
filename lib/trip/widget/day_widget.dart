@@ -4,6 +4,7 @@ import 'package:flutter_locatrip/trip/model/trip_day_model.dart';
 import 'package:flutter_locatrip/trip/model/trip_model.dart';
 import 'package:flutter_locatrip/trip/widget/date_bottom_sheet.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../map/model/place.dart';
 import '../screen/search_place_screen.dart';
@@ -26,6 +27,10 @@ class DayWidget extends StatefulWidget {
   final int focusedTileIndex;
   final bool isEditing;
   final Function(bool) onEditingChange;
+  final Function(bool) updateCheckedStatus;
+  final Function(int, bool) onChecked;
+  final List<Map<String, dynamic>> deletedItems;
+  final GoogleMapController? mapController;
 
   const DayWidget(
       {required this.selectedItem,
@@ -43,7 +48,11 @@ class DayWidget extends StatefulWidget {
       required this.listTileKeys2,
       required this.focusedTileIndex,
       required this.isEditing,
-      required this.onEditingChange});
+      required this.onEditingChange,
+      required this.updateCheckedStatus,
+      required this.onChecked,
+      required this.deletedItems,
+      required this.mapController});
 
   @override
   State<DayWidget> createState() => _DayWidgetState();
@@ -95,6 +104,14 @@ class _DayWidgetState extends State<DayWidget> {
       setState(() {
         _colors = widget.colors;
       });
+    }
+
+    if (widget.dayPlaceList != oldWidget.dayPlaceList) {
+      setState(() {
+        // _dayPlaceList = List.from(widget.dayPlaceList);
+        _dayPlaceList = widget.dayPlaceList;
+      });
+      print('didUpdateWidget _dayPlaceList: $_dayPlaceList');
     }
   }
 
@@ -195,7 +212,15 @@ class _DayWidgetState extends State<DayWidget> {
                 ? TextButton(
                     onPressed: () {
                       setState(() {
+                        print('delete ${widget.deletedItems}');
+
                         widget.onEditingChange(!widget.isEditing);
+
+                        if (widget.deletedItems.isNotEmpty) {
+                          _deleteDayPlaceList();
+                        } else {
+                          _saveOrderIndexAndSortIndex();
+                        }
                       });
                     },
                     style: TextButton.styleFrom(
@@ -291,6 +316,15 @@ class _DayWidgetState extends State<DayWidget> {
 
             widget.updateMarkersAndPolylines(
                 _dayPlaceList, result["dateIndex"]);
+
+            widget.listTileKeys.add(GlobalKey());
+            widget.listTileKeys2.add(GlobalKey());
+
+            widget.mapController!.animateCamera(
+              CameraUpdate.newLatLng(LatLng(
+                  _dayPlace["place"].location.latitude!,
+                  _dayPlace["place"].location.longitude!)),
+            );
           } else {
             print("이미 추가된 장소입니다.");
           }
@@ -317,6 +351,7 @@ class _DayWidgetState extends State<DayWidget> {
 
   Future<void> _navigateAndDisplaySelection(BuildContext context) async {
     _tripInfo["day"] = index;
+    print('index $index');
 
     final Map<String, dynamic> receiver = await Navigator.push(
         context,
@@ -324,17 +359,21 @@ class _DayWidgetState extends State<DayWidget> {
             builder: (context) => SearchPlaceScreen(
                   tripInfo: _tripInfo,
                 )));
+    if (receiver != null) {
+      setState(() {
+        Place selectedPlace = receiver['place'];
+        _dayPlace = {
+          "place": selectedPlace,
+          "day": receiver["day"],
+          "dateIndex": receiver["dateIndex"],
+        };
+      });
 
-    setState(() {
-      Place selectedPlace = receiver['place'];
-      _dayPlace = {
-        "place": selectedPlace,
-        "day": receiver["day"],
-        "dateIndex": receiver["dateIndex"]
-      };
-    });
-
-    _saveTripDayLocation();
+      _saveTripDayLocation();
+    } else {
+      print(
+          'Receiver is null: User might have navigated back without selecting anything.');
+    }
   }
 
   void _addMemo(Map<String, dynamic> data) async {
@@ -364,6 +403,117 @@ class _DayWidgetState extends State<DayWidget> {
     }
   }
 
+  // 바뀐 순서 저장시키기
+  void _saveOrderIndexAndSortIndex() {
+    List<Map<String, dynamic>> memoData = [];
+    List<Map<String, dynamic>> placeData = [];
+
+    for (Map<String, dynamic> dayMap in _dayPlaceList) {
+      // 메모
+      if (dayMap["isMemo"] == true) {
+        Map<String, dynamic> tempMap = {
+          "id": dayMap["id"],
+          "tripId": dayMap["tripId"],
+          "content": dayMap["content"],
+          "sortIndex": dayMap["sortIndex"],
+        };
+        memoData.add(tempMap);
+      } else {
+        // 장소
+
+        Map<String, dynamic> tempMap = {
+          "id": dayMap["id"],
+          "tripId": dayMap["tripId"],
+          "locationId": dayMap["locationId"],
+          "date": dayMap["date"],
+          "sortIndex": dayMap["sortIndex"],
+          "orderIndex": dayMap["orderIndex"],
+        };
+        placeData.add(tempMap);
+      }
+    }
+
+    if (memoData.isNotEmpty) _saveMemoIndex(memoData);
+    if (placeData.isNotEmpty) _saveTripDayIndex(placeData);
+  }
+
+  void _saveTripDayIndex(List<Map<String, dynamic>> placeData) async {
+    try {
+      List<Map<String, dynamic>> resultIndex =
+          await _tripDayModel.saveTripDayIndex(placeData, context);
+      if (resultIndex.isNotEmpty) {
+        print('저장했어!');
+        print('resultIndex $resultIndex');
+      }
+    } catch (e) {
+      print('에러메시지 $e');
+    }
+  }
+
+  void _saveMemoIndex(List<Map<String, dynamic>> memoData) async {
+    try {
+      List<Map<String, dynamic>> resultIndex =
+          await _tripModel.saveMemoIndex(memoData, context);
+      if (resultIndex.isNotEmpty) {
+        print('저장했어!');
+        print('resultIndex $resultIndex');
+      }
+    } catch (e) {
+      print('에러메시지 $e');
+    }
+  }
+
+  void _deleteDayPlaceList() {
+    List<int> memoId = [];
+    List<int> placeId = [];
+
+    for (Map<String, dynamic> deleteItem in widget.deletedItems) {
+      // 메모
+      if (deleteItem["isMemo"] == true) {
+        memoId.add(deleteItem["id"]);
+      } else {
+        // 장소
+        placeId.add(deleteItem["id"]);
+      }
+    }
+
+    if (memoId.isNotEmpty) _deleteMemo(memoId);
+    if (placeId.isNotEmpty) _deleteTripDay(placeId);
+  }
+
+  void _deleteTripDay(List<int> placeId) async {
+    try {
+      bool result = await _tripDayModel.deleteTripDay(placeId, context);
+      if (result) {
+        print('삭제했어!');
+      }
+    } catch (e) {
+      print('에러메시지 $e');
+    }
+  }
+
+  void _deleteMemo(List<int> placeId) async {
+    try {
+      bool result = await _tripModel.deleteMemo(placeId, context);
+      if (result) {
+        print('삭제했어!');
+      }
+    } catch (e) {
+      print('에러메시지 $e');
+    }
+  }
+
+  void showBottomButtons() {
+    for (Map<String, dynamic> item in _dayPlaceList) {
+      if (item["isChecked"]) {
+        widget.updateCheckedStatus(true);
+        break;
+      } else {
+        widget.updateCheckedStatus(false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -388,9 +538,12 @@ class _DayWidgetState extends State<DayWidget> {
                     _dayPlaceList[i]["orderIndex"] = orderIndex++;
                   }
                 }
+                print('$oldIndex $newIndex');
                 for (int i = 0; i < _dayPlaceList.length; i++) {
-                  _dayPlaceList[i]["sortIndex"] = i + 1;
+                  _dayPlaceList[i]["sortIndex"] = i;
                 }
+                print('정렬순서 확인하기 $_dayPlaceList');
+                widget.updateMarkersAndPolylines(_dayPlaceList, index);
               });
             },
             children: [
@@ -410,6 +563,9 @@ class _DayWidgetState extends State<DayWidget> {
                           if (_dayPlaceList[i]["isChecked"] != null) {
                             _dayPlaceList[i]["isChecked"] =
                                 !_dayPlaceList[i]["isChecked"];
+                            showBottomButtons();
+                            widget.onChecked(
+                                i, _dayPlaceList[i]["isChecked"] ?? false);
                           }
                         });
                       },
@@ -484,6 +640,9 @@ class _DayWidgetState extends State<DayWidget> {
                           if (_dayPlaceList[i]["isChecked"] != null) {
                             _dayPlaceList[i]["isChecked"] =
                                 !_dayPlaceList[i]["isChecked"];
+                            showBottomButtons();
+                            widget.onChecked(
+                                i, _dayPlaceList[i]["isChecked"] ?? false);
                           }
                         });
                       },
@@ -620,7 +779,10 @@ class _DayWidgetState extends State<DayWidget> {
           )),
         if (!widget.isEditing && _dayPlaceList != null)
           ..._dayPlaceList.map((item) {
+            print('widget.dayPlaceList ${widget.dayPlaceList.length}');
+
             final int index = widget.dayPlaceList.indexOf(item);
+            print('_dayPlaceList ${_dayPlaceList.length}');
 
             print('focusedTileIndex ${widget.focusedTileIndex}');
             print('listKey ${widget.listTileKeys}');
@@ -800,6 +962,12 @@ class _DayWidgetState extends State<DayWidget> {
                                   item['isChecked'] = false;
                                 }
                               }
+                            }
+                            showBottomButtons();
+
+                            for (int i = 0; i < _dayPlaceList.length; i++) {
+                              widget.onChecked(
+                                  i, _dayPlaceList[i]["isChecked"] ?? false);
                             }
                           });
                         },

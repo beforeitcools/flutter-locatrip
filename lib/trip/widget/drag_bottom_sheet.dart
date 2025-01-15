@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/common/widget/color.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import 'day_widget.dart';
 
@@ -18,6 +20,7 @@ class DragBottomSheet extends StatefulWidget {
   final void Function(String, List<Map<String, dynamic>>, int) onMarkerTap;
   final bool isEditing;
   final Function(bool) onEditingChange;
+  final GoogleMapController? mapController;
 
   const DragBottomSheet(
       {super.key,
@@ -32,7 +35,8 @@ class DragBottomSheet extends StatefulWidget {
       required this.updateMarkersAndPolylines,
       required this.onMarkerTap,
       required this.isEditing,
-      required this.onEditingChange});
+      required this.onEditingChange,
+      required this.mapController});
 
   @override
   State<DragBottomSheet> createState() => _DragBottomSheetState();
@@ -46,7 +50,12 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
 
   bool isExpanded = false;
 
-  // double _animatedPositionedOffset = 0;
+  void updateCheckedStatus(bool value) {
+    setState(() {
+      isChecked = value;
+    });
+  }
+
   late double _containerHeight;
   late double _animatedPositionedOffset;
   late double _expandedHeight;
@@ -66,6 +75,10 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
 
   final Map<int, List<GlobalKey>> _listTileKeys = {};
   final Map<int, List<GlobalKey>> _listTileKeys2 = {};
+
+  bool isChecked = false;
+
+  List<Map<String, dynamic>> _deletedItems = [];
 
   @override
   void initState() {
@@ -168,6 +181,7 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
           setState(() {
             _selectedIndex2 = i; // 현재 지나고 있는 DayWidget 인덱스 설정
           });
+
           widget.updateMarkersAndPolylines(tripDayAllList, _selectedIndex2);
         }
         break; // 첫 번째로 지나고 있는 DayWidget 을 찾으면 종료
@@ -196,7 +210,7 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
       // 날짜 별로 ListTile 키를 가져옴
       for (int index = 0; index < keys.length; index++) {
         final key = keys[index]; // 특정 ListTile 의 GlobalKey
-        print('key $key $index');
+        // print('key $key $index');
         if (key != null) {
           // 바텀시트의 RenderBox 가져오기
           final RenderBox? bottomSheetBox =
@@ -210,19 +224,13 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
                     .localToGlobal(Offset.zero, ancestor: bottomSheetBox)
                     .dy -
                 46; // 드래그 핸들러 높이
-            /*  print(
-                'Relative Y Offset: $relativeOffset (Day: $day, Index: $index)');
 
-            print('Scroll Offset: ${_scrollController.offset}');
-*/
             // 포커스 조건 충족 여부 확인
             if (relativeOffset <= focusThreshold &&
                 relativeOffset + renderBox.size.height > focusThreshold) {
               if (_focusedTileIndex != index || _selectedIndex2 != day) {
                 setState(() {
                   _focusedTileIndex = index;
-                  /*String markerId, List<Map<String, dynamic>> tripDayAllList,
-                  int dateIndex*/
                 });
                 if (_groupedTripDayAllList[day]?[index]["place"] != null) {
                   setState(() {
@@ -244,7 +252,7 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
       // 날짜 별로 ListTile 키를 가져옴
       for (int index = 0; index < keys.length; index++) {
         final key = keys[index]; // 특정 ListTile 의 GlobalKey
-        print('key2 $key $index');
+        // print('key2 $key $index');
         if (key != null) {
           // 바텀시트의 RenderBox 가져오기
           final RenderBox? bottomSheetBox =
@@ -327,11 +335,85 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
     }
   }
 
+  // 체크된 항목 삭제 / 정렬
+  // 체크된 항목 삭제 / 정렬
+  void _deleteCheckedItems() {
+    setState(() {
+      _deletedItems.clear();
+
+      // 모든 그룹을 순회
+      _groupedTripDayAllList.forEach((dateIndex, items) {
+        // 삭제된 아이템의 정보를 추적
+        List<Map<String, dynamic>> deletedItems =
+            items.where((item) => item["isChecked"] == true).toList();
+
+        _deletedItems.addAll(deletedItems);
+
+        // 삭제 후 필터링
+        _groupedTripDayAllList[dateIndex] =
+            items.where((item) => item["isChecked"] == false).toList();
+
+        // 삭제된 아이템의 정렬 및 순서 수정
+        for (var deletedItem in deletedItems) {
+          int deletedSortIndex = deletedItem["sortIndex"];
+          int deletedOrderIndex = deletedItem["orderIndex"] ?? -1;
+
+          _groupedTripDayAllList[dateIndex]!.forEach((item) {
+            // 삭제된 항목 수에 따라 sortIndex 조정
+            if (item["sortIndex"] > deletedSortIndex) {
+              item["sortIndex"] -= deletedItems
+                  .where((deleted) => deleted["sortIndex"] < item["sortIndex"])
+                  .length;
+            }
+
+            // 삭제된 항목 수에 따라 orderIndex 조정
+            if (deletedOrderIndex != -1 &&
+                item["orderIndex"] != null &&
+                item["orderIndex"] > deletedOrderIndex) {
+              item["orderIndex"] -= deletedItems
+                  .where((deleted) =>
+                      deleted["orderIndex"] != null &&
+                      deleted["orderIndex"] < item["orderIndex"])
+                  .length;
+            }
+          });
+        }
+      });
+
+      // 모든 그룹을 다시 정렬
+      _groupedTripDayAllList.forEach((dateIndex, items) {
+        items.sort((a, b) {
+          return (a["sortIndex"] ?? 0).compareTo(b["sortIndex"] ?? 0);
+        });
+      });
+
+      // 키 업데이트
+      _groupedTripDayAllList.forEach((dateIndex, items) {
+        _listTileKeys[dateIndex] = List.generate(
+          items.length,
+          (index) => GlobalKey(),
+        );
+
+        _listTileKeys2[dateIndex] = List.generate(
+          items.length,
+          (index) => GlobalKey(),
+        );
+
+        // 마커 폴리라인 업데이트
+        widget.updateMarkersAndPolylines(items, dateIndex);
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     _groupedTripDayAllList.forEach((day, dayPlaceList) {
-      _updateListTileKeys(day, dayPlaceList);
+      if (_listTileKeys[day] == null ||
+          _listTileKeys[day]!.length != dayPlaceList.length) {
+        _updateListTileKeys(day, dayPlaceList);
+      }
     });
+    print('빌드_groupedTripDayAllList$_groupedTripDayAllList');
 
     double screenWidth = MediaQuery.of(context).size.width;
 
@@ -440,25 +522,33 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
                           return Container(
                             key: _itemKeys[index],
                             child: DayWidget(
-                              selectedItem: _dropDownDay[index],
-                              dropDownDay: _dropDownDay,
-                              index: index,
-                              onHeightCalculated: (height) =>
-                                  _updateItemHeight(index, height),
-                              onDateSelected: _scrollToSelectedItem,
-                              selectedIndex: _selectedIndex,
-                              tripInfo: _tripInfo,
-                              dayPlaceList: dayPlaceList,
-                              colors: widget.colors,
-                              scrollController: _scrollController,
-                              updateMarkersAndPolylines:
-                                  widget.updateMarkersAndPolylines,
-                              listTileKeys: listTilekey,
-                              listTileKeys2: listTilekey2,
-                              focusedTileIndex: _focusedTileIndex,
-                              isEditing: widget.isEditing,
-                              onEditingChange: widget.onEditingChange,
-                            ),
+                                selectedItem: _dropDownDay[index],
+                                dropDownDay: _dropDownDay,
+                                index: index,
+                                onHeightCalculated: (height) =>
+                                    _updateItemHeight(index, height),
+                                onDateSelected: _scrollToSelectedItem,
+                                selectedIndex: _selectedIndex,
+                                tripInfo: _tripInfo,
+                                dayPlaceList: dayPlaceList,
+                                colors: widget.colors,
+                                scrollController: _scrollController,
+                                updateMarkersAndPolylines:
+                                    widget.updateMarkersAndPolylines,
+                                listTileKeys: listTilekey,
+                                listTileKeys2: listTilekey2,
+                                focusedTileIndex: _focusedTileIndex,
+                                isEditing: widget.isEditing,
+                                onEditingChange: widget.onEditingChange,
+                                updateCheckedStatus: updateCheckedStatus,
+                                onChecked: (index, isChecked) {
+                                  setState(() {
+                                    _groupedTripDayAllList[key]![index]
+                                        ["isChecked"] = isChecked;
+                                  });
+                                },
+                                deletedItems: _deletedItems,
+                                mapController: widget.mapController),
                           );
                         },
                       ),
@@ -466,6 +556,61 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
                   : Center(
                       child: CircularProgressIndicator(),
                     ),
+              widget.isEditing
+                  ? isChecked
+                      ? Container(
+                          height: 80,
+                          color: pointBlueColor,
+                          child: Row(
+                            children: [
+                              // 버튼 1
+                              Expanded(
+                                  child: TextButton(
+                                      onPressed: () {},
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.swap_vert,
+                                            color: Colors.white,
+                                          ),
+                                          Text(
+                                            "날짜 이동",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleSmall
+                                                ?.copyWith(color: Colors.white),
+                                          )
+                                        ],
+                                      ))),
+
+                              // 버튼 2
+                              Expanded(
+                                  child: TextButton(
+                                      onPressed: _deleteCheckedItems,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.delete_outlined,
+                                            color: Colors.white,
+                                          ),
+                                          Text(
+                                            "삭제하기",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleSmall
+                                                ?.copyWith(color: Colors.white),
+                                          )
+                                        ],
+                                      )))
+                            ],
+                          ),
+                        )
+                      : SizedBox.shrink()
+                  : SizedBox.shrink()
             ],
           ),
         ),
