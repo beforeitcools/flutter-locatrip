@@ -16,6 +16,8 @@ class DragBottomSheet extends StatefulWidget {
   final Future<void> Function(List<Map<String, dynamic>>, int)
       updateMarkersAndPolylines;
   final void Function(String, List<Map<String, dynamic>>, int) onMarkerTap;
+  final bool isEditing;
+  final Function(bool) onEditingChange;
 
   const DragBottomSheet(
       {super.key,
@@ -28,9 +30,9 @@ class DragBottomSheet extends StatefulWidget {
       required this.bottomScrollController,
       required this.colors,
       required this.updateMarkersAndPolylines,
-      required this.onMarkerTap
-      //required this.addCustomTextMarker
-      });
+      required this.onMarkerTap,
+      required this.isEditing,
+      required this.onEditingChange});
 
   @override
   State<DragBottomSheet> createState() => _DragBottomSheetState();
@@ -63,8 +65,7 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
   int _focusedTileIndex = -1; // 현재 포커스된 ListTile 인덱스
 
   final Map<int, List<GlobalKey>> _listTileKeys = {};
-
-  bool isAddLoading = false;
+  final Map<int, List<GlobalKey>> _listTileKeys2 = {};
 
   @override
   void initState() {
@@ -113,22 +114,6 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
         });
       });
     }
-  }
-
-  void _initializeKeys() {
-    // 날짜별로 GlobalKey 생성
-    widget.groupedTripDayAllList.forEach((day, dayPlaceList) {
-      _itemKeys[day] = GlobalKey(); // DayWidget용 GlobalKey
-      _listTileKeys[day] = List.generate(
-        dayPlaceList.length, // ListTile 수만큼 GlobalKey 생성
-        (index) => GlobalKey(),
-      );
-    });
-
-    /*// 디버깅: 생성된 GlobalKey 확인
-    _listTileKeys.forEach((day, keys) {
-      print('Day $day: $keys ${keys.length} ListTile GlobalKeys created');
-    });*/
   }
 
   @override
@@ -211,7 +196,55 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
       // 날짜 별로 ListTile 키를 가져옴
       for (int index = 0; index < keys.length; index++) {
         final key = keys[index]; // 특정 ListTile 의 GlobalKey
-        // print('key $key $index');
+        print('key $key $index');
+        if (key != null) {
+          // 바텀시트의 RenderBox 가져오기
+          final RenderBox? bottomSheetBox =
+              context.findRenderObject() as RenderBox?;
+          final renderBox =
+              key.currentContext?.findRenderObject() as RenderBox?;
+
+          if (renderBox != null && bottomSheetBox != null) {
+            // 바텀시트 기준의 Y 좌표 계산
+            final double relativeOffset = renderBox
+                    .localToGlobal(Offset.zero, ancestor: bottomSheetBox)
+                    .dy -
+                46; // 드래그 핸들러 높이
+            /*  print(
+                'Relative Y Offset: $relativeOffset (Day: $day, Index: $index)');
+
+            print('Scroll Offset: ${_scrollController.offset}');
+*/
+            // 포커스 조건 충족 여부 확인
+            if (relativeOffset <= focusThreshold &&
+                relativeOffset + renderBox.size.height > focusThreshold) {
+              if (_focusedTileIndex != index || _selectedIndex2 != day) {
+                setState(() {
+                  _focusedTileIndex = index;
+                  /*String markerId, List<Map<String, dynamic>> tripDayAllList,
+                  int dateIndex*/
+                });
+                if (_groupedTripDayAllList[day]?[index]["place"] != null) {
+                  setState(() {
+                    widget.onMarkerTap(
+                        _groupedTripDayAllList[day]?[index]["place"].id,
+                        _groupedTripDayAllList[day]!,
+                        day);
+                  });
+                }
+                // print('Focused on ListTile $index in Day $day');
+              }
+              return; // 한 번 포커스를 찾으면 중단
+            }
+          }
+        }
+      }
+    });
+    _listTileKeys2.forEach((day, keys) {
+      // 날짜 별로 ListTile 키를 가져옴
+      for (int index = 0; index < keys.length; index++) {
+        final key = keys[index]; // 특정 ListTile 의 GlobalKey
+        print('key2 $key $index');
         if (key != null) {
           // 바텀시트의 RenderBox 가져오기
           final RenderBox? bottomSheetBox =
@@ -258,9 +291,6 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
   }
 
   void _updateListTileKeys(int day, List<Map<String, dynamic>> dayPlaceList) {
-    setState(() {
-      isAddLoading = true;
-    });
     if (!_listTileKeys.containsKey(day)) {
       _listTileKeys[day] = [];
     }
@@ -276,13 +306,26 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
       // 여분의 키를 제거
       _listTileKeys[day] = _listTileKeys[day]!.sublist(0, dayPlaceList.length);
     }
-    // print('Updated _listTileKeys for day $day: ${_listTileKeys[day]?.length}');
 
-    setState(() {
-      isAddLoading = false;
-    });
+    if (!_listTileKeys2.containsKey(day)) {
+      _listTileKeys2[day] = [];
+    }
+
+    final currentLength2 = _listTileKeys2[day]!.length;
+    if (dayPlaceList.length > currentLength2) {
+      // 부족한 키를 추가
+      _listTileKeys2[day]!.addAll(
+        List.generate(
+          dayPlaceList.length - currentLength2,
+          (index) => GlobalKey(),
+        ),
+      );
+    } else if (dayPlaceList.length < currentLength2) {
+      // 여분의 키를 제거
+      _listTileKeys2[day] =
+          _listTileKeys2[day]!.sublist(0, dayPlaceList.length);
+    }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -390,26 +433,32 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
                           int key2 = _listTileKeys.keys.elementAt(index);
                           List<GlobalKey> listTilekey =
                               _listTileKeys[key2] ?? [];
+                          int key3 = _listTileKeys2.keys.elementAt(index);
+                          List<GlobalKey> listTilekey2 =
+                              _listTileKeys2[key3] ?? [];
 
                           return Container(
                             key: _itemKeys[index],
                             child: DayWidget(
-                                selectedItem: _dropDownDay[index],
-                                dropDownDay: _dropDownDay,
-                                index: index,
-                                onHeightCalculated: (height) =>
-                                    _updateItemHeight(index, height),
-                                onDateSelected: _scrollToSelectedItem,
-                                selectedIndex: _selectedIndex,
-                                tripInfo: _tripInfo,
-                                dayPlaceList: dayPlaceList,
-                                colors: widget.colors,
-                                scrollController: _scrollController,
-                                updateMarkersAndPolylines:
-                                    widget.updateMarkersAndPolylines,
-                                listTileKeys: listTilekey,
-                                focusedTileIndex: _focusedTileIndex,
-                                isAddLoading: isAddLoading),
+                              selectedItem: _dropDownDay[index],
+                              dropDownDay: _dropDownDay,
+                              index: index,
+                              onHeightCalculated: (height) =>
+                                  _updateItemHeight(index, height),
+                              onDateSelected: _scrollToSelectedItem,
+                              selectedIndex: _selectedIndex,
+                              tripInfo: _tripInfo,
+                              dayPlaceList: dayPlaceList,
+                              colors: widget.colors,
+                              scrollController: _scrollController,
+                              updateMarkersAndPolylines:
+                                  widget.updateMarkersAndPolylines,
+                              listTileKeys: listTilekey,
+                              listTileKeys2: listTilekey2,
+                              focusedTileIndex: _focusedTileIndex,
+                              isEditing: widget.isEditing,
+                              onEditingChange: widget.onEditingChange,
+                            ),
                           );
                         },
                       ),
