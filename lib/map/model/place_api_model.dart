@@ -134,7 +134,7 @@ class PlaceApiModel {
     try {
       final responses = await dio.get(
         "https://maps.googleapis.com/maps/api/geocode/json",
-        queryParameters: {'key': apiKey, 'latlng': "$lat,$lng"},
+        queryParameters: {'latlng': "$lat,$lng", 'key': apiKey},
       );
 
       if (responses.statusCode == 200) {

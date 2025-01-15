@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
@@ -78,6 +80,52 @@ class TripModel {
             responseData.map((item) => item as Map<String, dynamic>).toList();
         print('조회result $result');
         return result;
+      } else {
+        throw Exception("로드 실패");
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error : $e");
+    }
+  }
+
+  // 순서 저장시키기
+  Future<List<Map<String, dynamic>>> saveMemoIndex(
+      List<Map<String, dynamic>> memoData, BuildContext context) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    try {
+      final responses = await dio.post("$backUrl/memo/saveMemoIndex",
+          data: jsonEncode(memoData));
+
+      if (responses.statusCode == 200) {
+        print('responsese ${responses.data}');
+        final List<dynamic> responseData = responses.data;
+        final List<Map<String, dynamic>> result =
+            responseData.map((item) => item as Map<String, dynamic>).toList();
+
+        return result;
+      } else {
+        throw Exception("로드 실패");
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error : $e");
+    }
+  }
+
+  Future<bool> deleteMemo(List<int> memoId, BuildContext context) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    try {
+      final responses =
+          await dio.post("$backUrl/memo/deleteMemo", data: jsonEncode(memoId));
+
+      if (responses.statusCode == 200) {
+        print('responsese ${responses.data}');
+        return responses.data;
       } else {
         throw Exception("로드 실패");
       }
