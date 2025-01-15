@@ -159,24 +159,6 @@ class _TripViewScreenState extends State<TripViewScreen> {
     }
   }
 
-  /*Future<BitmapDescriptor> _getCustomMarkerIcon(
-      int orderIndex, Color color) async {
-    if (_iconCache.containsKey(orderIndex)) {
-      return _iconCache[orderIndex]!;
-    }
-
-    // 아이콘 생성 후 캐싱
-    final ByteData byteData = await createCustomMarkerIconImage(
-      text: orderIndex.toString(),
-      size: const Size(72, 72),
-      color: color,
-    );
-    final Uint8List imageData = byteData.buffer.asUint8List();
-    final BitmapDescriptor customMarker = BitmapDescriptor.fromBytes(imageData);
-
-    _iconCache[orderIndex] = customMarker;
-    return customMarker;
-  }*/
   Future<BitmapDescriptor> _getCustomMarkerIcon(int orderIndex, Color color,
       {bool isFocused = false}) async {
     // 캐싱 키 생성 (포커스 여부를 구분하기 위해 음수 변형)
