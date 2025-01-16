@@ -118,11 +118,17 @@ class CustomDialog {
     );
   }
 
-  static void showOneButtonDialog(BuildContext context, String contentMessage,
-      String buttonText, VoidCallback onConfirm) {
+  static void showOneButtonDialog(
+    BuildContext context,
+    String contentMessage,
+    String buttonText,
+    VoidCallback onConfirm, {
+    Color barrierColor = Colors.black54, // Default dimming color
+  }) {
     showDialog(
       context: context,
       barrierDismissible: false, // dialog 밖에 눌렀을때 닫힘 방지
+      barrierColor: barrierColor,
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
@@ -168,6 +174,7 @@ class CustomDialog {
                         color: pointBlueColor,
                         borderRadius: BorderRadius.only(
                           bottomRight: Radius.circular(10),
+                          bottomLeft: Radius.circular(10),
                         ),
                         child: InkWell(
                           onTap: () {
@@ -178,6 +185,7 @@ class CustomDialog {
                           highlightColor: Color.fromARGB(90, 43, 192, 228),
                           borderRadius: BorderRadius.only(
                             bottomLeft: Radius.circular(10),
+                            bottomRight: Radius.circular(10),
                           ),
                           child: Container(
                             alignment: Alignment.center,

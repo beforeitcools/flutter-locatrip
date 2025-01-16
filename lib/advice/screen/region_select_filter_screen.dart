@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/common/widget/color.dart';
 
 class RegionSelectFilterScreen extends StatelessWidget {
+  final Function(String, String) applyFilters;
+  final Function(String) regionFilterHandler;
+  String selectedRegionFilter;
+  String selectedOrderFilter;
   static const Map<String, List> _regionFilterMapList = {
     "전지역": [],
     "서울": [],
@@ -167,12 +172,62 @@ class RegionSelectFilterScreen extends StatelessWidget {
     "제주": ["제주", "서귀포"]
   };
 
-  const RegionSelectFilterScreen({
+  RegionSelectFilterScreen({
     super.key,
+    required this.applyFilters,
+    required this.regionFilterHandler,
+    required this.selectedRegionFilter,
+    required this.selectedOrderFilter,
   });
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("지역 선택", style: Theme.of(context).textTheme.headlineLarge),
+      ),
+      body: Padding(
+        padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+        child: GridView.builder(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2, // Two columns
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            childAspectRatio: 3, // Adjust the height of buttons
+          ),
+          itemCount: _regionFilterMapList.length,
+          itemBuilder: (context, index) {
+            final region = _regionFilterMapList.keys.toList()[index];
+            final bool isSelected = selectedRegionFilter == region;
+
+            return ElevatedButton(
+              onPressed: () {
+                regionFilterHandler(region);
+                applyFilters(region, selectedOrderFilter);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isSelected ? pointBlueColor : Colors.white,
+                side: BorderSide(
+                  color: grayColor,
+                  width: 1,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: isSelected ? 2 : 0,
+              ),
+              child: Text(
+                region,
+                style: Theme.of(context).textTheme.titleMedium,
+                /*style: TextStyle(
+                        color: isSelected ? Colors.white : Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),*/
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 }
