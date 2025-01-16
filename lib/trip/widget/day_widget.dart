@@ -8,6 +8,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../map/model/place.dart';
 import '../screen/search_place_screen.dart';
+import 'location_bottom_sheet.dart';
 
 class DayWidget extends StatefulWidget {
   final dynamic selectedItem;
@@ -87,7 +88,6 @@ class _DayWidgetState extends State<DayWidget> {
 
     // 프레임 렌더링 이후 높이를 계산
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // _calculateItemHeight();
       final RenderBox renderBox = context.findRenderObject() as RenderBox;
       final size = renderBox.size;
       widget.onHeightCalculated(size.height); // 부모로 높이 값 전달
@@ -108,10 +108,8 @@ class _DayWidgetState extends State<DayWidget> {
 
     if (widget.dayPlaceList != oldWidget.dayPlaceList) {
       setState(() {
-        // _dayPlaceList = List.from(widget.dayPlaceList);
         _dayPlaceList = widget.dayPlaceList;
       });
-      print('didUpdateWidget _dayPlaceList: $_dayPlaceList');
     }
   }
 
@@ -239,7 +237,6 @@ class _DayWidgetState extends State<DayWidget> {
                 : TextButton(
                     onPressed: () {
                       setState(() {
-                        /* print('_isEditing편집 $_isEditing');*/
                         widget.onEditingChange(!widget.isEditing);
                       });
                     },
@@ -320,6 +317,7 @@ class _DayWidgetState extends State<DayWidget> {
             widget.listTileKeys.add(GlobalKey());
             widget.listTileKeys2.add(GlobalKey());
 
+            print('바뀌나봐봐 ${_dayPlace["place"].location.latitude}');
             widget.mapController!.animateCamera(
               CameraUpdate.newLatLng(LatLng(
                   _dayPlace["place"].location.latitude!,
@@ -519,6 +517,7 @@ class _DayWidgetState extends State<DayWidget> {
     return Column(
       children: [
         Padding(padding: EdgeInsets.all(16), child: getWidget(index)),
+        // 편집
         if (widget.isEditing && _dayPlaceList != null)
           Container(
               child: ReorderableListView(
@@ -777,17 +776,10 @@ class _DayWidgetState extends State<DayWidget> {
                   ),
             ],
           )),
+        // 편집 x 기본 리스트 !
         if (!widget.isEditing && _dayPlaceList != null)
           ..._dayPlaceList.map((item) {
-            print('widget.dayPlaceList ${widget.dayPlaceList.length}');
-
             final int index = widget.dayPlaceList.indexOf(item);
-            print('_dayPlaceList ${_dayPlaceList.length}');
-
-            print('focusedTileIndex ${widget.focusedTileIndex}');
-            print('listKey ${widget.listTileKeys}');
-            print('listKey2 ${widget.listTileKeys2}');
-            print("index $index");
 
             if (item["isMemo"] == true) {
               // 메모일 경우
@@ -841,92 +833,94 @@ class _DayWidgetState extends State<DayWidget> {
                       ? Color(0xffE9EADA).withOpacity(0.2)
                       : Colors.white,
                   child: ListTile(
-                      key: widget.listTileKeys[index],
-                      contentPadding: EdgeInsets.only(left: 6),
-                      horizontalTitleGap: 16,
-                      leading: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _colors[colorIndex],
-                        ),
-                        width: 24,
-                        height: 24,
-                        alignment: Alignment.center,
-                        child: Text(
-                          item["orderIndex"]?.toString() ?? "",
-                          style: Theme.of(context)
-                              .textTheme
-                              .labelSmall
-                              ?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w500),
-                        ),
+                    key: widget.listTileKeys[index],
+                    contentPadding: EdgeInsets.only(left: 6),
+                    horizontalTitleGap: 16,
+                    leading: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _colors[colorIndex],
                       ),
-                      title: Row(
-                        children: [
-                          Container(
-                            width: MediaQuery.of(context).size.width -
-                                (6 + 16 + 24 + 32),
-                            padding: EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 16),
-                            decoration: BoxDecoration(
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  offset: Offset(1, 1),
-                                  blurRadius: 4,
+                      width: 24,
+                      height: 24,
+                      alignment: Alignment.center,
+                      child: Text(
+                        item["orderIndex"]?.toString() ?? "",
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: Colors.white, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    title: Row(
+                      children: [
+                        Container(
+                          width: MediaQuery.of(context).size.width -
+                              (6 + 16 + 24 + 32),
+                          padding: EdgeInsets.symmetric(
+                              vertical: 10, horizontal: 16),
+                          decoration: BoxDecoration(
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                offset: Offset(1, 1),
+                                blurRadius: 4,
+                              ),
+                            ],
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: FractionallySizedBox(
+                            widthFactor: 1,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item["place"]?.name ?? "",
+                                  style: Theme.of(context).textTheme.titleSmall,
+                                ),
+                                Wrap(
+                                  spacing: 2,
+                                  children: [
+                                    Text(
+                                      item["place"]?.category ?? "",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(color: grayColor),
+                                    ),
+                                    if (item["place"]?.category != null &&
+                                        item["place"]?.address != null)
+                                      Text(
+                                        "·",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(color: grayColor),
+                                      ),
+                                    Text(
+                                      item["place"]?.address?.split(" ")[0] ??
+                                          "",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(color: grayColor),
+                                    ),
+                                  ],
                                 ),
                               ],
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: FractionallySizedBox(
-                              widthFactor: 1,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item["place"]?.name ?? "",
-                                    style:
-                                        Theme.of(context).textTheme.titleSmall,
-                                  ),
-                                  Wrap(
-                                    spacing: 2,
-                                    children: [
-                                      Text(
-                                        item["place"]?.category ?? "",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .labelSmall
-                                            ?.copyWith(color: grayColor),
-                                      ),
-                                      if (item["place"]?.category != null &&
-                                          item["place"]?.address != null)
-                                        Text(
-                                          "·",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .labelSmall
-                                              ?.copyWith(color: grayColor),
-                                        ),
-                                      Text(
-                                        item["place"]?.address?.split(" ")[0] ??
-                                            "",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .labelSmall
-                                            ?.copyWith(color: grayColor),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
                             ),
                           ),
-                          /*SizedBox(width: 10),*/
-                          // 텍스트
-                        ],
-                      )));
+                        ),
+                        /*SizedBox(width: 10),*/
+                        // 텍스트
+                      ],
+                    ),
+                    onTap: () {
+                      showModalBottomSheet(
+                          context: context,
+                          builder: (context) =>
+                              LocationBottomSheet(place: item["place"]));
+                    },
+                  ));
             }
           }).toList(),
         widget.isEditing

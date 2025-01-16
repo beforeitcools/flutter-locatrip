@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/advice/screen/advice_post_screen.dart';
+import 'package:flutter_locatrip/advice/screen/advice_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/main/screen/main_screen.dart';
 import 'package:flutter_locatrip/trip/model/trip_day_model.dart';
@@ -12,10 +14,12 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import '../../advice/widget/posting.dart';
 import '../../map/model/custom_marker.dart';
 import '../../map/model/place.dart';
 import '../model/trip_model.dart';
 import '../widget/drag_bottom_sheet.dart';
+import '../widget/edit_bottom_sheet.dart';
 
 class TripViewScreen extends StatefulWidget {
   final int tripId;
@@ -505,6 +509,48 @@ class _TripViewScreenState extends State<TripViewScreen> {
     });
   }
 
+  // 첨삭받기 버튼 눌렀을 때
+  void _addPostOrShowModal() async {
+    int tripId = tripInfo["id"];
+    try {
+      int count = await _tripDayModel.getTripDayCount(tripId, context);
+      if (count >= 3) {
+        // 첨삭소로 이동
+        Navigator.push(
+            // 뭔가 넘겨줘야하나????
+            context,
+            MaterialPageRoute(builder: (context) => Posting()));
+      } else if (count < 3) {
+        showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                contentPadding: EdgeInsets.all(20),
+                actionsPadding: EdgeInsets.all(5),
+                content: Text(
+                  "첨삭글을 작성하려면 3개 이상의 장소를 등록하세요.",
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                actions: [
+                  TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: Text(
+                        "확인",
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: pointBlueColor, fontWeight: FontWeight.w500),
+                      ))
+                ],
+              );
+            });
+      }
+    } catch (e) {
+      print('에러메시지 $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     String dateRange = tripInfo['startDate'] == tripInfo['endDate']
@@ -657,7 +703,12 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                               // 권한 있는 사람만 편집가능
                                               isUserChecked
                                                   ? TextButton(
-                                                      onPressed: () {},
+                                                      onPressed: () {
+                                                        showModalBottomSheet(
+                                                            context: context,
+                                                            builder: (context) =>
+                                                                EditBottomSheet());
+                                                      },
                                                       style:
                                                           TextButton.styleFrom(
                                                         padding:
@@ -872,14 +923,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
               width: 68,
               height: 65,
               child: FloatingActionButton(
-                onPressed: () {
-                  // 첨삭받기로 이동 !!
-                  // Navigator.push(
-                  //     context,
-                  //     MaterialPageRoute(
-                  //       builder: (context) => TripScreen(),
-                  //     ));
-                },
+                onPressed: _addPostOrShowModal,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
