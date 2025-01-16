@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/common/model/json_parser.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
+import 'package:flutter_locatrip/trip/model/trip_day_model.dart';
 import 'package:flutter_locatrip/trip/model/trip_model.dart';
 
 class TripForPost extends StatefulWidget {
+  Function(String) onTripDataValue;
   int tripId;
-  TripForPost({super.key, required this.tripId});
+
+  TripForPost({super.key, required this.tripId, required this.onTripDataValue});
 
   @override
   State<TripForPost> createState() => _TripForPostState();
@@ -12,6 +16,8 @@ class TripForPost extends StatefulWidget {
 
 class _TripForPostState extends State<TripForPost> {
   TripModel _tripModel = TripModel();
+  TripDayModel _tripDayModel = TripDayModel();
+  JsonParser _jsonParser = JsonParser();
 
   int selectedIndex = 0;
 
@@ -22,12 +28,7 @@ class _TripForPostState extends State<TripForPost> {
     {"day": "day4", "date": "12.27/금"},
   ];
 
-  final List<Map<String, String>> schedules = [
-    {"location" : "강남역", "category" : "관광명소", "address" : "서울 강남구"},
-    {"location" : "대구역", "category" : "관광명소", "address" : "대구 북구"},
-    {"location" : "강남역", "category" : "관광명소", "address" : "서울 강남구"},
-    {"location" : "강남역", "category" : "관광명소", "address" : "서울 강남구"},
-  ];
+  late List<Map<String, dynamic>> _schedules = [];
 
 
   @override
@@ -39,8 +40,13 @@ class _TripForPostState extends State<TripForPost> {
   void _initTripSchedules(int tripId) async
   {
     try{
-      Map<String, dynamic> result = await _tripModel.selectTrip(widget.tripId, context);
-      print('$result');
+      List<Map<String, dynamic>> results = await _tripDayModel.getTripDay(widget.tripId, context);
+      setState(() {
+        _schedules = results;
+      });
+
+      widget.onTripDataValue(_jsonParser.convertToJSONString(_schedules));
+
     }catch(e){
       print("YOU CANNOT GET YOUR TRIPS $e");
     }
@@ -103,7 +109,7 @@ class _TripForPostState extends State<TripForPost> {
         Container(
           child: ListView.builder(
               shrinkWrap: true,
-              itemCount: schedules.length,
+              itemCount: _schedules.length,
               itemBuilder: (context, index){
                 return Container(
                     margin: EdgeInsets.all(16),
@@ -131,11 +137,11 @@ class _TripForPostState extends State<TripForPost> {
                             children: [
                               Container(
                                 width: MediaQuery.of(context).size.width,
-                                child: Text("${schedules[index]["location"]}", style: Theme.of(context).textTheme.titleMedium)
+                                child: Text("${_schedules[index]["location"]["name"]}", style: Theme.of(context).textTheme.titleMedium)
                               ),
                               Container(
                                 width: MediaQuery.of(context).size.width,
-                                child: Text("${schedules[index]["category"]} · ${schedules[index]["address"]}", style: Theme.of(context).textTheme.bodySmall!.copyWith(color: grayColor))
+                                child: Text("${_schedules[index]["location"]["category"]} · ${_schedules[index]["location"]["address"]}", style: Theme.of(context).textTheme.bodySmall!.copyWith(color: grayColor))
                               )
                             ],),
                         ))

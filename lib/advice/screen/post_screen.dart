@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/advice/model/post_model.dart';
 import 'package:flutter_locatrip/advice/widget/trip_for_post.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
@@ -13,6 +14,33 @@ class PostScreen extends StatefulWidget {
 class _PostScreenState extends State<PostScreen> {
   TextEditingController _titleController = TextEditingController();
   TextEditingController _contentController = TextEditingController();
+  PostModel _postModel = PostModel();
+
+  String _tripData = "";
+
+  void _savePost() async{
+    if(_titleController.text.isNotEmpty){
+      try{
+        Map<String, Object> post = {
+          "title" : _titleController.text,
+          "contents" : _contentController.text.isNotEmpty ? _contentController.text : "",
+          "tripId": widget.tripId,
+          "advicedTripData":_tripData,
+          "status":1
+        };
+
+        await _postModel.insertNewPost(post, context);
+
+      }catch(e){
+        print('포스트를 저장하는 중 에러가 발생했습니다 : $e');
+      }
+    }
+  }
+
+  void _updateValue(String value){
+    _tripData = value;
+    print("나의 트립 데이터 $_tripData");
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +48,7 @@ class _PostScreenState extends State<PostScreen> {
         appBar: AppBar(
           leading: IconButton(onPressed: (){Navigator.pop(context);Navigator.pop(context);}, icon: Icon(Icons.arrow_back_outlined)),
           title: Text("글쓰기"),
-          actions: [TextButton(onPressed: (){/* 등록하는 로직 넣어주기*/}, child: Text("등록", style: Theme.of(context).textTheme.labelMedium!.copyWith(color: pointBlueColor)))],
+          actions: [TextButton(onPressed: (){/* 등록하는 로직 넣어주기*/ _savePost();}, child: Text("등록", style: Theme.of(context).textTheme.labelMedium!.copyWith(color: pointBlueColor)))],
         ),
         body: Padding(padding: EdgeInsets.all(16),
             child: Form(child: SingleChildScrollView(
@@ -49,7 +77,7 @@ class _PostScreenState extends State<PostScreen> {
                     ),
                     SizedBox(height: 16),
                     /* 여기에 일정 보여주기 */
-                    TripForPost(tripId: widget.tripId)
+                    TripForPost(tripId: widget.tripId, onTripDataValue: _updateValue)
                   ],
                 ),
               )
