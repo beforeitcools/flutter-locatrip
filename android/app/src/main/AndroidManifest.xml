@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.beforeitcools.flutter_locatrip">
     <application
-        android:label="flutter_locatrip"
+        android:label="LocaT"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">
