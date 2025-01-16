@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_locatrip/advice/widget/posting.dart';
+import 'package:flutter_locatrip/advice/screen/post_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
 class PostBottomSheet extends StatefulWidget {
@@ -86,7 +86,10 @@ class _PostBottomSheetState extends State<PostBottomSheet> {
                 ),
                 backgroundColor: pointBlueColor
             ),
-            onPressed: (){ /* 글쓰기 페이지 */ Navigator.push(context, MaterialPageRoute(builder: (context)=>Posting()));}, child: Text("첨삭받기", style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white))
+            onPressed: (){ /* 글쓰기 페이지 */
+              Navigator.push(context, MaterialPageRoute(
+                  builder: (context)=>PostScreen(tripId: 2)));}, // 임시로 2 넣어둠...!!
+              child: Text("첨삭받기", style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white))
           )],
       )),
     );
