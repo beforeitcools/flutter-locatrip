@@ -5,6 +5,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/advice/screen/advice_post_screen.dart';
 import 'package:flutter_locatrip/advice/screen/advice_screen.dart';
+import 'package:flutter_locatrip/advice/screen/post_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/main/screen/main_screen.dart';
 import 'package:flutter_locatrip/trip/model/trip_day_model.dart';
@@ -16,12 +17,11 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart' as kakao;
-
-import '../../advice/widget/posting.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../map/model/custom_marker.dart';
 import '../../map/model/place.dart';
-import '../model/message_template.dart';
+
 import '../model/trip_model.dart';
 import '../widget/drag_bottom_sheet.dart';
 import '../widget/edit_bottom_sheet.dart';
@@ -525,7 +525,8 @@ class _TripViewScreenState extends State<TripViewScreen> {
         Navigator.push(
             // 뭔가 넘겨줘야하나????
             context,
-            MaterialPageRoute(builder: (context) => Posting()));
+            MaterialPageRoute(
+                builder: (context) => PostScreen(tripId: tripId)));
       } else if (count < 3) {
         showDialog(
             context: context,
@@ -563,10 +564,17 @@ class _TripViewScreenState extends State<TripViewScreen> {
     // 카카오톡 실행 가능 여부 확인
     bool isKakaoTalkSharingAvailable =
         await kakao.ShareClient.instance.isKakaoTalkSharingAvailable();
+
+    final FlutterSecureStorage _storage = FlutterSecureStorage();
+    final dynamic stringId = await _storage.read(key: 'userId');
+    String userId = stringId;
+    print('로그인중인userId $userId');
+
     Map<String, String> templateArgs = {
       'USER': '정민',
       'TRIP': '경주 외 1개 도시 여행',
-      'tripId': '1'
+      'tripId': '1',
+      'userId': userId
     };
 
     if (isKakaoTalkSharingAvailable) {
