@@ -8,7 +8,10 @@ import 'package:flutter_locatrip/Auth/screen/signup_screen.dart';
 import 'package:flutter_locatrip/auth/model/kakao_key_loader.dart';
 import 'package:flutter_locatrip/notification/init_noti.dart';
 import 'package:flutter_locatrip/notification/show_noti.dart';
+import 'package:flutter_locatrip/trip/screen/trip_invite_screen.dart';
+import 'package:flutter_locatrip/trip/screen/trip_view_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,6 +32,17 @@ void main() async {
   String? kakaoNativeAppKey =
       await KakaoKeyLoader.getNativeAppKey('KAKAO_NATIVE_APP_KEY');
   KakaoSdk.init(nativeAppKey: '${kakaoNativeAppKey}');
+  print('Kakao Native App Key: $kakaoNativeAppKey');
+
+  String? url = await receiveKakaoScheme();
+  print('!url $url');
+  kakaoSchemeStream.listen((url) {
+    // url에 커스텀 URL 스킴이 할당됩니다. 할당된 스킴의 활용 코드를 작성합니다.
+    print('url $url');
+  }, onError: (e) {
+    // 에러 상황의 예외 처리 코드를 작성합니다.
+    print('에러메시지 $e');
+  });
 
   await Firebase.initializeApp();
 
@@ -93,6 +107,7 @@ void main() async {
   }
 
   _initFCM();
+
   runApp(MyApp());
 }
 
@@ -120,6 +135,7 @@ class MyApp extends StatelessWidget {
                 "/start": (context) => StartScreen(),
                 "/login": (context) => LoginScreen(),
                 "/signup": (context) => SignupScreen(),
+                "/tripInvite": (context) => TripInviteScreen()
               },
               navigatorObservers: [appOverlayObserver],
             );

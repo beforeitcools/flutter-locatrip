@@ -1,8 +1,6 @@
 import 'package:flutter/services.dart';
 
 class ApiKeyLoader {
-  static const MethodChannel _channel = MethodChannel('api_key_loader');
-
   static Future<String?> getApiKey(String key) async {
     /*try {
       final String? apiKey =

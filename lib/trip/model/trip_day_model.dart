@@ -102,4 +102,24 @@ class TripDayModel {
       throw Exception("Error : $e");
     }
   }
+
+  Future<int> getTripDayCount(int tripId, BuildContext context) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    try {
+      final responses =
+          await dio.get("$backUrl/tripDay/getTripDayCount/$tripId");
+
+      if (responses.statusCode == 200) {
+        print('responsese ${responses.data}');
+        return responses.data;
+      } else {
+        throw Exception("로드 실패");
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error : $e");
+    }
+  }
 }
