@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/advice/screen/post_list_screen.dart';
 import 'package:flutter_locatrip/chatting/screen/chatting_screen.dart';
 import 'package:flutter_locatrip/mypage/screen/mypage_screen.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../main/screen/main_screen.dart';
 import '../../map/model/app_overlay_controller.dart';

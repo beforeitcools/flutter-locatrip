@@ -6,14 +6,16 @@ import 'package:flutter_locatrip/Auth/model/auth_model.dart';
 import 'package:flutter_locatrip/Auth/screen/login_screen.dart';
 import 'package:flutter_locatrip/Auth/screen/signup_screen.dart';
 import 'package:flutter_locatrip/auth/model/kakao_key_loader.dart';
+import 'package:flutter_locatrip/auth/model/secure_storage_model.dart';
 import 'package:flutter_locatrip/notification/init_noti.dart';
 import 'package:flutter_locatrip/notification/show_noti.dart';
-import 'package:flutter_locatrip/trip/screen/trip_invite_screen.dart';
-import 'package:flutter_locatrip/trip/screen/trip_view_screen.dart';
+import 'package:flutter_locatrip/trip/model/invite_state.dart';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:go_router/go_router.dart';
+
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'Auth/screen/start_screen.dart';
 import 'common/screen/error_screen.dart';
@@ -26,6 +28,7 @@ import 'common/screen/splash_screen.dart';
 import 'common/widget/style.dart' as style;
 
 final AppOverlayObserver appOverlayObserver = AppOverlayObserver();
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,14 +38,6 @@ void main() async {
   print('Kakao Native App Key: $kakaoNativeAppKey');
 
   String? url = await receiveKakaoScheme();
-  print('!url $url');
-  kakaoSchemeStream.listen((url) {
-    // url에 커스텀 URL 스킴이 할당됩니다. 할당된 스킴의 활용 코드를 작성합니다.
-    print('url $url');
-  }, onError: (e) {
-    // 에러 상황의 예외 처리 코드를 작성합니다.
-    print('에러메시지 $e');
-  });
 
   await Firebase.initializeApp();
 
@@ -111,12 +106,83 @@ void main() async {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   final Future<Widget?> _initFuture = Init.instance.initialize();
+
+  @override
+  void initState() {
+    kakaoSchemeStream.listen((url) {
+      // url에 커스텀 URL 스킴이 할당됩니다. 할당된 스킴의 활용 코드를 작성합니다.
+      print('url $url');
+      // 로그인 상태인지 확인
+      if (url != null) {
+        Uri uri = Uri.parse(url);
+        // 쿼리 파라미터 추출
+        print('uri $uri');
+        String? tripId = uri.queryParameters['tripId'];
+        String? userId = uri.queryParameters['userId'];
+        print('tripId $tripId userId $userId');
+        if (tripId != null && userId != null) handleKakaoScheme(tripId, userId);
+      }
+    }, onError: (e) {
+      // 에러 상황의 예외 처리 코드를 작성합니다.
+      print('에러메시지 $e');
+    });
+  }
+
+  void handleKakaoScheme(String tripId, String userId) async {
+    // 받아온 tripId를 inviteId로 저장
+    int? tripIdInt = int.tryParse(tripId);
+
+    if (tripIdInt == null) {
+      print('변환 실패');
+    } else {
+      print(tripIdInt);
+    }
+
+    int? userIdInt = int.tryParse(userId);
+
+    if (userIdInt == null) {
+      print('변환 실패');
+    } else {
+      print(userIdInt);
+    }
+
+    final inviteState = Provider.of<InviteState>(
+      navigatorKey.currentContext!,
+      listen: false,
+    );
+    inviteState.setInviteId(tripIdInt);
+    inviteState.setHostId(userIdInt);
+
+    final SecureStorageModel secureStorageModel = SecureStorageModel();
+    bool isLoggedIn = await secureStorageModel.isUserLoggedIn();
+    if (isLoggedIn) {
+      print('로그인! 되어있음!!');
+      // 안전한 Navigator 사용
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder: (context) => HomeScreen(),
+        ),
+      );
+    } else {
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder: (context) => LoginScreen(),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+
     return FutureBuilder(
       future: _initFuture,
       builder: (context, AsyncSnapshot snapshot) {
@@ -125,21 +191,21 @@ class MyApp extends StatelessWidget {
         } else if (snapshot.hasError) {
           return MaterialApp(home: ErrorScreen());
         } else {
-          {
-            return MaterialApp(
-              theme: style.theme,
-              debugShowCheckedModeBanner: false,
-              home: snapshot.data, // 로딩 완료시 HomeScreen()
-              routes: {
-                "/home": (context) => HomeScreen(),
-                "/start": (context) => StartScreen(),
-                "/login": (context) => LoginScreen(),
-                "/signup": (context) => SignupScreen(),
-                "/tripInvite": (context) => TripInviteScreen()
-              },
-              navigatorObservers: [appOverlayObserver],
-            );
-          }
+          return ChangeNotifierProvider(
+              create: (context) => InviteState(),
+              child: MaterialApp(
+                navigatorKey: navigatorKey,
+                theme: style.theme,
+                debugShowCheckedModeBanner: false,
+                home: snapshot.data, // 로딩 완료시 HomeScreen()
+                routes: {
+                  "/home": (context) => HomeScreen(),
+                  "/start": (context) => StartScreen(),
+                  "/login": (context) => LoginScreen(),
+                  "/signup": (context) => SignupScreen(),
+                },
+                navigatorObservers: [appOverlayObserver],
+              ));
         }
       },
     );
