@@ -15,6 +15,7 @@ public class MainActivity extends FlutterActivity {
 
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
+
         super.configureFlutterEngine(flutterEngine);
         new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL)
                 .setMethodCallHandler(
@@ -25,7 +26,10 @@ public class MainActivity extends FlutterActivity {
                             } else if (call.method.equals("getApiKey2")) {
                                 String apiKey = BuildConfig.GEOCODING_API_KEY;
                                 result.success(apiKey);
-                            }else {
+                            }else if (call.method.equals("getNativeAppKey")) {
+                                String apiKey = BuildConfig.KAKAO_NATIVE_APP_KEY;
+                                result.success(apiKey);
+                            } else {
                                 result.notImplemented();
                             }
                         }
