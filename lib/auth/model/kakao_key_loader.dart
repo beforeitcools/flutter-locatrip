@@ -7,7 +7,7 @@ class KakaoKeyLoader {
     const platform =
         MethodChannel('com.beforeitcools.flutter_locatrip/secrets');
     try {
-      final apiKey = await platform.invokeMethod<String>('getApiKey');
+      final apiKey = await platform.invokeMethod<String>('getNativeAppKey');
       print('apikey $apiKey');
       return apiKey ?? '';
     } catch (e) {
@@ -15,17 +15,4 @@ class KakaoKeyLoader {
       return '';
     }
   }
-
-  /*static Future<String?> getApiKey2(String key) async {
-    const platform =
-    MethodChannel('com.beforeitcools.flutter_locatrip/secrets');
-    try {
-      final apiKey = await platform.invokeMethod<String>('getApiKey2');
-
-      return apiKey ?? '';
-    } catch (e) {
-      print("Failed to get API key: $e");
-      return '';
-    }
-  }*/
 }

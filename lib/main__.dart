@@ -34,16 +34,6 @@ void main() async {
   KakaoSdk.init(nativeAppKey: '${kakaoNativeAppKey}');
   print('Kakao Native App Key: $kakaoNativeAppKey');
 
-  String? url = await receiveKakaoScheme();
-  print('!url $url');
-  kakaoSchemeStream.listen((url) {
-    // url에 커스텀 URL 스킴이 할당됩니다. 할당된 스킴의 활용 코드를 작성합니다.
-    print('url $url');
-  }, onError: (e) {
-    // 에러 상황의 예외 처리 코드를 작성합니다.
-    print('에러메시지 $e');
-  });
-
   await Firebase.initializeApp();
 
   //푸시 알림 관리 위한 객체
@@ -114,32 +104,73 @@ void main() async {
 class MyApp extends StatelessWidget {
   final Future<Widget?> _initFuture = Init.instance.initialize();
 
+  /// The route configuration.
+  final GoRouter _router = GoRouter(
+    initialLocation: '/',
+    routes: <RouteBase>[
+      GoRoute(
+        path: '/',
+        builder: (BuildContext context, GoRouterState state) {
+          // 자동 로그인 여부에 따라 초기 화면 설정
+          final autoLogin = state.extra as bool? ?? false;
+          return autoLogin ? HomeScreen() : StartScreen();
+        },
+        routes: <RouteBase>[
+          GoRoute(
+            path: '/home',
+            builder: (BuildContext context, GoRouterState state) =>
+                HomeScreen(),
+          ),
+          GoRoute(
+            path: '/start',
+            builder: (BuildContext context, GoRouterState state) =>
+                StartScreen(),
+          ),
+          GoRoute(
+            path: '/login',
+            builder: (BuildContext context, GoRouterState state) =>
+                LoginScreen(),
+          ),
+          GoRoute(
+            path: '/signup',
+            builder: (BuildContext context, GoRouterState state) =>
+                SignupScreen(),
+          ),
+          /*  GoRoute(
+            path: '/tripInvite',
+            builder: (BuildContext context, GoRouterState state) {
+              final tripId = state.uri.queryParameters['tripId'];
+              print('Received tripId: $tripId'); // 디버깅용 로그
+              if (tripId == null) {
+                return ErrorScreen();
+              }
+              // return TripInviteScreen(tripId: tripId);
+            },
+          ),*/
+        ],
+      ),
+    ],
+  );
+
   @override
   Widget build(BuildContext context) {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    return FutureBuilder(
-      future: _initFuture,
-      builder: (context, AsyncSnapshot snapshot) {
+
+    return FutureBuilder<bool>(
+      future: _initFuture.then((screen) => screen is HomeScreen),
+      builder: (context, AsyncSnapshot<bool> snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return MaterialApp(home: SplashScreen());
         } else if (snapshot.hasError) {
           return MaterialApp(home: ErrorScreen());
         } else {
-          {
-            return MaterialApp(
-              theme: style.theme,
-              debugShowCheckedModeBanner: false,
-              home: snapshot.data, // 로딩 완료시 HomeScreen()
-              routes: {
-                "/home": (context) => HomeScreen(),
-                "/start": (context) => StartScreen(),
-                "/login": (context) => LoginScreen(),
-                "/signup": (context) => SignupScreen(),
-                "/tripInvite": (context) => TripInviteScreen()
-              },
-              navigatorObservers: [appOverlayObserver],
-            );
-          }
+          final isAutoLogin = snapshot.data ?? false;
+          Init.instance.isAutoLogin = isAutoLogin; // 로그인 상태 저장
+          return MaterialApp.router(
+            routerConfig: _router,
+            theme: style.theme,
+            debugShowCheckedModeBanner: false,
+          );
         }
       },
     );
@@ -150,6 +181,7 @@ class Init {
   Init._();
   static final instance = Init._();
   Future<Widget?>? _initFuture; // 다중 실행 방지를 위한 캐싱
+  bool isAutoLogin = false;
 
   Future<Widget?> initialize() {
     if (_initFuture == null) {
@@ -184,16 +216,19 @@ class Init {
 
       try {
         await _authModel.login(loginData);
+        isAutoLogin = true;
         // 자동 로그인 성공
         return HomeScreen();
       } catch (e) {
         print(e);
+        isAutoLogin = false;
         // 자동 로그인 실패
         return StartScreen();
       }
     }
     // 자동 로그인 off
     else {
+      isAutoLogin = false;
       return StartScreen();
     }
   }

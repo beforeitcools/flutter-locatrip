@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -8,15 +10,18 @@ import 'package:flutter_locatrip/main/screen/main_screen.dart';
 import 'package:flutter_locatrip/trip/model/trip_day_model.dart';
 import 'package:flutter_locatrip/trip/widget/edit_close_modal.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:geocoding/geocoding.dart';
+import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart' as kakao;
 
 import '../../advice/widget/posting.dart';
+
 import '../../map/model/custom_marker.dart';
 import '../../map/model/place.dart';
+import '../model/message_template.dart';
 import '../model/trip_model.dart';
 import '../widget/drag_bottom_sheet.dart';
 import '../widget/edit_bottom_sheet.dart';
@@ -434,7 +439,8 @@ class _TripViewScreenState extends State<TripViewScreen> {
   // 이름으로 위도/경도 불러오기
   _getCoordinatesFromAddress() async {
     try {
-      List<Location> locations = await locationFromAddress(address);
+      List<geocoding.Location> locations =
+          await geocoding.locationFromAddress(address);
 
       setState(() {
         latitude = locations.first.latitude;
@@ -548,6 +554,38 @@ class _TripViewScreenState extends State<TripViewScreen> {
       }
     } catch (e) {
       print('에러메시지 $e');
+    }
+  }
+
+  void share() async {
+    // 사용자 정의 템플릿 ID
+    int templateId = 116405;
+    // 카카오톡 실행 가능 여부 확인
+    bool isKakaoTalkSharingAvailable =
+        await kakao.ShareClient.instance.isKakaoTalkSharingAvailable();
+    Map<String, String> templateArgs = {
+      'USER': '정민',
+      'TRIP': '경주 외 1개 도시 여행',
+      'tripId': '1'
+    };
+
+    if (isKakaoTalkSharingAvailable) {
+      try {
+        Uri uri = await kakao.ShareClient.instance
+            .shareCustom(templateId: templateId, templateArgs: templateArgs);
+        await kakao.ShareClient.instance.launchKakaoTalk(uri);
+        print('카카오톡 공유 완료');
+      } catch (error) {
+        print('카카오톡 공유 실패 $error');
+      }
+    } else {
+      try {
+        Uri shareUrl = await kakao.WebSharerClient.instance
+            .makeCustomUrl(templateId: templateId, templateArgs: templateArgs);
+        await kakao.launchBrowserTab(shareUrl, popupOpen: true);
+      } catch (error) {
+        print('카카오톡 공유 실패 $error');
+      }
     }
   }
 
@@ -780,7 +818,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                   height: 10,
                                 ),
                                 TextButton(
-                                  onPressed: () {},
+                                  onPressed: share,
                                   style: TextButton.styleFrom(
                                     backgroundColor: pointBlueColor,
                                     minimumSize: Size(0, 0),
