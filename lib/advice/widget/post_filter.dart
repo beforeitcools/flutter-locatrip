@@ -6,7 +6,6 @@ class PostFilter extends StatelessWidget {
   final List<String> orderFilterList;
   final Function(String) orderFilterHandler;
   String selectedOrderFilter;
-  // final Map<String, List> regionFilterMapList;
   String selectedRegionFilter;
   final Function(String) regionFilterHandler;
   final Function(String, String) applyFilters;
@@ -16,67 +15,16 @@ class PostFilter extends StatelessWidget {
     required this.orderFilterList,
     required this.orderFilterHandler,
     required this.selectedOrderFilter,
-    // required this.regionFilterMapList,
     required this.selectedRegionFilter,
     required this.regionFilterHandler,
     required this.applyFilters,
   });
-
-  /*@override
-  State<PostFilter> createState() => _PostFilterState();
-}
-
-class _PostFilterState extends State<PostFilter> {
-  late List _orderFilterList;
-  late Function _orderFilterHandler;
-  late String _selectedOrderFilter;
-  late Map _regionFilterMapList;
-  late String _selectedRegionFilter;
-  late Function(String) _regionFilterHandler;
-  late Function(String, String) _applyFilters;
-
-  @override
-  void initState() {
-    super.initState();
-    _orderFilterList = widget.orderFilterList;
-    _orderFilterHandler = widget.orderFilterHandler;
-    _selectedOrderFilter = widget.selectedOrderFilter;
-    _selectedRegionFilter = widget.selectedRegionFilter;
-    _regionFilterHandler = widget.regionFilterHandler;
-    _applyFilters = widget.applyFilters;
-  }*/
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        /*TextButton.icon(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => RegionSelectFilterScreen(
-                        applyFilters: _applyFilters,
-                        regionFilterHandler: _regionFilterHandler,
-                        selectedRegionFilter: _selectedRegionFilter,
-                        selectedOrderFilter: _selectedOrderFilter,
-                      )),
-            );
-          },
-          label: Text(
-            _selectedRegionFilter,
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          icon: Icon(Icons.filter_alt_outlined),
-          style: TextButton.styleFrom(
-            minimumSize: Size(83, 35),
-            backgroundColor: Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(6),
-            ),
-          ),
-        ),*/
         GestureDetector(
           // 지역 선택 스크린으로 이동
           onTap: () {
