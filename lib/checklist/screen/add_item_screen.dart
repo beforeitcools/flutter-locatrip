@@ -1,12 +1,19 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/checklist/model/checklist_model.dart';
+import 'package:flutter_locatrip/common/widget/color.dart';
 
 class AddItemScreen extends StatefulWidget {
 
   final int categoryId;
+  final int tripId;
+  final int userId;
 
-  AddItemScreen({required this.categoryId});
+  AddItemScreen({
+    required this.categoryId,
+    required this.tripId,
+    required this.userId,
+  });
 
   @override
   State<AddItemScreen> createState() => _AddItemScreenState();
@@ -25,7 +32,11 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
     try {
       final response = await _checklistModel.addItemToCategory(widget.categoryId,
-          {'name': itemName}, context
+          {'name': itemName,
+           'tripId' : widget.tripId,
+           'userId' : widget.userId,
+           'status' : 1,
+          }, context
       );
       if (response == "항목이 추가되었습니다.") {
         await _checklistModel.getItemsByCategory(widget.categoryId, context);
@@ -36,7 +47,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
         print('아이템 추가 실패');
       }
     }catch(e) {
-      print('아이템 추가 오류: $e');
+        print('아이템 추가 오류: $e');
     }
   }
 
@@ -50,12 +61,21 @@ class _AddItemScreenState extends State<AddItemScreen> {
             children: [
               TextField(
                 controller: _controller,
-                decoration: InputDecoration(labelText: '직접 입력'),
+                decoration: InputDecoration(labelText: '아이템 이름'),
               ),
               SizedBox(height: 20),
               ElevatedButton(
-                onPressed: _addItem,
-                child: Text('추가'),
+                onPressed: () => _addItem(),
+                child: Text('추가',
+                  style: TextStyle(color: Colors.white),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: pointBlueColor,
+                  padding: EdgeInsets.symmetric(vertical: 8, horizontal: 20), // Adjust padding
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
               ),
             ],
           ),

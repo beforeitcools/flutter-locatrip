@@ -152,7 +152,7 @@ class _MainScreenState extends State<MainScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ChecklistScreen(),
+                    builder: (context) => ChecklistScreen(tripId:1, userId:1),
                   ),
                 );
               },
