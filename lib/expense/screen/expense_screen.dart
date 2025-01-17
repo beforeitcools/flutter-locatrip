@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_locatrip/chatting/screen/chatting_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/expense/model/expense_model.dart';
 import 'package:flutter_locatrip/expense/screen/expense_extracost_screen.dart';
 import 'package:flutter_locatrip/expense/screen/expense_settlement_screen.dart';
 import 'package:flutter_locatrip/expense/screen/expense_updatecost_screen.dart';
-import 'package:flutter_locatrip/main/screen/main_screen.dart';
 import 'package:flutter_locatrip/map/model/app_overlay_controller.dart';
-import 'package:flutter_locatrip/map/screen/map_screen.dart';
-import 'package:flutter_locatrip/mypage/screen/mypage_screen.dart';
 import 'package:intl/intl.dart';
 
 class ExpenseScreen extends StatefulWidget {
@@ -40,15 +36,8 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     '기타': Icons.sms,
   };
 
-  final List<Widget> _pages = [
-    MainScreen(),
-    MapScreen(),
-    // AdviceScreen(),
-    ChattingScreen(),
-    MypageScreen(),
-  ];
-
-  final NumberFormat currencyFormat = NumberFormat('#,##0', 'ko_KR');
+  final NumberFormat currencyFormat =
+  NumberFormat('#,##0', 'ko_KR');
 
   @override
   void initState() {
@@ -57,17 +46,11 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     loadRegion();
   }
 
-  void _onTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-      AppOverlayController.removeOverlay();
-    });
-  }
 
   Future<void> loadExpensesGroupedByDays() async {
     try {
-      final data =
-          await expenseModel.getExpensesGroupedByDays(widget.tripId, context);
+      final data = await expenseModel.getExpensesGroupedByDays(
+          widget.tripId, context);
       setState(() {
         groupedExpenses = data;
         isLoading = false;
@@ -82,8 +65,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
 
   List<String> getParticipantsNicknames(Map<String, dynamic> expense) {
     final participants = expense['participants'] ?? [];
-    return participants
-        .map<String>((user) => user['nickname'] as String)
+    return participants.map<String>((user) => user['nickname'] as String)
         .toList();
   }
 
@@ -96,8 +78,8 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
 
   Future<void> loadRegion() async {
     try {
-      final regionData =
-          await expenseModel.getRegionByTripId(widget.tripId, context);
+      final regionData = await expenseModel.getRegionByTripId(
+          widget.tripId, context);
 
       setState(() {
         region = regionData[0][0].toString();
@@ -126,8 +108,10 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         return SafeArea(
           child: Container(
             constraints: BoxConstraints(
-              maxHeight:
-                  MediaQuery.of(context).size.height * 0.4, // 바텀 시트 높이 고정
+              maxHeight: MediaQuery
+                  .of(context)
+                  .size
+                  .height * 0.4, // 바텀 시트 높이 고정
             ),
             child: Column(
               children: [
@@ -138,7 +122,8 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                     style: TextStyle(
                         color: grayColor,
                         fontSize: 15,
-                        fontWeight: FontWeight.bold),
+                        fontWeight: FontWeight.bold
+                    ),
                   ),
                 ),
                 Expanded(
@@ -169,13 +154,14 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                         );
                       } else {
                         // 날짜별 항목
-                        final dayEntry =
-                            groupedExpenses.entries.elementAt(index - 1);
+                        final dayEntry = groupedExpenses.entries.elementAt(
+                            index - 1);
                         final day = dayEntry.key;
                         final date = dayEntry.value['date'];
 
-                        final formattedDate =
-                            day == "preparation" ? '여행 준비' : '$date';
+                        final formattedDate = day == "preparation"
+                            ? '여행 준비'
+                            : '$date';
 
                         return ListTile(
                           title: Text(
@@ -254,6 +240,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     );
   }
 
+
   void _deleteExpense(int expenseId, String day) async {
     try {
       // UI에서 먼저 항목 제거
@@ -289,13 +276,14 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ExpenseUpdateCostScreen(
-          expenseId: expenseId,
-          tripId: widget.tripId,
-          selectedDate: formattedDate,
-          availableDates: groupedExpenses.keys.toList(),
-          groupedExpenses: groupedExpenses,
-        ),
+        builder: (context) =>
+            ExpenseUpdateCostScreen(
+              expenseId: expenseId,
+              tripId: widget.tripId,
+              selectedDate: formattedDate,
+              availableDates: groupedExpenses.keys.toList(),
+              groupedExpenses: groupedExpenses,
+            ),
       ),
     );
 
@@ -311,12 +299,13 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ExpenseExtracostScreen(
-          tripId: widget.tripId,
-          selectedDate: formattedDate,
-          availableDates: groupedExpenses.keys.toList(),
-          groupedExpenses: groupedExpenses,
-        ),
+        builder: (context) =>
+            ExpenseExtracostScreen(
+              tripId: widget.tripId,
+              selectedDate: formattedDate,
+              availableDates: groupedExpenses.keys.toList(),
+              groupedExpenses: groupedExpenses,
+            ),
       ),
     );
 
@@ -327,13 +316,14 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     final filteredExpenses = selectedPeriod == '기간전체'
         ? groupedExpenses
         : {
-            selectedPeriod: groupedExpenses[selectedPeriod],
-          };
+      selectedPeriod: groupedExpenses[selectedPeriod],
+    };
 
     return Scaffold(
       appBar: PreferredSize(
@@ -349,9 +339,10 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
               Text(
                 region == '지역을 불러오는 중...' ? '지역을 불러오는 중...' : '$region 여행',
                 style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: grayColor),
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: grayColor,
+                ),
               ),
             ],
           ),
@@ -370,13 +361,13 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 8),
                 child: GestureDetector(
                   onTap: _showPeriodPicker,
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       border: Border.all(color: grayColor),
                     ),
@@ -387,10 +378,11 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                           selectedPeriod == '기간전체'
                               ? '기간전체'
                               : selectedPeriod == 'preparation'
-                                  ? '여행 준비'
-                                  : '${groupedExpenses[selectedPeriod]?['date'] ?? selectedPeriod}',
-                          style:
-                              const TextStyle(fontSize: 14, color: blackColor),
+                              ? '여행 준비'
+                              : '${groupedExpenses[selectedPeriod]?['date'] ??
+                              selectedPeriod}',
+                          style: const TextStyle(fontSize: 14,
+                              color: blackColor),
                         ),
                         const Icon(Icons.keyboard_arrow_down, color: grayColor),
                       ],
@@ -405,233 +397,198 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
       ),
       body: _selectedIndex == 0
           ? isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : ListView(
-                  children: filteredExpenses.entries.map((entry) {
-                    final day = entry.key;
-                    final dayData = entry.value as Map<String, dynamic>;
-                    final date = dayData['date'];
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+        children: filteredExpenses.entries.map((entry) {
+          final day = entry.key;
+          final dayData = entry.value as Map<String, dynamic>;
+          final date = dayData['date'];
 
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 날짜 제목
-                        Padding(
-                          padding: const EdgeInsets.all(10.0),
-                          child: Text(
-                            day == "preparation" ? '여행 준비' : '$date',
-                            style: const TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                        ),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 날짜 제목
+              Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Text(
+                  day == "preparation" ? '여행 준비' : '$date',
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
 
-                        // 비용 목록 (ReorderableListView 사용)
-                        ReorderableListView(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          buildDefaultDragHandles: false,
-                          onReorder: (oldIndex, newIndex) {
-                            // 드래그로 순서 변경
-                            setState(() {
-                              if (newIndex > oldIndex) {
-                                newIndex -= 1;
-                              }
-                              final item =
-                                  dayData['expenses'].removeAt(oldIndex);
-                              dayData['expenses'].insert(newIndex, item);
-                            });
-                          },
-                          children: List.generate(dayData['expenses'].length,
-                              (index) {
-                            final expense = dayData['expenses'][index];
-                            final String category = expense['category'] ?? '기타';
-                            final IconData icon =
-                                categoryIcons[category] ?? Icons.sms;
+              // 비용 목록 (ReorderableListView 사용)
+              ReorderableListView(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                buildDefaultDragHandles: false,
+                onReorder: (oldIndex, newIndex) {
+                  setState(() {
+                    if (newIndex > oldIndex) {
+                      newIndex -= 1;
+                    }
+                    final item = dayData['expenses'].removeAt(oldIndex);
+                    dayData['expenses'].insert(newIndex, item);
+                  });
+                },
+                children: List.generate(dayData['expenses'].length, (index) {
+                  final expense = dayData['expenses'][index];
+                  final String category = expense['category'] ?? '기타';
+                  final IconData icon = categoryIcons[category] ?? Icons.sms;
 
-                            return Column(
-                              key: ValueKey(expense['id']),
-                              children: [
-                                ListTile(
-                                  leading: isEditing
-                                      ? IconButton(
-                                          icon: const Icon(Icons.remove_circle,
-                                              color: Colors.red),
-                                          onPressed: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (BuildContext context) {
-                                                return AlertDialog(
-                                                  title: const Text('삭제 확인'),
-                                                  content: const Text(
-                                                      '이 항목을 삭제하시겠습니까?'),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        Navigator.of(context)
-                                                            .pop(); // 다이얼로그 닫기
-                                                      },
-                                                      child: const Text('취소'),
-                                                    ),
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        Navigator.of(context)
-                                                            .pop(); // 다이얼로그 닫기
-                                                        _deleteExpense(
-                                                            expense['id'],
-                                                            day); // 삭제 처리
-                                                      },
-                                                      child: const Text('삭제',
-                                                          style: TextStyle(
-                                                              color:
-                                                                  Colors.red)),
-                                                    ),
-                                                  ],
-                                                );
-                                              },
-                                            );
-                                          },
-                                        )
-                                      : Icon(icon, color: pointBlueColor),
-                                  title: Text(expense['description']),
-                                  trailing: isEditing
-                                      ? ReorderableDragStartListener(
-                                          index: index,
-                                          child: const Icon(Icons.menu,
-                                              color: grayColor),
-                                        )
-                                      : Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
-                                          children: [
-                                            Text(
-                                              '₩${currencyFormat.format(expense['amount'])}',
-                                              style: const TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              formatParticipantsNames(
-                                                  getParticipantsNicknames(
-                                                      expense)),
-                                              style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: grayColor),
-                                            ),
-                                          ],
-                                        ),
-                                  onTap: () {
-                                    if (!isEditing) {
-                                      final formattedDay = day == "preparation"
-                                          ? '여행 준비'
-                                          : '$date';
-                                      _navigateToUpdateExpense(
-                                          expense['id'], formattedDay);
-                                    }
-                                  },
-                                ),
-                                if (index <
-                                    (dayData['expenses'] as List).length)
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 0.2), // 간격 조절
-                                    child: Row(
-                                      children: [
-                                        const SizedBox(width: 18), // 좌측 여백
-                                        Expanded(
-                                          child: Divider(
-                                            thickness: 1,
-                                            color: grayColor,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 23), // 우측 여백
-                                      ],
+                  return Column(
+                    key: ValueKey(expense['id']),
+                    children: [
+                      ListTile(
+                        leading: isEditing
+                            ? IconButton(
+                          icon: const Icon(
+                              Icons.remove_circle, color: Colors.red),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text('삭제 확인'),
+                                  content: const Text('이 항목을 삭제하시겠습니까?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop(); // 다이얼로그 닫기
+                                      },
+                                      child: const Text('취소'),
                                     ),
-                                  ) // 선 추가
-                              ],
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop(); // 다이얼로그 닫기
+                                        _deleteExpense(
+                                            expense['id'], day); // 삭제 처리
+                                      },
+                                      child: const Text(
+                                        '삭제',
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
                             );
-                          }).toList(),
-                        ),
-
-                        // 비용추가와 body사이의 간격
-                        const SizedBox(height: 15),
-
-                        // 비용 추가 버튼
-                        Padding(
-                          padding: const EdgeInsets.only(
-                              left: 15.0), // 왼쪽 여백을 제목의 첫 글자에 맞춰 설정
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: blackColor,
-                              side: const BorderSide(color: grayColor),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 160, vertical: 8),
-                              textStyle: const TextStyle(fontSize: 16),
+                          },
+                        )
+                            : Icon(icon, color: pointBlueColor),
+                        title: Text(expense['description']),
+                        trailing: isEditing
+                            ? ReorderableDragStartListener(
+                          index: index,
+                          child: const Icon(Icons.menu, color: grayColor),
+                        )
+                            : Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '₩${currencyFormat.format(expense['amount'])}',
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
                             ),
-                            onPressed: () {
-                              final formattedDay =
-                                  day == "preparation" ? '여행 준비' : '$date';
-                              _navigateToAddExpense(formattedDay);
-                            },
-                            child: const Text('비용 추가'),
+                            const SizedBox(height: 4),
+                            Text(
+                              formatParticipantsNames(
+                                  getParticipantsNicknames(expense)),
+                              style:
+                              const TextStyle(fontSize: 12, color: grayColor),
+                            ),
+                          ],
+                        ),
+                        onTap: () {
+                          if (!isEditing) {
+                            final formattedDay =
+                            day == "preparation" ? '여행 준비' : '$date';
+                            _navigateToUpdateExpense(
+                                expense['id'], formattedDay);
+                          }
+                        },
+                      ),
+                      if (index < (dayData['expenses'] as List).length)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 0.2),
+                          child: Row(
+                            children: [
+                              const SizedBox(width: 18),
+                              Expanded(
+                                child: Divider(
+                                  thickness: 1,
+                                  color: grayColor,
+                                ),
+                              ),
+                              const SizedBox(width: 23),
+                            ],
                           ),
                         ),
-                      ],
-                    );
-                  }).toList(),
-                )
-          : _pages[_selectedIndex],
+                    ],
+                  );
+                }).toList(),
+              ),
+
+              // 비용 추가 버튼
+              Padding(
+                padding: const EdgeInsets.only(left: 15.0),
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: blackColor,
+                    side: const BorderSide(color: grayColor),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 160, vertical: 8),
+                    textStyle: const TextStyle(fontSize: 16),
+                  ),
+                  onPressed: () {
+                    final formattedDay =
+                    day == "preparation" ? '여행 준비' : '$date';
+                    _navigateToAddExpense(formattedDay);
+                  },
+                  child: const Text('비용 추가'),
+                ),
+              ),
+            ],
+          );
+        }).toList(),
+      )
+          : const SizedBox.shrink(),
       bottomNavigationBar: isEditing
           ? BottomAppBar(
-              child: Container(
-                height: 50,
-                color: pointBlueColor, // 배경색 설정
-                child: Center(
-                  child: SizedBox(
-                    width: double.infinity, // 버튼을 양쪽 꽉 차게 설정
-                    height: 50, // 버튼 높이 설정
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: pointBlueColor, // 버튼 배경색 설정
-                        foregroundColor: Colors.white, // 텍스트 색상
-                        elevation: 0, // 그림자 없애기
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          isEditing = false; // 편집 모드 종료
-                        });
-                      },
-                      child: const Text(
-                        '편집 완료',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+        child: Container(
+          height: 50,
+          color: pointBlueColor,
+          child: Center(
+            child: SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: pointBlueColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                ),
+                onPressed: () {
+                  setState(() {
+                    isEditing = false;
+                  });
+                },
+                child: const Text(
+                  '편집 완료',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-            )
-          : BottomNavigationBar(
-              currentIndex: _selectedIndex,
-              onTap: _onTapped,
-              items: const [
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.home_outlined), label: "홈"),
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.map_outlined), label: "지도"),
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.recommend_outlined), label: "여행첨삭소"),
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.sms_outlined), label: "채팅"),
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.account_circle_outlined), label: "마이페이지"),
-              ],
             ),
+          ),
+        ),
+      )
+          : null,
     );
   }
 }

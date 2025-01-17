@@ -985,13 +985,13 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                   children: [
                                     TextButton(
                                         onPressed: () {
-                                          /*Navigator.push(
+                                          Navigator.push(
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) =>
-                                                  ChecklistScreen(tripId: tripInfo["id"]),
+                                                  ChecklistScreen(tripId: tripInfo["id"], userId: userId),
                                             ),
-                                          );*/
+                                          );
                                         },
                                         style: TextButton.styleFrom(
                                           padding:
