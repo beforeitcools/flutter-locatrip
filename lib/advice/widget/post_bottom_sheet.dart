@@ -3,39 +3,45 @@ import 'package:flutter_locatrip/advice/screen/post_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
 class PostBottomSheet extends StatefulWidget {
-  const PostBottomSheet({super.key});
+  final List<dynamic> trips;
+
+  const PostBottomSheet({
+    super.key,
+    required this.trips,
+  });
 
   @override
   State<PostBottomSheet> createState() => _PostBottomSheetState();
 }
 
 class _PostBottomSheetState extends State<PostBottomSheet> {
-
-  final List<Map<String, String>> myTripLists = [
+  late List<dynamic> _trips;
+  /*final List<Map<String, String>> myTripLists = [
     {'title': '부산 여행', 'dates': '2024년 12월 24일 - 12월 27일'},
     {'title': '제주 여행', 'dates': '2024년 12월 24일 - 12월 27일'},
     {'title': '서울 여행', 'dates': '2024년 12월 24일 - 12월 27일'},
     {'title': '광주 여행', 'dates': '2024년 12월 24일 - 12월 27일'},
     {'title': '대전 여행', 'dates': '2024년 12월 24일 - 12월 27일'},
-  ];
+  ];*/
 
   List<bool> _isPressed = [];
-
 
   @override
   void initState() {
     super.initState();
-    _isPressed = List.generate(myTripLists.length, (index)=>false);
+    _trips = widget.trips;
+    _isPressed = List.generate(_trips.length, (index) => false);
   }
 
-  void _updateClickState(int index, bool isPressed){
+  void _updateClickState(int index, bool isPressed) {
     setState(() {
       _isPressed[index] = isPressed;
     });
   }
-  void _resetState(){
-    for(int i = 0; i<_isPressed.length; i++){
-      if(_isPressed[i] = true){
+
+  void _resetState() {
+    for (int i = 0; i < _isPressed.length; i++) {
+      if (_isPressed[i] = true) {
         setState(() {
           _isPressed[i] = false;
         });
@@ -47,7 +53,8 @@ class _PostBottomSheetState extends State<PostBottomSheet> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.6,
-      child: Center(child: Column(
+      child: Center(
+          child: Column(
         children: [
           Container(
             width: MediaQuery.of(context).size.width,
@@ -56,43 +63,70 @@ class _PostBottomSheetState extends State<PostBottomSheet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("지역 선택", style: Theme.of(context).textTheme.titleSmall),
+                Text("여행 선택", style: Theme.of(context).textTheme.titleSmall),
                 SizedBox(height: 16),
-                Expanded(child: ListView.builder(
-                    itemCount: myTripLists.length,
-                    itemBuilder: (context, index){
-                      final trip = myTripLists[index];
-                      return Card(
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            side: BorderSide(color: lightGrayColor, width: 1)),
-                        child: ListTile(
-                            onTap: (){ _resetState(); _updateClickState(index, true);},
-                            leading: CircleAvatar(backgroundColor: grayColor, child: Icon(Icons.trip_origin, color: subPointColor)),
-                            title: Text(trip["title"]!, style: !_isPressed[index] ? Theme.of(context).textTheme.labelMedium : Theme.of(context).textTheme.labelMedium!.copyWith(color: pointBlueColor)),
-                            subtitle: Text(trip["dates"]!, style: !_isPressed[index] ? Theme.of(context).textTheme.labelMedium : Theme.of(context).textTheme.labelMedium!.copyWith(color: pointBlueColor)),
-                        ),
-                      );
-                    }))
-              ],),
+                Expanded(
+                    child: ListView.builder(
+                        itemCount: _trips.length,
+                        itemBuilder: (context, index) {
+                          final trip = _trips[index];
+                          return Card(
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                                side: BorderSide(
+                                    color: lightGrayColor, width: 1)),
+                            child: ListTile(
+                              onTap: () {
+                                _resetState();
+                                _updateClickState(index, true);
+                              },
+                              leading: CircleAvatar(
+                                  backgroundColor: grayColor,
+                                  child: Icon(Icons.trip_origin,
+                                      color: subPointColor)),
+                              title: Text(trip["title"]!,
+                                  style: !_isPressed[index]
+                                      ? Theme.of(context).textTheme.labelMedium
+                                      : Theme.of(context)
+                                          .textTheme
+                                          .labelMedium!
+                                          .copyWith(color: pointBlueColor)),
+                              subtitle: Text(trip["dates"]!,
+                                  style: !_isPressed[index]
+                                      ? Theme.of(context).textTheme.labelMedium
+                                      : Theme.of(context)
+                                          .textTheme
+                                          .labelMedium!
+                                          .copyWith(color: pointBlueColor)),
+                            ),
+                          );
+                        }))
+              ],
+            ),
           ),
           Spacer(),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 80), // Full-width button
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.zero,
-                ),
-                backgroundColor: pointBlueColor
-            ),
-            onPressed: (){ /* 글쓰기 페이지 */
-              Navigator.push(context, MaterialPageRoute(
-                  builder: (context)=>PostScreen(tripId: 1)));}, // 임시로 2 넣어둠...!!
-              child: Text("첨삭받기", style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white))
-          )],
+              style: ElevatedButton.styleFrom(
+                  minimumSize: Size(double.infinity, 80), // Full-width button
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.zero,
+                  ),
+                  backgroundColor: pointBlueColor),
+              onPressed: () {
+                /* 글쓰기 페이지 */
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => PostScreen(tripId: 1)));
+              }, // 임시로 2 넣어둠...!!
+              child: Text("첨삭받기",
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelLarge
+                      ?.copyWith(color: Colors.white)))
+        ],
       )),
     );
   }
 }
-

@@ -89,9 +89,6 @@ class PostFilter extends StatelessWidget {
                   onChanged: (value) {
                     orderFilterHandler(value!);
                     applyFilters(selectedRegionFilter, selectedOrderFilter);
-                    /*setState(() {
-                      _selectedOrderFilter = value!;
-                    });*/
                   },
                   icon: Icon(Icons.keyboard_arrow_down_outlined),
                   iconSize: 24,
@@ -104,6 +101,9 @@ class PostFilter extends StatelessWidget {
             ),
           ),
         ),
+        SizedBox(
+          width: 16,
+        )
       ],
     );
   }
