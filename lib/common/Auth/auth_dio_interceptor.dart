@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/Auth/model/auth_model.dart';
+import 'package:flutter_locatrip/common/widget/loading_screen.dart';
 import 'package:flutter_locatrip/common/widget/url.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,6 +15,7 @@ class AuthInterceptor extends Interceptor {
   AuthInterceptor(this._dio, this.context);
 
   void _navigateToLogin() {
+    LoadingOverlay.hide();
     Navigator.pushNamedAndRemoveUntil(
       context,
       '/login',
@@ -87,6 +89,7 @@ class AuthInterceptor extends Interceptor {
     }
     // access 토큰 서명 오류 또는 파싱 오류(잘못된 접근)
     else if (err.response?.statusCode == 403) {
+      print("refresh 토큰 만료면 여기가 맞아~~~~~~~~~~~~~~~~~~~~~~~~~");
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("토큰 만료!")));
       await _storage.deleteAll();

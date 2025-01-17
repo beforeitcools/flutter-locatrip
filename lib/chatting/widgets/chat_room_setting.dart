@@ -5,6 +5,7 @@ import 'package:flutter_locatrip/common/widget/color.dart';
 class ChatRoomSetting extends StatefulWidget {
   String chatRoom;
   final int chatroomId;
+  //final Function(String) onChangeChatroomName;
   ChatRoomSetting({super.key, required this.chatRoom, required this.chatroomId});
 
   @override
@@ -76,6 +77,7 @@ class _ChatRoomSettingState extends State<ChatRoomSetting> {
                                                   _chatModel.updateChatroomName(widget.chatroomId, _controller.text, context);
                                                   setState(() {
                                                     widget.chatRoom = _controller.text;
+                                                    // widget.onChangeChatroomName(_controller.text);
                                                   });
                                                   _toggleTextButton();}, child: Text("저장", style: Theme.of(context).textTheme.labelMedium!.copyWith(color: pointBlueColor)))
                                                 ])

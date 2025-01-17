@@ -1,20 +1,30 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/advice/screen/advice_post_screen.dart';
+import 'package:flutter_locatrip/advice/screen/advice_screen.dart';
+import 'package:flutter_locatrip/advice/screen/post_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/main/screen/main_screen.dart';
 import 'package:flutter_locatrip/trip/model/trip_day_model.dart';
+import 'package:flutter_locatrip/trip/widget/edit_close_modal.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:geocoding/geocoding.dart';
+import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart' as kakao;
+import 'package:uuid/uuid.dart';
 
 import '../../map/model/custom_marker.dart';
 import '../../map/model/place.dart';
+
 import '../model/trip_model.dart';
 import '../widget/drag_bottom_sheet.dart';
+import '../widget/edit_bottom_sheet.dart';
 
 class TripViewScreen extends StatefulWidget {
   final int tripId;
@@ -27,7 +37,7 @@ class TripViewScreen extends StatefulWidget {
 
 class _TripViewScreenState extends State<TripViewScreen> {
   late final int userId;
-  bool isUserChecked = false;
+  bool isUserChecked = false; // 같은 유저인지 확인
 
   final DraggableScrollableController sheetController =
       DraggableScrollableController();
@@ -45,7 +55,6 @@ class _TripViewScreenState extends State<TripViewScreen> {
   GoogleMapController? mapController;
   Set<Marker> _markers = {};
   Set<Polyline> _polylines = {};
-  final List<LatLng> _markerPositions = [];
 
   String address = "";
 
@@ -67,11 +76,13 @@ class _TripViewScreenState extends State<TripViewScreen> {
     Colors.purple,
     Colors.pink,
     Colors.green,
-    Colors.red,
+    Colors.amber,
   ];
 
   final Map<int, BitmapDescriptor> _iconCache = {};
   String? _focusedMarkerId; // 현재 포커스된 마커 ID
+
+  bool isEditing = false; // 편집 여부
 
   @override
   void initState() {
@@ -105,6 +116,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
     });
   }
 
+  // 정보 로드
   void _loadInfo() async {
     setState(() {
       isLoading = true;
@@ -122,8 +134,18 @@ class _TripViewScreenState extends State<TripViewScreen> {
         setState(() {
           if (userId == result["userId"]) isUserChecked = true;
           tripInfo.addAll(result);
+          print('tripInfo $tripInfo');
 
-          address = tripInfo['selectedRegions'][0]['region'];
+          String? regionWithOrderIndexZero;
+
+          for (Map<String, dynamic> items in tripInfo['selectedRegions']) {
+            if (items['orderIndex'] == 0) {
+              regionWithOrderIndexZero = items['region'];
+              break;
+            }
+          }
+
+          address = regionWithOrderIndexZero!;
 
           isLoading = false;
 
@@ -142,7 +164,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
         });
       }
     } catch (e) {
-      print("에러메시지 : $e");
+      print("에러메시지1 : $e");
       setState(() {
         isLoading = false;
       });
@@ -159,24 +181,6 @@ class _TripViewScreenState extends State<TripViewScreen> {
     }
   }
 
-  /*Future<BitmapDescriptor> _getCustomMarkerIcon(
-      int orderIndex, Color color) async {
-    if (_iconCache.containsKey(orderIndex)) {
-      return _iconCache[orderIndex]!;
-    }
-
-    // 아이콘 생성 후 캐싱
-    final ByteData byteData = await createCustomMarkerIconImage(
-      text: orderIndex.toString(),
-      size: const Size(72, 72),
-      color: color,
-    );
-    final Uint8List imageData = byteData.buffer.asUint8List();
-    final BitmapDescriptor customMarker = BitmapDescriptor.fromBytes(imageData);
-
-    _iconCache[orderIndex] = customMarker;
-    return customMarker;
-  }*/
   Future<BitmapDescriptor> _getCustomMarkerIcon(int orderIndex, Color color,
       {bool isFocused = false}) async {
     // 캐싱 키 생성 (포커스 여부를 구분하기 위해 음수 변형)
@@ -199,6 +203,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
     return customMarker;
   }
 
+  // 확대된 마커 (다시 찍음)
   void _onMarkerTap(String markerId, List<Map<String, dynamic>> tripDayAllList,
       int dateIndex) async {
     setState(() {
@@ -207,6 +212,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
 
     // 마커 업데이트
     final List<Marker> updatedMarkers = [];
+    final List<LatLng> markerPositions = [];
     for (var tripDay in tripDayAllList) {
       if (tripDay["dateIndex"] == dateIndex && tripDay["place"] != null) {
         final bool isFocused = tripDay["place"].id == markerId;
@@ -218,6 +224,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
           colors[colorIndex],
           isFocused: isFocused,
         );
+        markerPositions.add(tripDay["place"].location);
 
         updatedMarkers.add(
           Marker(
@@ -227,6 +234,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
                 tripDay["place"].location.longitude ?? 0.0,
               ),
               icon: icon,
+              zIndex: isFocused ? 10 : 1,
               onTap: () {
                 _onMarkerTap(tripDay["place"].id!, tripDayAllList, dateIndex);
                 mapController!.animateCamera(
@@ -237,23 +245,40 @@ class _TripViewScreenState extends State<TripViewScreen> {
                 );
               }),
         );
+
+        if (isFocused) {
+          latitude = tripDay["place"].location.latitude;
+          longitude = tripDay["place"].location.longitude;
+        }
+        _moveMapToCurrentLocation();
       }
     }
 
+    final newPolylines = {
+      if (markerPositions.isNotEmpty)
+        Polyline(
+          polylineId: PolylineId("path_$dateIndex"),
+          points: markerPositions,
+          color: grayColor,
+          width: 1,
+          patterns: [PatternItem.dash(20), PatternItem.gap(10)],
+        ),
+    };
+
     setState(() {
       _markers = updatedMarkers.toSet(); // 마커 목록 갱신
+      _polylines = newPolylines;
     });
   }
 
+  // 날짜별 일정 불러오기
   Future<void> _loadTripDayLocation() async {
-    print('이거 실행되는지?');
-
     int tripId = tripInfo["id"];
-    print('tripId $tripId');
+
     try {
       List<Map<String, dynamic>> result =
           await _tripDayModel.getTripDay(tripId, context);
-      print('result조회 $result');
+
       if (result != null && result.isNotEmpty) {
         // 상태 변경 전에 데이터를 완전히 업데이트
         tripDayAllList.clear();
@@ -292,11 +317,12 @@ class _TripViewScreenState extends State<TripViewScreen> {
         setState(() {
           groupedTripDayAllList =
               groupByDate(tripDayAllList, _dropDownDay.length);
-        });
 
-        print('resultList $tripDayAllList');
-        print('groupedTripDayAllList $groupedTripDayAllList');
-        // return groupedTripDayAllList;
+          latitude = groupedTripDayAllList[0]?[0]["place"].location.latitude;
+          longitude = groupedTripDayAllList[0]?[0]["place"].location.longitude;
+          print("!!latitude: $latitude longitude: $longitude");
+          _moveMapToCurrentLocation();
+        });
       } else {
         print('결과가 없거나 null입니다.');
         await _selectMemo();
@@ -307,11 +333,12 @@ class _TripViewScreenState extends State<TripViewScreen> {
         });
       }
     } catch (e) {
-      print('에러메시지 $e');
+      print('에러메시지2 $e');
       // return {};
     }
   }
 
+  // 마커 & 폴리라인 찍기
   Future<void> _updateMarkersAndPolylines(
       List<Map<String, dynamic>> tripDayAllList, int dateIndex) async {
     final List<Marker> tempMarkers = [];
@@ -319,12 +346,11 @@ class _TripViewScreenState extends State<TripViewScreen> {
 
     for (var tripDay in tripDayAllList) {
       if (tripDay["dateIndex"] == dateIndex && tripDay["place"] != null) {
-        markerPositions.add(tripDay["place"].location);
-
         int orderIndex = tripDay["orderIndex"] ?? 1;
         int colorIndex = (orderIndex - 1) % colors.length;
         final BitmapDescriptor customMarker =
             await _getCustomMarkerIcon(orderIndex, colors[colorIndex]);
+        markerPositions.add(tripDay["place"].location);
 
         tempMarkers.add(
           Marker(
@@ -334,6 +360,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
               tripDay["place"].location.longitude ?? 0.0,
             ),
             icon: customMarker,
+            zIndex: 1,
             onTap: () {
               // _focusOnMarker(tripDay["dateIndex"], tripDay["orderIndex"] - 1);
               _onMarkerTap(tripDay["place"].id, tripDayAllList, dateIndex);
@@ -381,21 +408,23 @@ class _TripViewScreenState extends State<TripViewScreen> {
     return groupedMap;
   }
 
+  // 메모 불러오기
   Future<void> _selectMemo() async {
     try {
       List<Map<String, dynamic>> selectMemoList =
           await _tripModel.selectMemo(tripInfo["id"], context);
       if (selectMemoList != null) {
         print('메모 조회 성공');
-        print('selectMemoList $selectMemoList');
 
         List<Map<String, dynamic>> tempList = [];
         for (Map<String, dynamic> memo in selectMemoList) {
           Map<String, dynamic> newDayPlace = {};
+          newDayPlace["id"] = memo["id"];
           newDayPlace["isMemo"] = true;
           newDayPlace["memo"] = memo["content"];
           newDayPlace["dateIndex"] = memo["dateIndex"];
           newDayPlace["sortIndex"] = memo["sortIndex"];
+          newDayPlace["isChecked"] = false;
           tempList.add(newDayPlace);
         }
         // _dayPlaceList.addAll(tempList);
@@ -403,18 +432,19 @@ class _TripViewScreenState extends State<TripViewScreen> {
         print('new tripDayAllList $tripDayAllList');
       }
     } catch (e) {
-      print("에러메시지 $e");
+      print("에러메시지3 $e");
     }
   }
 
+  // 이름으로 위도/경도 불러오기
   _getCoordinatesFromAddress() async {
     try {
-      List<Location> locations = await locationFromAddress(address);
+      List<geocoding.Location> locations =
+          await geocoding.locationFromAddress(address);
 
       setState(() {
         latitude = locations.first.latitude;
         longitude = locations.first.longitude;
-        // print("latitude: $latitude longitude: $longitude");
 
         tripInfo['latitude'] = locations.first.latitude;
         tripInfo['longitude'] = locations.first.longitude;
@@ -426,6 +456,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
     }
   }
 
+  // 현재 위치로 이동
   void _moveMapToCurrentLocation() {
     if (latitude != null && longitude != null && mapController != null) {
       // print("latitude2: $latitude longitude: $longitude");
@@ -448,6 +479,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
     return dates;
   }
 
+  // 여행기간 날짜 리스트
   List<String> getDropDownDayList() {
     _dropDownDay.clear(); // 중복 추가 방지
 
@@ -477,6 +509,94 @@ class _TripViewScreenState extends State<TripViewScreen> {
     return DateFormat('y년 M월 d일').format(date);
   }
 
+  void updateEditingState(bool value) {
+    setState(() {
+      isEditing = value;
+    });
+  }
+
+  // 첨삭받기 버튼 눌렀을 때
+  void _addPostOrShowModal() async {
+    int tripId = tripInfo["id"];
+    try {
+      int count = await _tripDayModel.getTripDayCount(tripId, context);
+      if (count >= 3) {
+        // 첨삭소로 이동
+        Navigator.push(
+            // 뭔가 넘겨줘야하나????
+            context,
+            MaterialPageRoute(
+                builder: (context) => PostScreen(tripId: tripId)));
+      } else if (count < 3) {
+        showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                contentPadding: EdgeInsets.all(20),
+                actionsPadding: EdgeInsets.all(5),
+                content: Text(
+                  "첨삭글을 작성하려면 3개 이상의 장소를 등록하세요.",
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                actions: [
+                  TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: Text(
+                        "확인",
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: pointBlueColor, fontWeight: FontWeight.w500),
+                      ))
+                ],
+              );
+            });
+      }
+    } catch (e) {
+      print('에러메시지 $e');
+    }
+  }
+
+  void share() async {
+    // 사용자 정의 템플릿 ID
+    int templateId = 116405;
+    // 카카오톡 실행 가능 여부 확인
+    bool isKakaoTalkSharingAvailable =
+        await kakao.ShareClient.instance.isKakaoTalkSharingAvailable();
+
+    final FlutterSecureStorage _storage = FlutterSecureStorage();
+    final dynamic stringId = await _storage.read(key: 'userId');
+    String userId = stringId;
+    print('로그인중인userId $userId');
+
+    Map<String, String> templateArgs = {
+      'USER': '정민',
+      'TRIP': '경주 외 1개 도시 여행',
+      'tripId': '1',
+      'userId': userId
+    };
+
+    if (isKakaoTalkSharingAvailable) {
+      try {
+        Uri uri = await kakao.ShareClient.instance
+            .shareCustom(templateId: templateId, templateArgs: templateArgs);
+        await kakao.ShareClient.instance.launchKakaoTalk(uri);
+        print('카카오톡 공유 완료');
+      } catch (error) {
+        print('카카오톡 공유 실패 $error');
+      }
+    } else {
+      try {
+        Uri shareUrl = await kakao.WebSharerClient.instance
+            .makeCustomUrl(templateId: templateId, templateArgs: templateArgs);
+        await kakao.launchBrowserTab(shareUrl, popupOpen: true);
+      } catch (error) {
+        print('카카오톡 공유 실패 $error');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     String dateRange = tripInfo['startDate'] == tripInfo['endDate']
@@ -485,7 +605,15 @@ class _TripViewScreenState extends State<TripViewScreen> {
 
     double screenHeight = MediaQuery.of(context).size.height;
 
-    // print('animatedPositionedOffset $_animatedPositionedOffset');
+    // isEditing이 true일 때 스크롤 위치를 설정
+    if (isEditing) {
+      print('isEditing!');
+      double targetOffset = 172;
+      targetOffset = targetOffset.clamp(
+          _singleScrollController.position.minScrollExtent,
+          _singleScrollController.position.maxScrollExtent);
+      _singleScrollController.jumpTo(targetOffset);
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -493,16 +621,13 @@ class _TripViewScreenState extends State<TripViewScreen> {
         backgroundColor: Colors.white,
         leading: IconButton(
             onPressed: () {
-              // **추가해야함 ! 뒤로 가기 클릭했을 때 마이페이지 or 홈으로 이동 시키기...!!!
-              // Navigator.pushAndRemoveUntil(
-              //   context,
-              //   MaterialPageRoute(
-              //     builder: (context) => MainScreen(),
-              //     fullscreenDialog: false,
-              //   ),
-              //   (Route<dynamic> route) => false,
-              // );
-              Navigator.popUntil(context, (route) => route.isFirst);
+              isEditing
+                  ? showDialog(
+                      context: context,
+                      builder: (context) {
+                        return EditCloseModal();
+                      })
+                  : Navigator.popUntil(context, (route) => route.isFirst);
             },
             icon: Icon(Icons.arrow_back)),
         title: _isTop
@@ -522,11 +647,45 @@ class _TripViewScreenState extends State<TripViewScreen> {
                   )
                 ],
               )
-            : SizedBox.shrink(),
+            : isEditing
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isEditing.toString(),
+                        style: TextStyle(fontSize: 10),
+                      ),
+                      Text(
+                        tripInfo["title"],
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      Text(dateRange,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(color: grayColor))
+                    ],
+                  )
+                : SizedBox.shrink(),
         actions: [
-          IconButton(onPressed: () {}, icon: Icon(Icons.ios_share)),
-          IconButton(
-              onPressed: () {}, icon: Icon(Icons.notifications_outlined)),
+          isEditing
+              ? IconButton(
+                  onPressed: null,
+                  icon: Icon(Icons.ios_share),
+                  color: blackColor.withOpacity(0.2),
+                )
+              : IconButton(onPressed: () {}, icon: Icon(Icons.ios_share)),
+          isEditing
+              ? IconButton(
+                  onPressed: null,
+                  icon: Icon(Icons.notifications_outlined),
+                  color: blackColor.withOpacity(0.2),
+                )
+              : IconButton(
+                  onPressed: () {}, icon: Icon(Icons.notifications_outlined)),
         ],
       ),
       body: isLoading
@@ -537,6 +696,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
                   children: [
                     SingleChildScrollView(
                       controller: _singleScrollController,
+                      physics: isEditing
+                          ? NeverScrollableScrollPhysics()
+                          : AlwaysScrollableScrollPhysics(),
                       child: Column(
                         children: [
                           Container(
@@ -584,10 +746,15 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                                 width: 16,
                                               ),
 
-                                              // 권한 있는 사람만 편집가능 - 나중에 확인 !
+                                              // 권한 있는 사람만 편집가능
                                               isUserChecked
                                                   ? TextButton(
-                                                      onPressed: () {},
+                                                      onPressed: () {
+                                                        showModalBottomSheet(
+                                                            context: context,
+                                                            builder: (context) =>
+                                                                EditBottomSheet());
+                                                      },
                                                       style:
                                                           TextButton.styleFrom(
                                                         padding:
@@ -659,7 +826,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                   height: 10,
                                 ),
                                 TextButton(
-                                  onPressed: () {},
+                                  onPressed: share,
                                   style: TextButton.styleFrom(
                                     backgroundColor: pointBlueColor,
                                     minimumSize: Size(0, 0),
@@ -753,7 +920,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                 initialCameraPosition: CameraPosition(
                                     target:
                                         LatLng(latitude! - 0.005, longitude!),
-                                    zoom: 11),
+                                    zoom: 13),
                                 onMapCreated: (GoogleMapController controller) {
                                   mapController = controller; // 지도 컨트롤러 초기화
                                 },
@@ -780,46 +947,45 @@ class _TripViewScreenState extends State<TripViewScreen> {
                     // 슬라이드 컨텐츠
 
                     DragBottomSheet(
-                        dropDownDay: _dropDownDay,
-                        tripInfo: tripInfo,
-                        animatedPositionedOffset: _animatedPositionedOffset,
-                        containerHeight: _containerHeight,
-                        singleScrollController: _singleScrollController,
-                        groupedTripDayAllList: groupedTripDayAllList,
-                        bottomScrollController: bottomScrollController,
-                        colors: colors,
-                        updateMarkersAndPolylines: _updateMarkersAndPolylines,
-                        onMarkerTap: _onMarkerTap)
+                      dropDownDay: _dropDownDay,
+                      tripInfo: tripInfo,
+                      animatedPositionedOffset: _animatedPositionedOffset,
+                      containerHeight: _containerHeight,
+                      singleScrollController: _singleScrollController,
+                      groupedTripDayAllList: groupedTripDayAllList,
+                      bottomScrollController: bottomScrollController,
+                      colors: colors,
+                      updateMarkersAndPolylines: _updateMarkersAndPolylines,
+                      onMarkerTap: _onMarkerTap,
+                      isEditing: isEditing,
+                      onEditingChange: updateEditingState,
+                      mapController: mapController,
+                    )
                   ],
                 ),
-      floatingActionButton: Container(
-        width: 68,
-        height: 65,
-        child: FloatingActionButton(
-          onPressed: () {
-            // 첨삭받기로 이동 !!
-            // Navigator.push(
-            //     context,
-            //     MaterialPageRoute(
-            //       builder: (context) => TripScreen(),
-            //     ));
-          },
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.add,
-              ),
-              Text(
-                "첨삭받기",
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Colors.white,
+      floatingActionButton: isEditing
+          ? SizedBox.shrink()
+          : Container(
+              width: 68,
+              height: 65,
+              child: FloatingActionButton(
+                onPressed: _addPostOrShowModal,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.add,
                     ),
+                    Text(
+                      "첨삭받기",
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: Colors.white,
+                          ),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }

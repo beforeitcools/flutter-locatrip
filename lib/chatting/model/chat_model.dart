@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/chatting/widgets/chat_room.dart';
 import 'package:flutter_locatrip/common/Auth/auth_dio_interceptor.dart';
 import 'package:flutter_locatrip/common/widget/url.dart';
 
@@ -103,7 +105,9 @@ class ChatModel{
     }
   }
 
-  Future<void> insertNewChattingRoom(String chatroomName, BuildContext context) async{
+  Future<void> chattingRoomForOTO(int userId, String chatroomName, BuildContext context) async{
+    // 이거는 1:1 one to one 이라서 OTO 했어요 ...
+    print("CHATTING ROOM FOR ONE TO ONE");
     final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
@@ -113,8 +117,22 @@ class ChatModel{
 
     try{
       final response = await dio.post(
-        "$backUrl/newChat",
-        data: chatroomName);
+          "$backUrl/chatroom/onetoone",
+        data: {
+          "userId" : userId, // 유저 아이디
+          "chatroomName" : chatroomName // 유저 이름!!
+        });
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final result = response.data as int;
+        print("채팅방 확인!!!! 넘어가! $result");
+        
+        Navigator.push(context, MaterialPageRoute(builder: (context)=> ChatRoomPage(chatroomId: result, chatroomName: chatroomName)));
+      }
+      else {
+        throw Exception("FAILED YOUR CHAT ROOM! : ${response.statusCode}");
+      }
+
     }catch(e){
       print("Failed to make new room");
       throw Exception ("Error  $e");

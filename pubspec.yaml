@@ -21,6 +21,7 @@ dependencies:
   permission_handler: ^11.3.1
   cached_network_image: ^3.2.3
   image_picker: ^1.1.2
+  kakao_flutter_sdk: ^1.9.6
 
   intl: ^0.20.1
   google_maps_flutter: ^2.10.0
@@ -30,6 +31,8 @@ dependencies:
   carousel_slider: ^5.0.0
   easy_image_viewer: ^1.5.1
   url_launcher: ^6.3.1
+  provider: ^6.1.2
+
 
   firebase_core: ^3.8.1
   firebase_messaging: ^15.1.6
@@ -40,6 +43,15 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.2
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/locat_app_icon.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/locat_app_icon.png"
 
 
 flutter:
