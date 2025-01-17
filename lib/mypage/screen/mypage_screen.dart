@@ -13,6 +13,9 @@ import 'package:flutter_locatrip/mypage/screen/myposts_screen.dart';
 import 'package:flutter_locatrip/mypage/screen/mytrip_screen.dart';
 import 'package:flutter_locatrip/mypage/screen/profile_update_screen.dart';
 import 'package:flutter_locatrip/common/screen/userpage_screen.dart';
+import 'package:provider/provider.dart';
+
+import '../../trip/model/invite_state.dart';
 
 class MypageScreen extends StatefulWidget {
   const MypageScreen({super.key});
@@ -34,9 +37,11 @@ class _MypageScreenState extends State<MypageScreen> {
 
   Future<void> _logout() async {
     try {
+      Provider.of<InviteState>(context, listen: false).setInviteId(null);
       String result = await _authModel.logout();
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(result)));
+
       Navigator.pushNamedAndRemoveUntil(
         context,
         '/start',

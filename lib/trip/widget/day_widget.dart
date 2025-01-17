@@ -292,7 +292,7 @@ class _DayWidgetState extends State<DayWidget> {
     try {
       Map<String, dynamic> result =
           await _tripDayModel.saveTripDayLocation(data, context);
-      print('saveTripDayLocation결과 $result');
+
       if (result.isNotEmpty) {
         setState(() {
           if (!_dayPlaceList.any((place) => place["id"] == result["id"])) {
@@ -300,10 +300,7 @@ class _DayWidgetState extends State<DayWidget> {
             _dayPlace["tripId"] = result["tripId"];
             _dayPlace["locationId"] = result["locationId"];
             _dayPlace["date"] = result["date"];
-            _dayPlace["visitTime"] = result["visitTime"];
             _dayPlace["orderIndex"] = result["orderIndex"];
-            _dayPlace["memo"] = result["memo"];
-            _dayPlace["expenseId"] = result["expenseId"];
             _dayPlace["isChecked"] = false;
             _dayPlace["dateIndex"] = result["dateIndex"];
             _dayPlace["isMemo"] = false;
@@ -317,7 +314,6 @@ class _DayWidgetState extends State<DayWidget> {
             widget.listTileKeys.add(GlobalKey());
             widget.listTileKeys2.add(GlobalKey());
 
-            print('바뀌나봐봐 ${_dayPlace["place"].location.latitude}');
             widget.mapController!.animateCamera(
               CameraUpdate.newLatLng(LatLng(
                   _dayPlace["place"].location.latitude!,
@@ -331,11 +327,6 @@ class _DayWidgetState extends State<DayWidget> {
     } catch (e) {
       print('에러메시지 $e');
     }
-
-    // 1.장소가 없으면 장소 저장 - 있으면 저장x  -> 장소 이름 넘겨서 아이디 찾기 ㅇ
-    // 2. 일정 id trip_view_screen 에서 받아오기 - tripInfo에 있음 ㅇ
-    // 3. place 로 저장.. // 이름 주소 카테고리 위도 경도
-    // 저장 후에 tripDayLocation Id 값도 반환받아서 갖고 있기
   }
 
   // 두 지점 간 거리 계산

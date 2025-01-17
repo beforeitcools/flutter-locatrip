@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/chatting/widgets/chat_room.dart';
 import 'package:flutter_locatrip/common/Auth/auth_dio_interceptor.dart';
 import 'package:flutter_locatrip/common/widget/url.dart';
 
@@ -122,8 +124,10 @@ class ChatModel{
         });
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final result = response.data as String;
-        print("채팅방 확인!!!! 넘어가!");
+        final result = response.data as int;
+        print("채팅방 확인!!!! 넘어가! $result");
+        
+        Navigator.push(context, MaterialPageRoute(builder: (context)=> ChatRoomPage(chatroomId: result, chatroomName: chatroomName)));
       }
       else {
         throw Exception("FAILED YOUR CHAT ROOM! : ${response.statusCode}");

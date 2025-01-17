@@ -88,7 +88,7 @@ class _PostBottomSheetState extends State<PostBottomSheet> {
             ),
             onPressed: (){ /* 글쓰기 페이지 */
               Navigator.push(context, MaterialPageRoute(
-                  builder: (context)=>PostScreen(tripId: 2)));}, // 임시로 2 넣어둠...!!
+                  builder: (context)=>PostScreen(tripId: 1)));}, // 임시로 2 넣어둠...!!
               child: Text("첨삭받기", style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white))
           )],
       )),

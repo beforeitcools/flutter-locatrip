@@ -46,10 +46,8 @@ class _ExpenseUpdateCostScreen extends State<ExpenseUpdateCostScreen> {
   List<Map<String, dynamic>> _participants = [];
   bool isLoading = true;
 
-
   final FlutterSecureStorage _storage = FlutterSecureStorage();
   late int currentUserId;
-
 
   @override
   void initState() {
@@ -57,15 +55,12 @@ class _ExpenseUpdateCostScreen extends State<ExpenseUpdateCostScreen> {
     _fetchParticipants();
     _fetchExpenseDetails();
     _getCurrentUserId();
-    if (widget.selectedDate == 'preparation') {
+
+    if (widget.selectedDate == '여행 준비') {
       _selectedDate = '여행 준비';
-    } else if (widget.groupedExpenses.containsKey(widget.selectedDate)) {
-      final dateDetail = widget.groupedExpenses[widget.selectedDate]?['date'] ?? '';
-      _selectedDate = '${widget.selectedDate} $dateDetail';
     } else {
       _selectedDate = widget.selectedDate; // fallback: 원래 값 사용
     }
-
   }
 
   Future<void> _getCurrentUserId() async {
@@ -93,14 +88,6 @@ class _ExpenseUpdateCostScreen extends State<ExpenseUpdateCostScreen> {
     }
   }
 
-  String get formattedDate {
-    if (_selectedDate == 'preparation') {
-      return '여행 준비';
-    }
-    final dateDetail = widget.groupedExpenses[_selectedDate]?['date'] ?? '';
-    return '$_selectedDate $dateDetail';
-  }
-
   Future<void> _fetchExpenseDetails() async {
     try {
       final expenseData = await expenseModel.getExpenseById(widget.expenseId, context);
@@ -109,16 +96,57 @@ class _ExpenseUpdateCostScreen extends State<ExpenseUpdateCostScreen> {
         _amountController.text = expenseData['amount'].toString();
         _selectedPaymentMethod = expenseData['paymentMethod'] ?? '현금';
         _selectedCategory = expenseData['category'] ?? '숙소';
-        _selectedDate = expenseData['date'] ?? '날짜 선택';
+        if (_selectedDate == widget.selectedDate) {
+          _selectedDate = widget.selectedDate; // 전달된 초기값 유지
+        } else {
+          _selectedDate = expenseData['date'] ?? widget.selectedDate; // 서버 값이 없는 경우만 초기 값 사용
+        }
 
-        _participants = List<Map<String, dynamic>>.from(expenseData['participants'].map((user) => {
-          'id': user['id'],
-          'nickname': user['nickname'],
-          'isChecked': user['isChecked'] ?? false,
-          'isPaid': user['isPaid'] ?? false,
-        }));
+        // 결제한 사람 처리
+        final paidByUsers = List<Map<String, dynamic>>.from(
+          expenseData['paidByUsers'].map((user) => {
+            'id': user['userId'],
+            'nickname': user['nickname'],
+            'isPaid': true,
+            'isChecked': false, // 초기 값: 결제자만 체크
+          }),
+        );
+
+        // 참여한 사람 처리
+        final participants = List<Map<String, dynamic>>.from(
+          expenseData['participants'].map((user) => {
+            'id': user['userId'],
+            'nickname': user['nickname'],
+            'isPaid': false, // 초기 값: 참여자만 체크
+            'isChecked': true,
+          }),
+        );
+
+        setState(() {
+          for (var participant in _participants) {
+            // 결제 상태 업데이트
+            final paidUser = paidByUsers.firstWhere(
+                  (user) => user['id'] == participant['id'],
+              orElse: () => {},
+            );
+            if (paidUser.isNotEmpty) {
+              participant['isPaid'] = true;
+            }
+
+            // 참여 상태 업데이트
+            final checkedUser = participants.firstWhere(
+                  (user) => user['id'] == participant['id'],
+              orElse: () => {},
+            );
+            if (checkedUser.isNotEmpty) {
+              participant['isChecked'] = true;
+            }
+          }
+        });
+
         isLoading = false;
       });
+
     } catch (e) {
       print('Error fetching expense details: $e');
       setState(() {
@@ -126,43 +154,79 @@ class _ExpenseUpdateCostScreen extends State<ExpenseUpdateCostScreen> {
       });
     }
   }
+
+  String get formattedDate {
+    if (_selectedDate == '여행 준비' || _selectedDate == 'preparation') {
+      return '여행 준비';
+    }
+
+    final dateDetail = widget.groupedExpenses[_selectedDate]?['date'];
+    if (dateDetail != null && dateDetail.isNotEmpty) {
+      return dateDetail;
+    }
+    else {
+      return _selectedDate;
+    }
+  }
+
   /// 날짜 선택 BottomSheet
   void _showDatePicker() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true, // 화면 크기에 유연하게 반응하도록 설정
       builder: (context) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const ListTile(
-                title: Text('날짜 선택', style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-              ...widget.availableDates.map((date) {
-                final formattedDate = date == "preparation"
-                    ? '여행 준비'
-                    : '$date ${widget.groupedExpenses[date]?['date'] ?? ''}';
-
-                return ListTile(
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.4, // 바텀 시트 높이 고정
+            ),
+            child: Column(
+              children: [
+                // 제목
+                const ListTile(
                   title: Text(
-                    formattedDate,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: _selectedDate == date ? pointBlueColor : blackColor,
-                    ),
+                    '날짜선택',
+                    style: TextStyle(color: grayColor, fontSize: 15),
                   ),
-                  trailing: _selectedDate == date
-                      ? const Icon(Icons.check, color: pointBlueColor)
-                      : null,
-                  onTap: () {
-                    setState(() {
-                      _selectedDate = date; // 선택된 날짜로 업데이트
-                    });
-                    Navigator.pop(context);
-                  },
-                );
-              }).toList(),
-            ],
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: widget.groupedExpenses.length,
+                    itemBuilder: (context, index) {
+                      // 날짜별 항목
+                      final dayEntry = widget.groupedExpenses.entries.elementAt(index);
+                      final day = dayEntry.key;
+                      final date = dayEntry.value['date'];
+
+                      final formattedDate = day == "preparation"
+                          ? '여행 준비'
+                          : '$date';
+
+                      return ListTile(
+                        title: Text(
+                          formattedDate,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: _selectedDate == date
+                                ? pointBlueColor
+                                : blackColor,
+                          ),
+                        ),
+                        trailing: _selectedDate == date
+                            ? const Icon(Icons.check, color: pointBlueColor)
+                            : null,
+                        onTap: () {
+                          setState(() {
+                            _selectedDate = date;
+                          });
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
