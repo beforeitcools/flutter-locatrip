@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/advice/model/post_model.dart';
+import 'package:flutter_locatrip/advice/screen/post_view_screen.dart';
 import 'package:flutter_locatrip/advice/widget/trip_for_post.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
@@ -29,8 +30,8 @@ class _PostScreenState extends State<PostScreen> {
           "status":1
         };
 
-        await _postModel.insertNewPost(post, context);
-
+        int postId = await _postModel.insertNewPost(post, context);
+        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => PostViewScreen(postId: postId)));
       }catch(e){
         print('포스트를 저장하는 중 에러가 발생했습니다 : $e');
       }
@@ -39,7 +40,6 @@ class _PostScreenState extends State<PostScreen> {
 
   void _updateValue(String value){
     _tripData = value;
-    print("나의 트립 데이터 $_tripData");
   }
 
   @override
