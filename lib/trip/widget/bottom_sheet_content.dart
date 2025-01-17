@@ -96,13 +96,6 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                 "imageUrl": regionImages[region['name']] ?? defaultImageUrl,
               }));
 
-      // // '국내' 추가
-      // _recommendedRegions.add({
-      //   "name": "국내",
-      //   "sub": "어디론가 떠나고 싶을 때",
-      //   "image": "",
-      // });
-
       // 초기 화면에서 추천 지역 표시
       _displayedRegions = _recommendedRegions;
       isLoading = false;
@@ -202,6 +195,8 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
   ButtonStyle _toggleStyle(String regionName) {
     bool isSelected = selectedRegions.any((item) => item['name'] == regionName);
     return TextButton.styleFrom(
+      minimumSize: Size(0, 0),
+      padding: EdgeInsets.symmetric(vertical: 5, horizontal: 12),
       backgroundColor: isSelected ? Colors.white : lightGrayColor,
       side: BorderSide(
         color: isSelected ? pointBlueColor : Colors.transparent,
@@ -210,7 +205,7 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
       textStyle: Theme.of(context)
           .textTheme
           .labelSmall
-          ?.copyWith(fontWeight: FontWeight.w500),
+          ?.copyWith(fontWeight: FontWeight.w600),
     );
   }
 
@@ -314,19 +309,22 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                           itemCount: _displayedRegions.length,
                           itemBuilder: (context, i) {
                             return ListTile(
-                              // contentPadding: EdgeInsets.only(bottom: 20),
-                              leading: Image.asset(
-                                _displayedRegions[i]["imageUrl"] ?? "",
-                                width: 36,
-                                height: 36,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Image.asset(
-                                    defaultImageUrl,
-                                    width: 36,
-                                    height: 36,
-                                  );
-                                },
+                              leading: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.asset(
+                                  _displayedRegions[i]["imageUrl"].toString() ??
+                                      "",
+                                  width: 36,
+                                  height: 36,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Image.asset(
+                                      defaultImageUrl,
+                                      width: 36,
+                                      height: 36,
+                                    );
+                                  },
+                                ),
                               ),
                               contentPadding: EdgeInsets.zero,
                               title: Text(_displayedRegions[i]["name"]!,
@@ -388,9 +386,10 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                             child: Column(
                               children: [
                                 Stack(
+                                  clipBehavior: Clip.none,
                                   children: [
                                     ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(999),
                                       child: Image.asset(
                                         region["imageUrl"].toString() ??
                                             defaultImageUrl,
@@ -401,8 +400,8 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                                             (context, error, stackTrace) {
                                           return Image.asset(
                                             defaultImageUrl,
-                                            width: 50,
-                                            height: 50,
+                                            width: 30,
+                                            height: 30,
                                           );
                                         },
                                       ),
@@ -420,8 +419,8 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                                             boxShadow: [
                                               BoxShadow(
                                                 color: Colors.black
-                                                    .withOpacity(0.05),
-                                                offset: Offset(1, 0),
+                                                    .withOpacity(0.1),
+                                                offset: Offset(1, 1),
                                                 blurRadius: 2,
                                               )
                                             ],

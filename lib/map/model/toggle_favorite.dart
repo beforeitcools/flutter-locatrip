@@ -6,11 +6,7 @@ class ToggleFavorite {
   final LocationModel _locationModel = LocationModel();
 
   Future<void> insertLocation(
-      Place place,
-      // Map<String, bool> favoriteStatus,
-      // List<Map<String, bool>> favoriteStatusList,
-      BuildContext context,
-      VoidCallback onUpdate) async {
+      Place place, BuildContext context, VoidCallback onUpdate) async {
     Map<String, dynamic> placeData = {
       "googleId": place.id,
       "name": place.name,
@@ -26,8 +22,6 @@ class ToggleFavorite {
       print('result $result');
 
       if ((result != null && result is Map<String, dynamic>)) {
-        /*favoriteStatus[place.name] = true;
-        favoriteStatusList.add(favoriteStatus);*/
         onUpdate();
       }
     } catch (e) {
@@ -36,23 +30,13 @@ class ToggleFavorite {
   }
 
   Future<void> removeFavorite(
-      Place place,
-      // Map<String, bool> favoriteStatus,
-      // List<Map<String, bool>> favoriteStatusList,
-      BuildContext context,
-      VoidCallback onUpdate) async {
-    /*Map<String, dynamic> placeData = {
-      "name": place.name,
-      "address": place.address
-    };*/
+      Place place, BuildContext context, VoidCallback onUpdate) async {
     String googleId = place.id;
 
     try {
       String result = await _locationModel.deleteFavorite(googleId, context);
 
       if (result != null) {
-        /*favoriteStatus[place.name] = false;
-        favoriteStatusList.remove(favoriteStatus);*/
         onUpdate();
       }
     } catch (e) {
@@ -63,12 +47,7 @@ class ToggleFavorite {
     }
   }
 
-  void toggleFavoriteStatus(
-      Place place,
-      // Map<String, bool> favoriteStatus,
-      // List<Map<String, bool>> favoriteStatusList,
-      bool isFavorite,
-      BuildContext context,
+  void toggleFavoriteStatus(Place place, bool isFavorite, BuildContext context,
       VoidCallback onUpdate) {
     bool _isFavorite = isFavorite ?? false;
     print('현재 상태: $_isFavorite');

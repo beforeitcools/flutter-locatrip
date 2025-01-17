@@ -3,22 +3,23 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_locatrip/advice/screen/advice_post_screen.dart';
-import 'package:flutter_locatrip/advice/screen/advice_screen.dart';
+
 import 'package:flutter_locatrip/advice/screen/post_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
-import 'package:flutter_locatrip/main/screen/main_screen.dart';
+
+import 'package:flutter_locatrip/mypage/model/mypage_model.dart';
 import 'package:flutter_locatrip/trip/model/trip_day_model.dart';
 import 'package:flutter_locatrip/trip/widget/edit_close_modal.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geocoding/geocoding.dart' as geocoding;
-import 'package:geolocator/geolocator.dart';
+
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart' as kakao;
-import 'package:uuid/uuid.dart';
 
+import '../../checklist/screen/checklist_screen.dart';
+import '../../expense/screen/expense_screen.dart';
 import '../../map/model/custom_marker.dart';
 import '../../map/model/place.dart';
 
@@ -36,8 +37,13 @@ class TripViewScreen extends StatefulWidget {
 }
 
 class _TripViewScreenState extends State<TripViewScreen> {
+  final TripModel _tripModel = TripModel();
+  final TripDayModel _tripDayModel = TripDayModel();
+  final MypageModel _mypageModel = MypageModel();
+
   late final int userId;
   bool isUserChecked = false; // 같은 유저인지 확인
+  late String _nickName;
 
   final DraggableScrollableController sheetController =
       DraggableScrollableController();
@@ -46,8 +52,6 @@ class _TripViewScreenState extends State<TripViewScreen> {
 
   Map<String, dynamic> tripInfo = {};
 
-  TripModel _tripModel = TripModel();
-  TripDayModel _tripDayModel = TripDayModel();
   bool isLoading = true;
 
   double? latitude;
@@ -84,6 +88,10 @@ class _TripViewScreenState extends State<TripViewScreen> {
 
   bool isEditing = false; // 편집 여부
 
+  List<String> _tripUsersProfileList = [];
+
+  bool _unreadAlarmExists = false;
+
   @override
   void initState() {
     super.initState();
@@ -106,7 +114,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
     _singleScrollController.addListener(() {
       setState(() {
         _animatedPositionedOffset = _singleScrollController.offset;
-        // print('_animatedPositionedOffset $_animatedPositionedOffset');
+
         if (_animatedPositionedOffset > 64) {
           _isTop = true;
         } else {
@@ -128,14 +136,22 @@ class _TripViewScreenState extends State<TripViewScreen> {
       final FlutterSecureStorage _storage = FlutterSecureStorage();
       final dynamic stringId = await _storage.read(key: 'userId');
       userId = int.tryParse(stringId) ?? 0;
-      /*print('userId $userId');*/
 
       if (result.isNotEmpty) {
         setState(() {
           if (userId == result["userId"]) isUserChecked = true;
-          tripInfo.addAll(result);
-          print('tripInfo $tripInfo');
+          tripInfo.addAll(result["trip"]);
+          _unreadAlarmExists = result["unreadAlarmExists"];
 
+          // 참여 중인 유저 프로필 이미지
+          for (Map<String, dynamic> tripUser in tripInfo["tripUsers"]) {
+            String _profilePic = tripUser["user"]["profilePic"] == null
+                ? "null"
+                : tripUser["user"]["profilePic"];
+            _tripUsersProfileList.add(_profilePic);
+          }
+
+          // 선택한 지역 중 첫번째 찾기
           String? regionWithOrderIndexZero;
 
           for (Map<String, dynamic> items in tripInfo['selectedRegions']) {
@@ -280,7 +296,6 @@ class _TripViewScreenState extends State<TripViewScreen> {
           await _tripDayModel.getTripDay(tripId, context);
 
       if (result != null && result.isNotEmpty) {
-        // 상태 변경 전에 데이터를 완전히 업데이트
         tripDayAllList.clear();
         for (Map<String, dynamic> resultItem in result) {
           Map<String, dynamic> resultMap = {
@@ -558,7 +573,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
     }
   }
 
-  void share() async {
+  void _share() async {
     // 사용자 정의 템플릿 ID
     int templateId = 116405;
     // 카카오톡 실행 가능 여부 확인
@@ -568,12 +583,32 @@ class _TripViewScreenState extends State<TripViewScreen> {
     final FlutterSecureStorage _storage = FlutterSecureStorage();
     final dynamic stringId = await _storage.read(key: 'userId');
     String userId = stringId;
-    print('로그인중인userId $userId');
+    print('로그인 중인 userId $userId');
 
+    String region = "";
+    int regionLength = 0;
+    int tripId = 0;
+    String elseString = "";
+
+    if (tripInfo.isNotEmpty) {
+      // 닉네임 찾아 오는 로직
+      _getMyNickname();
+
+      if (_nickName.isNotEmpty) {
+        // 선택한 지역
+        region = tripInfo["selectedRegions"][0]["region"];
+        regionLength = tripInfo["selectedRegions"].length - 1;
+        elseString = regionLength == 0 ? "" : " 외 ${regionLength}개";
+
+        // 일정ID
+        tripId = tripInfo["id"];
+      }
+    }
+    print('_nickName$_nickName$region$regionLength$tripId$userId');
     Map<String, String> templateArgs = {
-      'USER': '정민',
-      'TRIP': '경주 외 1개 도시 여행',
-      'tripId': '1',
+      'USER': _nickName,
+      'TRIP': '${region}${elseString} 도시 여행',
+      'tripId': '$tripId',
       'userId': userId
     };
 
@@ -597,6 +632,18 @@ class _TripViewScreenState extends State<TripViewScreen> {
     }
   }
 
+  void _getMyNickname() async {
+    try {
+      Map<String, dynamic> result = await _mypageModel.getMyPageData(context);
+      if (result.isNotEmpty) {
+        print('result $result');
+        _nickName = result["user"]['nickname'];
+      }
+    } catch (e) {
+      print('에러메시지 $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     String dateRange = tripInfo['startDate'] == tripInfo['endDate']
@@ -607,7 +654,6 @@ class _TripViewScreenState extends State<TripViewScreen> {
 
     // isEditing이 true일 때 스크롤 위치를 설정
     if (isEditing) {
-      print('isEditing!');
       double targetOffset = 172;
       targetOffset = targetOffset.clamp(
           _singleScrollController.position.minScrollExtent,
@@ -615,6 +661,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
       _singleScrollController.jumpTo(targetOffset);
     }
 
+    String defaultImageUrl = "assets/default_profile_image.png";
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -681,7 +728,24 @@ class _TripViewScreenState extends State<TripViewScreen> {
           isEditing
               ? IconButton(
                   onPressed: null,
-                  icon: Icon(Icons.notifications_outlined),
+                  icon: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Icon(Icons.notifications_outlined),
+                      // 새로운 알림 여부
+
+                      if (_unreadAlarmExists)
+                        Positioned(
+                          right: -1,
+                          top: 1,
+                          child: Container(
+                            padding: EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                                color: Colors.red, shape: BoxShape.circle),
+                          ),
+                        )
+                    ],
+                  ),
                   color: blackColor.withOpacity(0.2),
                 )
               : IconButton(
@@ -825,36 +889,94 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                 SizedBox(
                                   height: 10,
                                 ),
-                                TextButton(
-                                  onPressed: share,
-                                  style: TextButton.styleFrom(
-                                    backgroundColor: pointBlueColor,
-                                    minimumSize: Size(0, 0),
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                    padding: EdgeInsets.symmetric(
-                                        vertical: 6, horizontal: 12),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.add,
-                                        size: 20,
-                                        color: Colors.white,
-                                      ),
-                                      Text(
-                                        "일행과 함께 짜기",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .labelMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w600,
+                                Row(
+                                  children: [
+                                    if (_tripUsersProfileList.isNotEmpty)
+                                      ..._tripUsersProfileList
+                                          .asMap()
+                                          .entries
+                                          .map((entry) {
+                                        int index = entry.key;
+
+                                        return Transform.translate(
+                                          offset: Offset(
+                                              index == 0 ? 0 : -10.0 * index,
+                                              0),
+                                          child: Container(
+                                            width: 32,
+                                            height: 32,
+                                            decoration: BoxDecoration(
+                                                border: Border.all(
+                                                  color: Colors.white,
+                                                  width: 1,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(999)),
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(999),
+                                              child: Image.asset(
+                                                entry.value.toString() ??
+                                                    defaultImageUrl,
+                                                width: 32,
+                                                height: 32,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error,
+                                                    stackTrace) {
+                                                  return Image.asset(
+                                                    defaultImageUrl,
+                                                    width: 32,
+                                                    height: 32,
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      }),
+                                    Transform.translate(
+                                      offset: _tripUsersProfileList.isNotEmpty
+                                          ? Offset(
+                                              -10.0 *
+                                                  _tripUsersProfileList.length,
+                                              0)
+                                          : Offset(0, 0),
+                                      child: TextButton(
+                                        onPressed: _share,
+                                        style: TextButton.styleFrom(
+                                            backgroundColor: pointBlueColor,
+                                            minimumSize: Size(0, 0),
+                                            tapTargetSize: MaterialTapTargetSize
+                                                .shrinkWrap,
+                                            padding: EdgeInsets.fromLTRB(
+                                                8, 6, 12, 6),
+                                            side: BorderSide(
+                                                width: 1, color: Colors.white)),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.add,
+                                              size: 18,
                                               color: Colors.white,
                                             ),
+                                            Text(
+                                              _tripUsersProfileList.isNotEmpty
+                                                  ? "일행 초대"
+                                                  : "일행과 함께 짜기",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .labelMedium
+                                                  ?.copyWith(
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.white,
+                                                  ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ],
-                                  ),
+                                    )
+                                  ],
                                 ),
                                 SizedBox(
                                   height: 10,
@@ -862,7 +984,15 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                 Row(
                                   children: [
                                     TextButton(
-                                        onPressed: () {},
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ChecklistScreen(),
+                                            ),
+                                          );
+                                        },
                                         style: TextButton.styleFrom(
                                           padding:
                                               EdgeInsets.fromLTRB(12, 6, 12, 6),
@@ -885,7 +1015,16 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                       width: 10,
                                     ),
                                     TextButton(
-                                        onPressed: () {},
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ExpenseScreen(
+                                                      tripId: tripInfo["id"]),
+                                            ),
+                                          );
+                                        },
                                         style: TextButton.styleFrom(
                                           padding:
                                               EdgeInsets.fromLTRB(12, 6, 12, 6),
@@ -912,8 +1051,6 @@ class _TripViewScreenState extends State<TripViewScreen> {
                           if (latitude != null && longitude != null)
                             Container(
                               height: 260,
-                              // height: MediaQuery.of(context).size.height - 250,
-                              // // (80 + 172),
                               child: GoogleMap(
                                 zoomControlsEnabled: true,
                                 zoomGesturesEnabled: true,

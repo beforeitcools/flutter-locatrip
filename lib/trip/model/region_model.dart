@@ -15,15 +15,6 @@ class RegionModel {
       if (response.statusCode == 200) {
         final List<dynamic> regcodes = response.data['regcodes'];
 
-        // 전국 시/도 일단 저장
-        for (var item in regcodes) {
-          allResults.add({
-            "name": item['name'],
-            "sub": item['name'],
-            "imageUrl": "assets/imgPlaceholder.png"
-          });
-        }
-
         // 2. '도'로 끝나는 지역 필터링
         final filteredRegions =
             regcodes.where((region) => region['name'].endsWith('도')).toList();
@@ -41,7 +32,8 @@ class RegionModel {
         for (var res in responses) {
           if (res.statusCode == 200) {
             final filteredData = res.data['regcodes'].where((item) {
-              return item['code'].substring(4, 6) == '00';
+              return item['code'].substring(4, 6) == '00' &&
+                  !item['name'].endsWith('도');
             }).toList();
 
             // 5. 데이터 변환 및 추가
@@ -81,6 +73,22 @@ class RegionModel {
             })
             .values
             .toList();
+
+        // 1-1 '도' 아닌 나머지
+        final wideRegions =
+            regcodes.where((region) => !region['name'].endsWith('도')).toList();
+
+        final cleanedCities = wideRegions.map((region) {
+          return region['name'].replaceAll(RegExp(r'(특별|광역)시$'), '');
+        }).toList();
+
+        for (int i = 0; i < wideRegions.length; i++) {
+          uniqueResults.add({
+            "name": cleanedCities[i],
+            "sub": wideRegions[i]['name'],
+            "imageUrl": "assets/imgPlaceholder.png"
+          });
+        }
 
         return uniqueResults;
       } else {
