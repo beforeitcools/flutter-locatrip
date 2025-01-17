@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/advice/screen/advice_post_screen.dart';
-import 'package:flutter_locatrip/advice/screen/advice_screen.dart';
 import 'package:flutter_locatrip/advice/screen/post_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/main/screen/main_screen.dart';

@@ -29,7 +29,7 @@ class _PostListScreen extends State<PostListScreen> {
   final _orderFilterList = ["최신순", "첨삭순"];
   String _selectedOrderFilter = "최신순";
   // final _regionFilterList = ["전지역", "서울", "부산", "대구", "인천", "광주", "대전", "울산", "세종", "경기", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주"];
-  String _selectedRegionFilter = "전지역";
+  String _selectedRegionFilter = "";
   final AdviceModel _adviceModel = AdviceModel();
 
   void _orderFilterHandler(String selectedOrderFilter) {
@@ -50,7 +50,8 @@ class _PostListScreen extends State<PostListScreen> {
     // Apply region filter if not "전지역"
     if (selectedRegionFilter != "전지역") {
       filteredPosts = filteredPosts
-          .where((post) => post["region"].contains(selectedRegionFilter))
+          .where((post) =>
+              post["selectedRegionsList"].contains(selectedRegionFilter))
           .toList();
     }
 
@@ -91,6 +92,7 @@ class _PostListScreen extends State<PostListScreen> {
       print(result);
       print(result['postsInMyRegion']);
       print(result['postsInMyRegion'].runtimeType);
+      print(result['unreadAlarmExists']);
       setState(() {
         _postsInMyRegion = result['postsInMyRegion'];
         _allPosts = result['allPosts'];
@@ -230,8 +232,7 @@ class _PostListScreen extends State<PostListScreen> {
             ),
           ],
         ),
-        body: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
+        body: Container(
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Recommendations(

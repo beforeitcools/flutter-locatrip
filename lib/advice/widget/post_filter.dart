@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/advice/screen/region_select_filter_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
-class PostFilter extends StatefulWidget {
+class PostFilter extends StatelessWidget {
   final List<String> orderFilterList;
   final Function(String) orderFilterHandler;
   String selectedOrderFilter;
@@ -22,7 +22,7 @@ class PostFilter extends StatefulWidget {
     required this.applyFilters,
   });
 
-  @override
+  /*@override
   State<PostFilter> createState() => _PostFilterState();
 }
 
@@ -41,11 +41,10 @@ class _PostFilterState extends State<PostFilter> {
     _orderFilterList = widget.orderFilterList;
     _orderFilterHandler = widget.orderFilterHandler;
     _selectedOrderFilter = widget.selectedOrderFilter;
-    // _regionFilterMapList = widget.regionFilterMapList;
     _selectedRegionFilter = widget.selectedRegionFilter;
     _regionFilterHandler = widget.regionFilterHandler;
     _applyFilters = widget.applyFilters;
-  }
+  }*/
 
   @override
   Widget build(BuildContext context) {
@@ -85,15 +84,15 @@ class _PostFilterState extends State<PostFilter> {
               context,
               MaterialPageRoute(
                   builder: (context) => RegionSelectFilterScreen(
-                        applyFilters: _applyFilters,
-                        regionFilterHandler: _regionFilterHandler,
-                        selectedRegionFilter: _selectedRegionFilter,
-                        selectedOrderFilter: _selectedOrderFilter,
+                        applyFilters: applyFilters,
+                        regionFilterHandler: regionFilterHandler,
+                        selectedRegionFilter: selectedRegionFilter,
+                        selectedOrderFilter: selectedOrderFilter,
                       )),
             );
           },
           child: Container(
-              padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              padding: EdgeInsets.fromLTRB(16, 8, 8, 8),
               decoration: BoxDecoration(
                   border: Border.all(color: lightGrayColor),
                   borderRadius: BorderRadius.circular(6)),
@@ -104,7 +103,7 @@ class _PostFilterState extends State<PostFilter> {
                 ),
                 child: Row(
                   children: [
-                    Text(_selectedRegionFilter,
+                    Text(selectedRegionFilter,
                         style: Theme.of(context).textTheme.titleSmall),
                     Icon(Icons.filter_alt_outlined),
                   ],
@@ -115,7 +114,7 @@ class _PostFilterState extends State<PostFilter> {
           width: 16,
         ),
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: EdgeInsets.fromLTRB(16, 8, 8, 8),
           decoration: BoxDecoration(
             border: Border.all(color: lightGrayColor),
             borderRadius: BorderRadius.circular(6),
@@ -130,21 +129,21 @@ class _PostFilterState extends State<PostFilter> {
               color: Colors.transparent,
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
-                  value: _selectedOrderFilter,
+                  value: selectedOrderFilter,
                   elevation: 1,
                   dropdownColor: Colors.white,
-                  items: _orderFilterList
+                  items: orderFilterList
                       .map((order) => DropdownMenuItem<String>(
                           value: order,
                           child: Text(order,
                               style: Theme.of(context).textTheme.titleSmall)))
                       .toList(),
                   onChanged: (value) {
-                    _orderFilterHandler(value);
-                    _applyFilters(_selectedRegionFilter, _selectedOrderFilter);
-                    setState(() {
+                    orderFilterHandler(value!);
+                    applyFilters(selectedRegionFilter, selectedOrderFilter);
+                    /*setState(() {
                       _selectedOrderFilter = value!;
-                    });
+                    });*/
                   },
                   icon: Icon(Icons.keyboard_arrow_down_outlined),
                   iconSize: 24,
