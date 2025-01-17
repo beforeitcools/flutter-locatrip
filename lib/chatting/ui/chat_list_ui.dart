@@ -59,7 +59,6 @@ class _ChatListUiState extends State<ChatListUi> {
 
   @override
   Widget build(BuildContext context) {
-    // 실시간으로 참조해야 됨 ...? 이거 때문에 websocket 채널 연결한 거였는데 하
     return ListTile(
       hoverColor: Color.fromRGBO(170, 170, 170, 0.1),
       onTap: (){Navigator.push(context, MaterialPageRoute(builder: (context)=> ChatRoomPage(token: token,chatroomId: widget.chatroomId, chatroomName: widget.chatroomName)));},

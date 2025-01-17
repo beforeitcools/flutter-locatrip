@@ -6,16 +6,14 @@ import 'package:flutter_locatrip/Auth/model/auth_model.dart';
 import 'package:flutter_locatrip/Auth/screen/login_screen.dart';
 import 'package:flutter_locatrip/Auth/screen/signup_screen.dart';
 import 'package:flutter_locatrip/auth/model/kakao_key_loader.dart';
-import 'package:flutter_locatrip/auth/model/secure_storage_model.dart';
 import 'package:flutter_locatrip/notification/init_noti.dart';
 import 'package:flutter_locatrip/notification/show_noti.dart';
-import 'package:flutter_locatrip/trip/model/invite_state.dart';
-
+import 'package:flutter_locatrip/trip/screen/trip_invite_screen.dart';
+import 'package:flutter_locatrip/trip/screen/trip_view_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
+import 'package:go_router/go_router.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'Auth/screen/start_screen.dart';
 import 'common/screen/error_screen.dart';
@@ -28,7 +26,6 @@ import 'common/screen/splash_screen.dart';
 import 'common/widget/style.dart' as style;
 
 final AppOverlayObserver appOverlayObserver = AppOverlayObserver();
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,8 +33,6 @@ void main() async {
       await KakaoKeyLoader.getNativeAppKey('KAKAO_NATIVE_APP_KEY');
   KakaoSdk.init(nativeAppKey: '${kakaoNativeAppKey}');
   print('Kakao Native App Key: $kakaoNativeAppKey');
-
-  String? url = await receiveKakaoScheme();
 
   await Firebase.initializeApp();
 
@@ -106,106 +101,76 @@ void main() async {
   runApp(MyApp());
 }
 
-class MyApp extends StatefulWidget {
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
+class MyApp extends StatelessWidget {
   final Future<Widget?> _initFuture = Init.instance.initialize();
 
-  @override
-  void initState() {
-    kakaoSchemeStream.listen((url) {
-      // url에 커스텀 URL 스킴이 할당됩니다. 할당된 스킴의 활용 코드를 작성합니다.
-      print('url $url');
-      // 로그인 상태인지 확인
-      if (url != null) {
-        Uri uri = Uri.parse(url);
-        // 쿼리 파라미터 추출
-        print('uri $uri');
-        String? tripId = uri.queryParameters['tripId'];
-        String? userId = uri.queryParameters['userId'];
-        print('tripId $tripId userId $userId');
-        if (tripId != null && userId != null) handleKakaoScheme(tripId, userId);
-      }
-    }, onError: (e) {
-      // 에러 상황의 예외 처리 코드를 작성합니다.
-      print('에러메시지 $e');
-    });
-  }
-
-  void handleKakaoScheme(String tripId, String userId) async {
-    // 받아온 tripId를 inviteId로 저장
-    int? tripIdInt = int.tryParse(tripId);
-
-    if (tripIdInt == null) {
-      print('변환 실패');
-    } else {
-      print(tripIdInt);
-    }
-
-    int? userIdInt = int.tryParse(userId);
-
-    if (userIdInt == null) {
-      print('변환 실패');
-    } else {
-      print(userIdInt);
-    }
-
-    final inviteState = Provider.of<InviteState>(
-      navigatorKey.currentContext!,
-      listen: false,
-    );
-    inviteState.setInviteId(tripIdInt);
-    inviteState.setHostId(userIdInt);
-
-    final SecureStorageModel secureStorageModel = SecureStorageModel();
-    bool isLoggedIn = await secureStorageModel.isUserLoggedIn();
-    if (isLoggedIn) {
-      print('로그인! 되어있음!!');
-      // 안전한 Navigator 사용
-      navigatorKey.currentState?.push(
-        MaterialPageRoute(
-          builder: (context) => HomeScreen(),
-        ),
-      );
-    } else {
-      navigatorKey.currentState?.push(
-        MaterialPageRoute(
-          builder: (context) => LoginScreen(),
-        ),
-      );
-    }
-  }
+  /// The route configuration.
+  final GoRouter _router = GoRouter(
+    initialLocation: '/',
+    routes: <RouteBase>[
+      GoRoute(
+        path: '/',
+        builder: (BuildContext context, GoRouterState state) {
+          // 자동 로그인 여부에 따라 초기 화면 설정
+          final autoLogin = state.extra as bool? ?? false;
+          return autoLogin ? HomeScreen() : StartScreen();
+        },
+        routes: <RouteBase>[
+          GoRoute(
+            path: '/home',
+            builder: (BuildContext context, GoRouterState state) =>
+                HomeScreen(),
+          ),
+          GoRoute(
+            path: '/start',
+            builder: (BuildContext context, GoRouterState state) =>
+                StartScreen(),
+          ),
+          GoRoute(
+            path: '/login',
+            builder: (BuildContext context, GoRouterState state) =>
+                LoginScreen(),
+          ),
+          GoRoute(
+            path: '/signup',
+            builder: (BuildContext context, GoRouterState state) =>
+                SignupScreen(),
+          ),
+          /*  GoRoute(
+            path: '/tripInvite',
+            builder: (BuildContext context, GoRouterState state) {
+              final tripId = state.uri.queryParameters['tripId'];
+              print('Received tripId: $tripId'); // 디버깅용 로그
+              if (tripId == null) {
+                return ErrorScreen();
+              }
+              // return TripInviteScreen(tripId: tripId);
+            },
+          ),*/
+        ],
+      ),
+    ],
+  );
 
   @override
   Widget build(BuildContext context) {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
-    return FutureBuilder(
-      future: _initFuture,
-      builder: (context, AsyncSnapshot snapshot) {
+    return FutureBuilder<bool>(
+      future: _initFuture.then((screen) => screen is HomeScreen),
+      builder: (context, AsyncSnapshot<bool> snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return MaterialApp(home: SplashScreen());
         } else if (snapshot.hasError) {
           return MaterialApp(home: ErrorScreen());
         } else {
-          return ChangeNotifierProvider(
-              create: (context) => InviteState(),
-              child: MaterialApp(
-                navigatorKey: navigatorKey,
-                theme: style.theme,
-                debugShowCheckedModeBanner: false,
-                home: snapshot.data, // 로딩 완료시 HomeScreen()
-                routes: {
-                  "/home": (context) => HomeScreen(),
-                  "/start": (context) => StartScreen(),
-                  "/login": (context) => LoginScreen(),
-                  "/signup": (context) => SignupScreen(),
-                },
-                navigatorObservers: [appOverlayObserver],
-              ));
+          final isAutoLogin = snapshot.data ?? false;
+          Init.instance.isAutoLogin = isAutoLogin; // 로그인 상태 저장
+          return MaterialApp.router(
+            routerConfig: _router,
+            theme: style.theme,
+            debugShowCheckedModeBanner: false,
+          );
         }
       },
     );
@@ -216,6 +181,7 @@ class Init {
   Init._();
   static final instance = Init._();
   Future<Widget?>? _initFuture; // 다중 실행 방지를 위한 캐싱
+  bool isAutoLogin = false;
 
   Future<Widget?> initialize() {
     if (_initFuture == null) {
@@ -250,16 +216,19 @@ class Init {
 
       try {
         await _authModel.login(loginData);
+        isAutoLogin = true;
         // 자동 로그인 성공
         return HomeScreen();
       } catch (e) {
         print(e);
+        isAutoLogin = false;
         // 자동 로그인 실패
         return StartScreen();
       }
     }
     // 자동 로그인 off
     else {
+      isAutoLogin = false;
       return StartScreen();
     }
   }

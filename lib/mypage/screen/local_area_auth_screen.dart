@@ -182,126 +182,134 @@ class _LocalAreaAuthScreenState extends State<LocalAreaAuthScreen> {
         ? LatLng(latitude!, longitude!)
         : LatLng(37.514575, 127.0495556);
 
-    return Stack(
-      children: [
-        Scaffold(
-          appBar: AppBar(
-            title: Text("현지인 인증하기",
-                style: Theme.of(context).textTheme.headlineLarge),
-          ),
-          body: SingleChildScrollView(
-            child: IntrinsicHeight(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(0, 0, 0, 16),
-                child: Center(
-                  child: Column(
-                    children: [
-                      latitude != null && longitude != null
-                          ? Container(
-                              height: screenHeight / 2.5,
-                              child: GoogleMap(
-                                initialCameraPosition: CameraPosition(
-                                    target: LatLng(_mapCenter.latitude,
-                                        _mapCenter.longitude),
-                                    zoom: 15),
-                                myLocationEnabled: true,
-                                myLocationButtonEnabled: true,
-                                onMapCreated: (GoogleMapController controller) {
-                                  mapController = controller;
-                                },
-                                markers: _markers,
-                                onCameraMove: (CameraPosition position) {
-                                  setState(() {
-                                    _mapCenter = position.target;
-                                    latitude = _mapCenter.latitude;
-                                    longitude = _mapCenter.longitude;
-                                    print('_mapCenter $_mapCenter');
-                                  });
-                                },
-                                zoomGesturesEnabled: true,
-                                tiltGesturesEnabled: true,
+    return WillPopScope(
+      onWillPop: () async {
+        // Pass true when the back button is pressed
+        Navigator.pop(context, true);
+        return false; // Prevent default back navigation
+      },
+      child: Stack(
+        children: [
+          Scaffold(
+            appBar: AppBar(
+              title: Text("현지인 인증하기",
+                  style: Theme.of(context).textTheme.headlineLarge),
+            ),
+            body: SingleChildScrollView(
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(0, 0, 0, 16),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        latitude != null && longitude != null
+                            ? Container(
+                                height: screenHeight / 2.5,
+                                child: GoogleMap(
+                                  initialCameraPosition: CameraPosition(
+                                      target: LatLng(_mapCenter.latitude,
+                                          _mapCenter.longitude),
+                                      zoom: 15),
+                                  myLocationEnabled: true,
+                                  myLocationButtonEnabled: true,
+                                  onMapCreated:
+                                      (GoogleMapController controller) {
+                                    mapController = controller;
+                                  },
+                                  markers: _markers,
+                                  onCameraMove: (CameraPosition position) {
+                                    setState(() {
+                                      _mapCenter = position.target;
+                                      latitude = _mapCenter.latitude;
+                                      longitude = _mapCenter.longitude;
+                                      print('_mapCenter $_mapCenter');
+                                    });
+                                  },
+                                  zoomGesturesEnabled: true,
+                                  tiltGesturesEnabled: true,
+                                ),
+                              )
+                            : Center(
+                                heightFactor: 12,
+                                child: CircularProgressIndicator()),
+                        SizedBox(
+                          height: 16,
+                        ),
+                        Text(administrativeDistrict.isNotEmpty
+                            ? "현재 위치: $administrativeDistrict"
+                            : "현재 위치를 가져오는 중..."),
+                        SizedBox(
+                          height: 16,
+                        ),
+                        Text("인증된 지역: $authenticatedLocalArea"),
+                        SizedBox(
+                          height: 16,
+                        ),
+                        Text("마지막 인증: $authenticatedDate"),
+                        SizedBox(
+                          height: 16,
+                        ),
+                        Text("남은 인증 유효기간: $daysLeftUntilAuthExpire 일"),
+                        SizedBox(
+                          height: 16,
+                        ),
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
+                          child: TextButton(
+                            onPressed: !_isButtonEnabled
+                                ? null
+                                : () {
+                                    CustomDialog.show(
+                                        context,
+                                        "현재 위치 : $administrativeDistrict로 현지인 인증 하시겠습니까?",
+                                        "인증하기",
+                                        () => updateLocalAreaAuthentication(
+                                            administrativeDistrict));
+                                  },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "현재 위치로 현지인 인증하기",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelLarge
+                                      ?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white),
+                                ),
+                              ],
+                            ),
+                            style: TextButton.styleFrom(
+                              minimumSize: Size(380, 60),
+                              backgroundColor:
+                                  _isButtonEnabled ? pointBlueColor : grayColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                            )
-                          : Center(
-                              heightFactor: 12,
-                              child: CircularProgressIndicator()),
-                      SizedBox(
-                        height: 16,
-                      ),
-                      Text(administrativeDistrict.isNotEmpty
-                          ? "현재 위치: $administrativeDistrict"
-                          : "현재 위치를 가져오는 중..."),
-                      SizedBox(
-                        height: 16,
-                      ),
-                      Text("인증된 지역: $authenticatedLocalArea"),
-                      SizedBox(
-                        height: 16,
-                      ),
-                      Text("마지막 인증: $authenticatedDate"),
-                      SizedBox(
-                        height: 16,
-                      ),
-                      Text("남은 인증 유효기간: $daysLeftUntilAuthExpire 일"),
-                      SizedBox(
-                        height: 16,
-                      ),
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-                        child: TextButton(
-                          onPressed: !_isButtonEnabled
-                              ? null
-                              : () {
-                                  CustomDialog.show(
-                                      context,
-                                      "현재 위치 : $administrativeDistrict로 현지인 인증 하시겠습니까?",
-                                      "인증하기",
-                                      () => updateLocalAreaAuthentication(
-                                          administrativeDistrict));
-                                },
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "현재 위치로 현지인 인증하기",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelLarge
-                                    ?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white),
-                              ),
-                            ],
-                          ),
-                          style: TextButton.styleFrom(
-                            minimumSize: Size(380, 60),
-                            backgroundColor:
-                                _isButtonEnabled ? pointBlueColor : grayColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-        if (_isLoading)
-          Container(
-            color: Colors.black54,
-            child: Center(
-              child: Image.asset(
-                'assets/splash_screen_image.gif',
-                width: 100,
-                height: 100,
+          if (_isLoading)
+            Container(
+              color: Colors.black54,
+              child: Center(
+                child: Image.asset(
+                  'assets/splash_screen_image.gif',
+                  width: 100,
+                  height: 100,
+                ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
