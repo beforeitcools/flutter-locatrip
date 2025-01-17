@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/chatting/model/chat_model.dart';
 import 'package:flutter_locatrip/common/model/local_area_auth_controller.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/common/widget/loading_screen.dart';
@@ -28,6 +29,7 @@ class _UserpageScreenState extends State<UserpageScreen> {
   late String _localArea = '';
   late String _badgelocalArea = '';
   final MypageModel _mypageModel = MypageModel();
+  final ChatModel _chatModel = ChatModel();
 
   Future<void> _loadMypageData(int userId) async {
     try {
@@ -267,7 +269,7 @@ class _UserpageScreenState extends State<UserpageScreen> {
                     height: 16,
                   ),
                   TextButton.icon(
-                    onPressed: () {},
+                    onPressed: () { /*TODO 채팅 기능 넣어!!!!!!!!!!!!!*/ _chatModel.chattingRoomForOTO(userId, _nickname, context);},
                     icon: Icon(Icons.sms_outlined),
                     label: Text(
                       "채팅하기",

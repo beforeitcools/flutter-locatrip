@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/chatting/model/chat_model.dart';
 import 'package:flutter_locatrip/chatting/model/socket_modules.dart';
 
 class TestEdittingPage extends StatefulWidget {
@@ -11,6 +12,7 @@ class TestEdittingPage extends StatefulWidget {
 
 class _TestEdittingPageState extends State<TestEdittingPage> {
   final SocketModules _socketModules = SocketModules();
+  final ChatModel _chatModel = ChatModel();
   late bool _editState = false;
 
   // init 할 때 현재 상태 가져옴
@@ -49,6 +51,7 @@ class _TestEdittingPageState extends State<TestEdittingPage> {
       ),
       body:Column(
         children: [
+          ElevatedButton(onPressed: (){_chatModel.chattingRoomForOTO(2, "honeybee", context);}, child: Text("chatroom with 1")),
           TextButton(onPressed: (){_editMyTrips();}, child: Text("상태 변경")),
           TextButton(
               onPressed:(){ // 받아올 유저 아이디, 유저 이름, context

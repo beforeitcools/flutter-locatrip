@@ -11,9 +11,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ChatRoomPage extends StatefulWidget {
-  ChatRoomPage({super.key, required this.token, required this.chatroomId, required this.chatroomName});
-  String token;
-  final String chatroomName;
+  ChatRoomPage({super.key, required this.chatroomId, required this.chatroomName});
+  String chatroomName;
   final int chatroomId;
 
   @override
