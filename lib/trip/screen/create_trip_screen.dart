@@ -160,7 +160,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                                                       ClipRRect(
                                                         borderRadius:
                                                             BorderRadius
-                                                                .circular(12),
+                                                                .circular(999),
                                                         child: Image.asset(
                                                           region["imageUrl"]
                                                                   .toString() ??
@@ -173,18 +173,21 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                                                                   stackTrace) {
                                                             return Image.asset(
                                                               defaultImageUrl,
-                                                              width: 50,
-                                                              height: 50,
+                                                              width: 30,
+                                                              height: 30,
                                                             );
                                                           },
                                                         ),
+                                                      ),
+                                                      SizedBox(
+                                                        height: 4,
                                                       ),
                                                       Text(
                                                         region["name"]
                                                             .toString(),
                                                         style: Theme.of(context)
                                                             .textTheme
-                                                            .labelSmall
+                                                            .bodySmall
                                                             ?.copyWith(
                                                                 color:
                                                                     grayColor),
@@ -207,7 +210,9 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                                                           BorderStyle.solid))),
                                           child: TextButton(
                                               style: TextButton.styleFrom(
-                                                padding: EdgeInsets.all(16),
+                                                padding: EdgeInsets.symmetric(
+                                                    vertical: 16,
+                                                    horizontal: 0),
                                                 alignment: Alignment.centerLeft,
                                               ),
                                               onPressed: () {
@@ -242,27 +247,29 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                                           },
                                           maxLength: 20,
                                           decoration: InputDecoration(
-                                            hintText: "여행 제목",
-                                            hintStyle: Theme.of(context)
-                                                .textTheme
-                                                .bodyMedium
-                                                ?.copyWith(color: grayColor),
-                                            enabledBorder: UnderlineInputBorder(
-                                              borderSide: BorderSide(
-                                                width: 0,
-                                                color: Colors.transparent,
+                                              isDense: true,
+                                              hintText: "여행 제목",
+                                              hintStyle: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.copyWith(color: grayColor),
+                                              enabledBorder:
+                                                  UnderlineInputBorder(
+                                                borderSide: BorderSide(
+                                                  width: 0,
+                                                  color: Colors.transparent,
+                                                ),
                                               ),
-                                            ),
-                                            focusedBorder: UnderlineInputBorder(
-                                              borderSide: BorderSide(
-                                                width: 0, // 포커스 시 하단 밑줄 제거
-                                                color: Colors.transparent,
+                                              focusedBorder:
+                                                  UnderlineInputBorder(
+                                                borderSide: BorderSide(
+                                                  width: 0, // 포커스 시 하단 밑줄 제거
+                                                  color: Colors.transparent,
+                                                ),
                                               ),
-                                            ),
-                                            contentPadding: EdgeInsets.fromLTRB(
-                                                16, 16, 16, 0),
-                                            border: InputBorder.none,
-                                          ),
+                                              border: InputBorder.none,
+                                              contentPadding:
+                                                  EdgeInsets.only(top: 16)),
                                           style: Theme.of(context)
                                               .textTheme
                                               .bodyMedium,

@@ -35,7 +35,6 @@ void main() async {
   String? kakaoNativeAppKey =
       await KakaoKeyLoader.getNativeAppKey('KAKAO_NATIVE_APP_KEY');
   KakaoSdk.init(nativeAppKey: '${kakaoNativeAppKey}');
-  print('Kakao Native App Key: $kakaoNativeAppKey');
 
   String? url = await receiveKakaoScheme();
 
@@ -117,40 +116,31 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     kakaoSchemeStream.listen((url) {
-      // url에 커스텀 URL 스킴이 할당됩니다. 할당된 스킴의 활용 코드를 작성합니다.
-      print('url $url');
       // 로그인 상태인지 확인
       if (url != null) {
         Uri uri = Uri.parse(url);
         // 쿼리 파라미터 추출
-        print('uri $uri');
+
         String? tripId = uri.queryParameters['tripId'];
         String? userId = uri.queryParameters['userId'];
-        print('tripId $tripId userId $userId');
+
         if (tripId != null && userId != null) handleKakaoScheme(tripId, userId);
       }
     }, onError: (e) {
-      // 에러 상황의 예외 처리 코드를 작성합니다.
       print('에러메시지 $e');
     });
   }
 
   void handleKakaoScheme(String tripId, String userId) async {
-    // 받아온 tripId를 inviteId로 저장
     int? tripIdInt = int.tryParse(tripId);
+    int? userIdInt = int.tryParse(userId);
 
     if (tripIdInt == null) {
       print('변환 실패');
-    } else {
-      print(tripIdInt);
     }
-
-    int? userIdInt = int.tryParse(userId);
 
     if (userIdInt == null) {
       print('변환 실패');
-    } else {
-      print(userIdInt);
     }
 
     final inviteState = Provider.of<InviteState>(
@@ -163,19 +153,9 @@ class _MyAppState extends State<MyApp> {
     final SecureStorageModel secureStorageModel = SecureStorageModel();
     bool isLoggedIn = await secureStorageModel.isUserLoggedIn();
     if (isLoggedIn) {
-      print('로그인! 되어있음!!');
-      // 안전한 Navigator 사용
-      navigatorKey.currentState?.push(
-        MaterialPageRoute(
-          builder: (context) => HomeScreen(),
-        ),
-      );
+      navigatorKey.currentState?.pushReplacementNamed("/home");
     } else {
-      navigatorKey.currentState?.push(
-        MaterialPageRoute(
-          builder: (context) => LoginScreen(),
-        ),
-      );
+      navigatorKey.currentState?.pushReplacementNamed("/login");
     }
   }
 

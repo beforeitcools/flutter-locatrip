@@ -15,14 +15,10 @@ import '../model/product_image_provider.dart';
 
 class LocationDetailScreen extends StatefulWidget {
   final Place place;
-  // final Map<String, bool> favoriteStatus;
-  // final List<Map<String, bool>> favoriteStatusList;
 
   const LocationDetailScreen({
     super.key,
     required this.place,
-    // required this.favoriteStatus,
-    // required this.favoriteStatusList
   });
 
   @override
@@ -40,12 +36,8 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
   late Place _place;
   PlaceDetail? _placeDetail;
   bool _isLoading = false;
-  // bool _isFavorite = false;
 
   bool _isExpanded = false;
-
-  // Map<String, bool> _favoriteStatus = {};
-  // List<Map<String, bool>> _favoriteStatusList = [];
   bool _isFavorite = false;
 
   void _handlePageChange(int newIndex) {
@@ -90,9 +82,6 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
     _loadDetail(_place.id);
     setState(() {
       AppOverlayController.removeOverlay();
-      // _favoriteStatusList = widget.favoriteStatusList;
-      // _favoriteStatus = widget.favoriteStatus;
-      // print('_favoriteStatus $_favoriteStatus');
     });
   }
 

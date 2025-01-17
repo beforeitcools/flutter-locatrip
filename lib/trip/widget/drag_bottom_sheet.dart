@@ -413,7 +413,6 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
         _updateListTileKeys(day, dayPlaceList);
       }
     });
-    print('빌드_groupedTripDayAllList$_groupedTripDayAllList');
 
     double screenWidth = MediaQuery.of(context).size.width;
 
