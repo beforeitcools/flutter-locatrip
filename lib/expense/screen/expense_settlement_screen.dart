@@ -167,13 +167,13 @@ class _ExpenseSettlementScreenState extends State<ExpenseSettlementScreen> {
 
             // 기존의 '누가 누구에게' 섹션
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(10.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Divider(
                     height: 1,
-                    thickness: 0.3,
+                    thickness: 0.8,
                     color: grayColor,
                   ),
                   SizedBox(height: 16),
@@ -193,7 +193,7 @@ class _ExpenseSettlementScreenState extends State<ExpenseSettlementScreen> {
                   SizedBox(height: 16), // 텍스트와 선 사이의 간격
                   Divider(
                     height: 1,
-                    thickness: 0.5,
+                    thickness: 0.8,
                     color: grayColor,
                   ),
                   SizedBox(height: 16),
@@ -263,7 +263,7 @@ class _ExpenseSettlementScreenState extends State<ExpenseSettlementScreen> {
                 children: [
                   Divider(
                     height: 1,
-                    thickness: 0.5,
+                    thickness: 0.8,
                     color: grayColor,
                   ),
                   SizedBox(height: 16),
@@ -274,7 +274,7 @@ class _ExpenseSettlementScreenState extends State<ExpenseSettlementScreen> {
                   SizedBox(height: 16),
                   Divider(
                     height: 1,
-                    thickness: 0.4,
+                    thickness: 0.8,
                     color: grayColor,
                   ),
                   SizedBox(height: 8),

@@ -43,7 +43,7 @@ class _MainScreenState extends State<MainScreen> {
     _inviteId = Provider.of<InviteState>(context, listen: false).inviteId;
     _hostId = Provider.of<InviteState>(context, listen: false).hostId;
 
-    // 일정에 참여 중인 유저인지 확인
+    // 일정에 참여중인 유저인지 확인
     if (_inviteId != null && _hostId != null) _isExistTripUser();
 
     _getUserInfo();
@@ -254,6 +254,7 @@ class _MainScreenState extends State<MainScreen> {
         ),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
+          // 닫기 버튼
           TextButton(
             onPressed: () {
               Provider.of<InviteState>(context, listen: false)
@@ -289,6 +290,9 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 초대 됐는지 확인
+    // String? inviteId = Provider.of<InviteState>(context).inviteId;
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(64),
