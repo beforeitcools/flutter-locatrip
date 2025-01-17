@@ -42,7 +42,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
   final MypageModel _mypageModel = MypageModel();
 
   late final int userId;
-  bool isUserChecked = false; // 같은 유저인지 확인
+
   late String _nickName;
 
   final DraggableScrollableController sheetController =
@@ -133,13 +133,8 @@ class _TripViewScreenState extends State<TripViewScreen> {
       Map<String, dynamic> result =
           await _tripModel.selectTrip(widget.tripId, context);
 
-      final FlutterSecureStorage _storage = FlutterSecureStorage();
-      final dynamic stringId = await _storage.read(key: 'userId');
-      userId = int.tryParse(stringId) ?? 0;
-
       if (result.isNotEmpty) {
         setState(() {
-          if (userId == result["userId"]) isUserChecked = true;
           tripInfo.addAll(result["trip"]);
           _unreadAlarmExists = result["unreadAlarmExists"];
 
@@ -460,7 +455,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
       setState(() {
         latitude = locations.first.latitude;
         longitude = locations.first.longitude;
-
+        print('현재 지역 latitude$latitude longitude$longitude');
         tripInfo['latitude'] = locations.first.latitude;
         tripInfo['longitude'] = locations.first.longitude;
       });
@@ -569,7 +564,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
             });
       }
     } catch (e) {
-      print('에러메시지 $e');
+      print('에러메시지4 $e');
     }
   }
 
@@ -604,7 +599,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
         tripId = tripInfo["id"];
       }
     }
-    print('_nickName$_nickName$region$regionLength$tripId$userId');
+
     Map<String, String> templateArgs = {
       'USER': _nickName,
       'TRIP': '${region}${elseString} 도시 여행',
@@ -640,7 +635,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
         _nickName = result["user"]['nickname'];
       }
     } catch (e) {
-      print('에러메시지 $e');
+      print('에러메시지5 $e');
     }
   }
 
@@ -651,6 +646,8 @@ class _TripViewScreenState extends State<TripViewScreen> {
         : "${formatDate(tripInfo['startDate'])} ~ ${formatDate(tripInfo['endDate'])}";
 
     double screenHeight = MediaQuery.of(context).size.height;
+
+    print('!?!latitude $latitude');
 
     // isEditing이 true일 때 스크롤 위치를 설정
     if (isEditing) {
@@ -805,46 +802,38 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                                   ),
                                                 ),
                                               ),
-
                                               SizedBox(
                                                 width: 16,
                                               ),
+                                              TextButton(
+                                                  onPressed: () {
+                                                    showModalBottomSheet(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            EditBottomSheet());
+                                                  },
+                                                  style: TextButton.styleFrom(
+                                                    padding: EdgeInsets.zero,
+                                                    minimumSize: Size(
+                                                      0,
+                                                      0,
+                                                    ),
 
-                                              // 권한 있는 사람만 편집가능
-                                              isUserChecked
-                                                  ? TextButton(
-                                                      onPressed: () {
-                                                        showModalBottomSheet(
-                                                            context: context,
-                                                            builder: (context) =>
-                                                                EditBottomSheet());
-                                                      },
-                                                      style:
-                                                          TextButton.styleFrom(
-                                                        padding:
-                                                            EdgeInsets.zero,
-                                                        minimumSize: Size(
-                                                          0,
-                                                          0,
+                                                    tapTargetSize:
+                                                        MaterialTapTargetSize
+                                                            .shrinkWrap, // 터치 영역 최소화
+                                                  ),
+                                                  child: Text(
+                                                    "편집",
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodySmall
+                                                        ?.copyWith(
+                                                          color: grayColor,
+                                                          fontWeight:
+                                                              FontWeight.w600,
                                                         ),
-
-                                                        tapTargetSize:
-                                                            MaterialTapTargetSize
-                                                                .shrinkWrap, // 터치 영역 최소화
-                                                      ),
-                                                      child: Text(
-                                                        "편집",
-                                                        style: Theme.of(context)
-                                                            .textTheme
-                                                            .bodySmall
-                                                            ?.copyWith(
-                                                              color: grayColor,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600,
-                                                            ),
-                                                      ))
-                                                  : SizedBox.shrink(),
+                                                  ))
                                             ],
                                           ),
                                           SizedBox(height: 8),
@@ -989,7 +978,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) =>
-                                                  ChecklistScreen(tripId: tripInfo["id"], userId: userId),
+                                                  ChecklistScreen(
+                                                      tripId: tripInfo["id"],
+                                                      userId: userId),
                                             ),
                                           );
                                         },
@@ -1052,7 +1043,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
                             Container(
                               height: 260,
                               child: GoogleMap(
-                                zoomControlsEnabled: true,
+                                zoomControlsEnabled: false,
                                 zoomGesturesEnabled: true,
                                 initialCameraPosition: CameraPosition(
                                     target:

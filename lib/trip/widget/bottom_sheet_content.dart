@@ -3,6 +3,7 @@ import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/trip/model/region_model.dart';
 import 'package:flutter_locatrip/trip/widget/no_result.dart';
 
+import '../model/recommend_region.dart';
 import '../screen/create_trip_screen.dart';
 
 class BottomSheetContent extends StatefulWidget {
@@ -20,50 +21,8 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
 
   // 우리나라 시군
   List<Map<String, String>> _allRegionsList = [];
-
-  // 추천 장소들
+// 추천 장소들
   List<Map<String, String>> _recommendedRegions = [];
-  List _recommendedNames = [
-    "가평",
-    "양평",
-    "강릉",
-    "속초",
-    "경주",
-    "부산",
-    "여수",
-    "인천",
-    "전주",
-    "제주",
-    "춘천",
-    "홍천",
-    "태안",
-    "통영",
-    "거제",
-    "남해",
-    "포항",
-    "안동"
-  ];
-
-  Map<String, String> regionImages = {
-    "가평": "assets/images/gapyeong.jpg",
-    "양평": "assets/images/yangpyeong.jpg",
-    "강릉": "assets/images/gangneung.jpg",
-    "속초": "assets/images/sokcho.jpg",
-    "경주": "assets/images/gyeongju.jpg",
-    "부산": "assets/images/busan.jpg",
-    "여수": "assets/images/yeosu.jpg",
-    "인천": "assets/images/incheon.jpg",
-    "전주": "assets/images/jeonju.jpg",
-    "제주": "assets/images/jeju.jpg",
-    "춘천": "assets/images/chuncheon.jpg",
-    "홍천": "assets/images/hongcheon.jpg",
-    "태안": "assets/images/taean.jpg",
-    "통영": "assets/images/tongyeong.jpg",
-    "거제": "assets/images/geoje.jpg",
-    "남해": "assets/images/namhae.jpg",
-    "포항": "assets/images/pohang.jpg",
-    "안동": "assets/images/andong.jpg"
-  };
 
   // 기본 이미지 (이미지가 없는 경우)
   final String defaultImageUrl = "assets/imgPlaceholder.png";
@@ -90,7 +49,7 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
 
       // 추천 지역 필터링
       _recommendedRegions = List<Map<String, String>>.from(_allRegionsList
-          .where((region) => _recommendedNames.contains(region['name']))
+          .where((region) => recommendedNames.contains(region['name']))
           .map((region) => {
                 ...region,
                 "imageUrl": regionImages[region['name']] ?? defaultImageUrl,

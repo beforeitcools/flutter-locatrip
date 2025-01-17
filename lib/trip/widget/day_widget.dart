@@ -314,11 +314,14 @@ class _DayWidgetState extends State<DayWidget> {
             widget.listTileKeys.add(GlobalKey());
             widget.listTileKeys2.add(GlobalKey());
 
+            print('이거 실행돼?1');
+            print('_dayPlace $_dayPlace');
             widget.mapController!.animateCamera(
               CameraUpdate.newLatLng(LatLng(
                   _dayPlace["place"].location.latitude!,
                   _dayPlace["place"].location.longitude!)),
             );
+            print('이거 실행돼?끗');
           } else {
             print("이미 추가된 장소입니다.");
           }
@@ -340,15 +343,14 @@ class _DayWidgetState extends State<DayWidget> {
 
   Future<void> _navigateAndDisplaySelection(BuildContext context) async {
     _tripInfo["day"] = index;
-    print('index $index');
 
-    final Map<String, dynamic> receiver = await Navigator.push(
+    final receiver = await Navigator.push(
         context,
         MaterialPageRoute(
             builder: (context) => SearchPlaceScreen(
                   tripInfo: _tripInfo,
                 )));
-    if (receiver != null) {
+    if (receiver != null && receiver is Map<String, dynamic>) {
       setState(() {
         Place selectedPlace = receiver['place'];
         _dayPlace = {
@@ -356,12 +358,13 @@ class _DayWidgetState extends State<DayWidget> {
           "day": receiver["day"],
           "dateIndex": receiver["dateIndex"],
         };
+        print('제대로 담고있니? $_dayPlace');
       });
 
       _saveTripDayLocation();
     } else {
       print(
-          'Receiver is null: User might have navigated back without selecting anything.');
+          'Receiver is null or not a Map<String, dynamic>: User might have navigated back without selecting anything.');
     }
   }
 
