@@ -23,7 +23,6 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
   final ChecklistModel _checklistModel = ChecklistModel();
   List<dynamic> _categories = [];
   List<int> _selectedItemIds = [];
-  int _selectedIndex = 0;
   bool _isEditing = false;
   String region = '지역을 불러오는 중...';
   String tripDuration = '여행 기간을 불러오는 중...';
@@ -342,11 +341,6 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
     }
   }
 
-  void _onTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -531,23 +525,6 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
               ),
             ),
           ),
-        ],
-      ),
-
-        bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onTapped,
-        items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined), label: "홈"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.map_outlined), label: "지도"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.recommend_outlined), label: "여행첨삭소"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.sms_outlined), label: "채팅"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.account_circle_outlined), label: "마이페이지"),
         ],
       ),
     );

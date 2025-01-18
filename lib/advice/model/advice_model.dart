@@ -65,4 +65,26 @@ class AdviceModel {
       throw Exception("Error: $e");
     }
   }
+
+  Future<List<dynamic>> checkIfUserHasTrips(BuildContext context) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    final FlutterSecureStorage storage = FlutterSecureStorage();
+    final dynamic stringId = await storage.read(key: 'userId');
+    final int userId = int.tryParse(stringId) ?? 0;
+
+    try {
+      final response = await dio.get("$backUrl/advice/checkValidTrips/$userId");
+
+      if (response.statusCode == 200) {
+        return response.data as List<dynamic>;
+      } else {
+        throw Exception("데이터 로드 실패");
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error: $e");
+    }
+  }
 }

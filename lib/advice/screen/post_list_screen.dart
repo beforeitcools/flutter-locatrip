@@ -6,6 +6,7 @@ import 'package:flutter_locatrip/advice/widget/post_bottom_sheet.dart';
 import 'package:flutter_locatrip/advice/widget/post_filter.dart';
 import 'package:flutter_locatrip/advice/widget/post_list.dart';
 import 'package:flutter_locatrip/advice/widget/recommendations.dart';
+import 'package:flutter_locatrip/advice/widget/shortage_dialog.dart';
 import 'package:flutter_locatrip/common/screen/alarm_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/common/widget/loading_screen.dart';
@@ -28,8 +29,7 @@ class _PostListScreen extends State<PostListScreen> {
   late List<dynamic> _filteredPost = [];
   final _orderFilterList = ["최신순", "첨삭순"];
   String _selectedOrderFilter = "최신순";
-  // final _regionFilterList = ["전지역", "서울", "부산", "대구", "인천", "광주", "대전", "울산", "세종", "경기", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주"];
-  String _selectedRegionFilter = "전지역";
+  String _selectedRegionFilter = "";
   final AdviceModel _adviceModel = AdviceModel();
 
   void _orderFilterHandler(String selectedOrderFilter) {
@@ -47,14 +47,13 @@ class _PostListScreen extends State<PostListScreen> {
   void _applyFilters(String selectedRegionFilter, String selectedOrderFilter) {
     List<Map<String, dynamic>> filteredPosts = [..._allPosts];
 
-    // Apply region filter if not "전지역"
     if (selectedRegionFilter != "전지역") {
       filteredPosts = filteredPosts
-          .where((post) => post["region"].contains(selectedRegionFilter))
+          .where((post) =>
+              post["selectedRegionsList"].contains(selectedRegionFilter))
           .toList();
     }
 
-    // Apply sorting based on sortOrder
     if (selectedOrderFilter == "최신순") {
       filteredPosts.sort((a, b) =>
           b["createdAt"].compareTo(a["createdAt"])); // Most recent first
@@ -91,6 +90,7 @@ class _PostListScreen extends State<PostListScreen> {
       print(result);
       print(result['postsInMyRegion']);
       print(result['postsInMyRegion'].runtimeType);
+      print(result['unreadAlarmExists']);
       setState(() {
         _postsInMyRegion = result['postsInMyRegion'];
         _allPosts = result['allPosts'];
@@ -149,6 +149,34 @@ class _PostListScreen extends State<PostListScreen> {
     // 기다리다가 돌아오면 트리거
     if (result == true) {
       _reloadPageData();
+    }
+  }
+
+  // 유저가 3개 이상의 장소가 등록된 여행 일정이 있는지 체크 후
+  // dialog 를 보여주던지 bottom sheet 로 여행을 뿌려주던지
+  // 성능을 위해서 한번에 다 가져온다
+  Future<void> _checkIfUserHasTrips() async {
+    try {
+      List<dynamic> userTripData =
+          await _adviceModel.checkIfUserHasTrips(context);
+      print(userTripData);
+      if (userTripData.isEmpty) {
+        showDialog(
+            context: context,
+            builder: (context) {
+              return ShortageDialog();
+            });
+      } else {
+        showModalBottomSheet(
+            context: context,
+            builder: (context) {
+              return PostBottomSheet(trips: userTripData);
+            });
+      }
+    } catch (e) {
+      print("!!!!!!!!!!!!!!!!!!글쓰기 검증중 에러 발생 : $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('글쓰기 검증중 오류가 발생했습니다. 다시 시도해주세요.')));
     }
   }
 
@@ -230,8 +258,7 @@ class _PostListScreen extends State<PostListScreen> {
             ),
           ],
         ),
-        body: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
+        body: Container(
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Recommendations(
@@ -243,7 +270,6 @@ class _PostListScreen extends State<PostListScreen> {
               orderFilterList: _orderFilterList,
               orderFilterHandler: _orderFilterHandler,
               selectedOrderFilter: _selectedOrderFilter,
-              // regionFilterMapList: _regionFilterMapList,
               selectedRegionFilter: _selectedRegionFilter,
               regionFilterHandler: _regionFilterHandler,
               applyFilters: _applyFilters,
@@ -259,12 +285,7 @@ class _PostListScreen extends State<PostListScreen> {
             height: 60,
             child: FloatingActionButton(
               onPressed: () {
-                // showDialog(context: context, builder: (context){return ShortageDialog();});
-                showModalBottomSheet(
-                    context: context,
-                    builder: (context) {
-                      return PostBottomSheet();
-                    });
+                _checkIfUserHasTrips();
               },
               child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,

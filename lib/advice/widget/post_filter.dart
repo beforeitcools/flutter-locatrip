@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/advice/screen/region_select_filter_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
-class PostFilter extends StatefulWidget {
+class PostFilter extends StatelessWidget {
   final List<String> orderFilterList;
   final Function(String) orderFilterHandler;
   String selectedOrderFilter;
-  // final Map<String, List> regionFilterMapList;
   String selectedRegionFilter;
   final Function(String) regionFilterHandler;
   final Function(String, String) applyFilters;
@@ -16,68 +15,16 @@ class PostFilter extends StatefulWidget {
     required this.orderFilterList,
     required this.orderFilterHandler,
     required this.selectedOrderFilter,
-    // required this.regionFilterMapList,
     required this.selectedRegionFilter,
     required this.regionFilterHandler,
     required this.applyFilters,
   });
 
   @override
-  State<PostFilter> createState() => _PostFilterState();
-}
-
-class _PostFilterState extends State<PostFilter> {
-  late List _orderFilterList;
-  late Function _orderFilterHandler;
-  late String _selectedOrderFilter;
-  late Map _regionFilterMapList;
-  late String _selectedRegionFilter;
-  late Function(String) _regionFilterHandler;
-  late Function(String, String) _applyFilters;
-
-  @override
-  void initState() {
-    super.initState();
-    _orderFilterList = widget.orderFilterList;
-    _orderFilterHandler = widget.orderFilterHandler;
-    _selectedOrderFilter = widget.selectedOrderFilter;
-    // _regionFilterMapList = widget.regionFilterMapList;
-    _selectedRegionFilter = widget.selectedRegionFilter;
-    _regionFilterHandler = widget.regionFilterHandler;
-    _applyFilters = widget.applyFilters;
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        /*TextButton.icon(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => RegionSelectFilterScreen(
-                        applyFilters: _applyFilters,
-                        regionFilterHandler: _regionFilterHandler,
-                        selectedRegionFilter: _selectedRegionFilter,
-                        selectedOrderFilter: _selectedOrderFilter,
-                      )),
-            );
-          },
-          label: Text(
-            _selectedRegionFilter,
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          icon: Icon(Icons.filter_alt_outlined),
-          style: TextButton.styleFrom(
-            minimumSize: Size(83, 35),
-            backgroundColor: Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(6),
-            ),
-          ),
-        ),*/
         GestureDetector(
           // 지역 선택 스크린으로 이동
           onTap: () {
@@ -85,15 +32,15 @@ class _PostFilterState extends State<PostFilter> {
               context,
               MaterialPageRoute(
                   builder: (context) => RegionSelectFilterScreen(
-                        applyFilters: _applyFilters,
-                        regionFilterHandler: _regionFilterHandler,
-                        selectedRegionFilter: _selectedRegionFilter,
-                        selectedOrderFilter: _selectedOrderFilter,
+                        applyFilters: applyFilters,
+                        regionFilterHandler: regionFilterHandler,
+                        selectedRegionFilter: selectedRegionFilter,
+                        selectedOrderFilter: selectedOrderFilter,
                       )),
             );
           },
           child: Container(
-              padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              padding: EdgeInsets.fromLTRB(16, 8, 8, 8),
               decoration: BoxDecoration(
                   border: Border.all(color: lightGrayColor),
                   borderRadius: BorderRadius.circular(6)),
@@ -104,7 +51,7 @@ class _PostFilterState extends State<PostFilter> {
                 ),
                 child: Row(
                   children: [
-                    Text(_selectedRegionFilter,
+                    Text(selectedRegionFilter,
                         style: Theme.of(context).textTheme.titleSmall),
                     Icon(Icons.filter_alt_outlined),
                   ],
@@ -115,7 +62,7 @@ class _PostFilterState extends State<PostFilter> {
           width: 16,
         ),
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: EdgeInsets.fromLTRB(16, 8, 8, 8),
           decoration: BoxDecoration(
             border: Border.all(color: lightGrayColor),
             borderRadius: BorderRadius.circular(6),
@@ -130,21 +77,18 @@ class _PostFilterState extends State<PostFilter> {
               color: Colors.transparent,
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
-                  value: _selectedOrderFilter,
+                  value: selectedOrderFilter,
                   elevation: 1,
                   dropdownColor: Colors.white,
-                  items: _orderFilterList
+                  items: orderFilterList
                       .map((order) => DropdownMenuItem<String>(
                           value: order,
                           child: Text(order,
                               style: Theme.of(context).textTheme.titleSmall)))
                       .toList(),
                   onChanged: (value) {
-                    _orderFilterHandler(value);
-                    _applyFilters(_selectedRegionFilter, _selectedOrderFilter);
-                    setState(() {
-                      _selectedOrderFilter = value!;
-                    });
+                    orderFilterHandler(value!);
+                    applyFilters(selectedRegionFilter, selectedOrderFilter);
                   },
                   icon: Icon(Icons.keyboard_arrow_down_outlined),
                   iconSize: 24,
@@ -157,6 +101,9 @@ class _PostFilterState extends State<PostFilter> {
             ),
           ),
         ),
+        SizedBox(
+          width: 16,
+        )
       ],
     );
   }

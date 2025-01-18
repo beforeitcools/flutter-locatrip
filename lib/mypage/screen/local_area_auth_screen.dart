@@ -104,6 +104,25 @@ class _LocalAreaAuthScreenState extends State<LocalAreaAuthScreen> {
     }
   }
 
+  // 행정구역명에서 시,군 빼주는 함수
+  String getFormattedRegionName(String region) {
+    String unformattedRegionName = region.trim();
+    if (unformattedRegionName.endsWith("특별시") ||
+        unformattedRegionName.endsWith("특례시") ||
+        unformattedRegionName.endsWith("광역시")) {
+      return unformattedRegionName.substring(
+          0, unformattedRegionName.length - 3);
+    } else if (unformattedRegionName.endsWith("시") ||
+        (unformattedRegionName.endsWith("군"))) {
+      return unformattedRegionName.substring(
+          0, unformattedRegionName.length - 1);
+    } else if (unformattedRegionName.endsWith("특별자치시")) {
+      return unformattedRegionName.substring(unformattedRegionName.length - 5);
+    } else {
+      return unformattedRegionName;
+    }
+  }
+
   // 행정구역명 알아오기
   Future<void> _getAdministrativeDistrict() async {
     try {
@@ -126,7 +145,9 @@ class _LocalAreaAuthScreenState extends State<LocalAreaAuthScreen> {
           if (component['types'].contains('administrative_area_level_1') &&
               component['long_name'].toString().endsWith("시")) {
             setState(() {
-              administrativeDistrict = component['long_name'];
+              // 시, 군 빼주는 메소드
+              administrativeDistrict =
+                  getFormattedRegionName(component['long_name']);
               _isButtonEnabled = true;
             });
             print("Administrative District: $administrativeDistrict");
@@ -135,7 +156,8 @@ class _LocalAreaAuthScreenState extends State<LocalAreaAuthScreen> {
               (component['long_name'].toString().endsWith("시") ||
                   component['long_name'].toString().endsWith("군"))) {
             setState(() {
-              administrativeDistrict = component['long_name'];
+              administrativeDistrict =
+                  getFormattedRegionName(component['long_name']);
               _isButtonEnabled = true;
             });
             print("Administrative District: $administrativeDistrict");

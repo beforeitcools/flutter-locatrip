@@ -1,11 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/advice/screen/subregion_select_filter_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
-class RegionSelectFilterScreen extends StatelessWidget {
+class RegionSelectFilterScreen extends StatefulWidget {
   final Function(String, String) applyFilters;
   final Function(String) regionFilterHandler;
   String selectedRegionFilter;
   String selectedOrderFilter;
+
+  RegionSelectFilterScreen({
+    super.key,
+    required this.applyFilters,
+    required this.regionFilterHandler,
+    required this.selectedRegionFilter,
+    required this.selectedOrderFilter,
+  });
+
+  @override
+  State<RegionSelectFilterScreen> createState() =>
+      _RegionSelectFilterScreenState();
+}
+
+class _RegionSelectFilterScreenState extends State<RegionSelectFilterScreen> {
+  late Function(String, String) _applyFilters;
+  late Function(String) _regionFilterHandler;
+  late String _selectedRegionFilter;
+  late String _selectedOrderFilter;
   static const Map<String, List> _regionFilterMapList = {
     "전지역": [],
     "서울": [],
@@ -172,13 +192,14 @@ class RegionSelectFilterScreen extends StatelessWidget {
     "제주": ["제주", "서귀포"]
   };
 
-  RegionSelectFilterScreen({
-    super.key,
-    required this.applyFilters,
-    required this.regionFilterHandler,
-    required this.selectedRegionFilter,
-    required this.selectedOrderFilter,
-  });
+  @override
+  void initState() {
+    super.initState();
+    _applyFilters = widget.applyFilters;
+    _regionFilterHandler = widget.regionFilterHandler;
+    _selectedRegionFilter = widget.selectedRegionFilter;
+    _selectedOrderFilter = widget.selectedOrderFilter;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -198,12 +219,33 @@ class RegionSelectFilterScreen extends StatelessWidget {
           itemCount: _regionFilterMapList.length,
           itemBuilder: (context, index) {
             final region = _regionFilterMapList.keys.toList()[index];
-            final bool isSelected = selectedRegionFilter == region;
+            final bool isSelected = _selectedRegionFilter == region;
 
             return ElevatedButton(
               onPressed: () {
-                regionFilterHandler(region);
-                applyFilters(region, selectedOrderFilter);
+                _regionFilterHandler(region);
+                _applyFilters(region, _selectedOrderFilter);
+                setState(() {
+                  _selectedRegionFilter = region;
+                });
+                // 시는 navigator.pop 도는 subregion_select_filter_screen 으로
+                // length 로 가능할지도
+                if (_regionFilterMapList[region]!.isEmpty) {
+                  Navigator.pop(context);
+                } else {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => SubRegionSelectFilterScreen(
+                              applyFilters: _applyFilters,
+                              regionFilterHandler: _regionFilterHandler,
+                              selectedRegionFilter: _selectedRegionFilter,
+                              selectedOrderFilter: _selectedOrderFilter,
+                              subRegionList: _regionFilterMapList[region]!,
+                              selectedRegion: region,
+                            )),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: isSelected ? pointBlueColor : Colors.white,
