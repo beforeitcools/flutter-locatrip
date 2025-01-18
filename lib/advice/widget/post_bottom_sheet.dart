@@ -25,6 +25,7 @@ class _PostBottomSheetState extends State<PostBottomSheet> {
   ];*/
 
   List<bool> _isPressed = [];
+  late int _selectedTripId;
 
   @override
   void initState() {
@@ -36,6 +37,7 @@ class _PostBottomSheetState extends State<PostBottomSheet> {
   void _updateClickState(int index, bool isPressed) {
     setState(() {
       _isPressed[index] = isPressed;
+      _selectedTripId = _trips[index]['tripId'];
     });
   }
 
@@ -85,20 +87,34 @@ class _PostBottomSheetState extends State<PostBottomSheet> {
                                   backgroundColor: grayColor,
                                   child: Icon(Icons.trip_origin,
                                       color: subPointColor)),
-                              title: Text(trip["title"]!,
-                                  style: !_isPressed[index]
-                                      ? Theme.of(context).textTheme.labelMedium
-                                      : Theme.of(context)
-                                          .textTheme
-                                          .labelMedium!
-                                          .copyWith(color: pointBlueColor)),
-                              subtitle: Text(trip["dates"]!,
-                                  style: !_isPressed[index]
-                                      ? Theme.of(context).textTheme.labelMedium
-                                      : Theme.of(context)
-                                          .textTheme
-                                          .labelMedium!
-                                          .copyWith(color: pointBlueColor)),
+                              title: Text(
+                                trip["title"],
+                                style: !_isPressed[index]
+                                    ? Theme.of(context).textTheme.labelMedium
+                                    : Theme.of(context)
+                                        .textTheme
+                                        .labelMedium!
+                                        .copyWith(color: pointBlueColor),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(
+                                "${trip['startDate']} - ${trip['endDate']}",
+                                style: !_isPressed[index]
+                                    ? Theme.of(context).textTheme.labelMedium
+                                    : Theme.of(context)
+                                        .textTheme
+                                        .labelMedium!
+                                        .copyWith(color: pointBlueColor),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              trailing: _isPressed[index]
+                                  ? Icon(
+                                      Icons.check,
+                                      color: pointBlueColor,
+                                    )
+                                  : SizedBox.shrink(),
                             ),
                           );
                         }))
@@ -118,8 +134,9 @@ class _PostBottomSheetState extends State<PostBottomSheet> {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => PostScreen(tripId: 1)));
-              }, // 임시로 2 넣어둠...!!
+                        builder: (context) =>
+                            PostScreen(tripId: _selectedTripId)));
+              },
               child: Text("첨삭받기",
                   style: Theme.of(context)
                       .textTheme

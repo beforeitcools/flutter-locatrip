@@ -36,19 +36,26 @@ class _TripForPostState extends State<TripForAdvice> {
     try {
       int day = 1;
       for (int i = 0; i < _myTrip.length; i++) {
-        if (i > 0 && _myTrip[i - 1]["date"] == _myTrip[i]["date"]) {
-          continue;
-        } else {
+        if(_days.isNotEmpty){
+          for(var d in _days){
+            if(d["date"] == _myTrip[i]["date"]) { continue; }
+            else{
+              String tripDay = "day ${day++}";
+              String tripDate = _myTrip[i]["date"];
+
+              _days.add({"day": tripDay, "date": tripDate});
+              print('my days: $_days');
+            }
+          }
+        }
+        else{
           String tripDay = "day ${day++}";
           String tripDate = _myTrip[i]["date"];
 
           _days.add({"day": tripDay, "date": tripDate});
+          print('my days: $_days');
         }
 
-        setState(() {
-          _days;
-          _schedules = _myTrip.where((trip) => trip["dateIndex"] == (selectedIndex + 1)).toList();
-        });
       }
     } catch (e) {
       print("YOU CANNOT GET YOUR TRIPS $e");
@@ -80,7 +87,7 @@ class _TripForPostState extends State<TripForAdvice> {
                       onTap: () {
                         setState(() {
                           selectedIndex = index;
-                          _schedules = _myTrip.where((trip) => trip["dateIndex"] == (selectedIndex + 1)).toList();
+                          _schedules = _myTrip.where((trip) => trip["dateIndex"] == (selectedIndex)).toList();
                         });
                       },
                       child: Container(
@@ -128,7 +135,7 @@ class _TripForPostState extends State<TripForAdvice> {
                 itemCount: _schedules.length,
                 itemBuilder: (context, index) {
                   return Container(
-                      margin: EdgeInsets.all(16),
+                      margin: EdgeInsets.only(bottom: 16),
                       width: MediaQuery.of(context).size.width,
                       child: Row(children: [
                         CircleAvatar(
@@ -138,6 +145,7 @@ class _TripForPostState extends State<TripForAdvice> {
                         ),
                         Expanded(
                             child: Container(
+                              margin: EdgeInsets.only(left: 16),
                               alignment: Alignment.centerLeft,
                               padding: EdgeInsets.only(left: 16),
                               height: 70,
@@ -145,25 +153,21 @@ class _TripForPostState extends State<TripForAdvice> {
                                   borderRadius: BorderRadius.all(Radius.circular(6)),
                                   boxShadow: [BoxShadow(color: lightGrayColor, blurRadius: 4)],
                                   color: Colors.white),
-                              child: Row(children: [
-                                Column(
-                                  mainAxisSize: MainAxisSize.max,
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Container(
-                                        width: MediaQuery.of(context).size.width,
-                                        child: Text(
-                                            "${_schedules[index]["location"]["name"]}",
-                                            style: Theme.of(context).textTheme.titleMedium)),
-                                    Container(
-                                        width:
-                                        MediaQuery.of(context).size.width,
-                                        child: Text(
-                                            "${_schedules[index]["location"]["category"]} · ${_schedules[index]["location"]["address"]}",
-                                            style: Theme.of(context).textTheme.bodySmall!.copyWith(color: grayColor)))
-                                  ],
-                                ),
-                                IconButton(onPressed: (){/*TODO 바텀바로 첨삭보기, 첨삭하기(현지인의 경우)*/}, icon: Icon(Icons.forum), color: blackColor,)
+                                    Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text("${_schedules[index]["location"]["name"]}",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context).textTheme.titleMedium),
+                                        Text("${_schedules[index]["location"]["category"]} · ${_schedules[index]["location"]["address"]}",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context).textTheme.bodySmall!.copyWith(color: grayColor))],),
+                                    IconButton(onPressed: (){/*TODO 바텀바로 첨삭보기, 첨삭하기(현지인의 경우)*/}, icon: Icon(Icons.forum_outlined), color: blackColor,)
                               ])
                             ))
                       ]));
