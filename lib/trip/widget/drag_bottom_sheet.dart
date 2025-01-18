@@ -495,7 +495,7 @@ class _DragBottomSheetState extends State<DragBottomSheet> {
                           if (_scrollController.position.extentAfter == 0) {
                             _singleScrollController.animateTo(
                               _singleScrollController.offset + 50, // 부모 스크롤 이동
-                              duration: Duration(milliseconds: 200),
+                              duration: Duration(milliseconds: 100),
                               curve: Curves.easeOut,
                             );
                           }

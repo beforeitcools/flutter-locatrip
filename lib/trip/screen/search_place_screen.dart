@@ -120,28 +120,37 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
         });
       } else if ((currentSize - minSize).abs() < tolerance) {
         setState(() {
+          FocusScope.of(context).unfocus();
           isExpanded = false;
         });
       }
     });
 
     _focusNode.addListener(() {
-      if (_focusNode.hasFocus) {
-        // TextField에 커서가 놓일 때 실행할 동작
-        print("TextField is focused");
-        sheetController.animateTo(
-          maxSize,
-          duration: Duration(milliseconds: 100),
-          curve: Curves.easeInOut,
-        );
-      } else {
-        // TextField에서 포커스가 벗어날 때 실행할 동작
-        print("TextField lost focus");
-        sheetController.animateTo(
-          minSize,
-          duration: Duration(milliseconds: 100),
-          curve: Curves.easeInOut,
-        );
+      if (sheetController.isAttached) {
+        if (_focusNode.hasFocus) {
+          if (isExpanded) {
+            setState(() {
+              isExpanded = false;
+            });
+          }
+          sheetController.animateTo(
+            maxSize,
+            duration: Duration(milliseconds: 100),
+            curve: Curves.easeInOut,
+          );
+        } else {
+          if (!isExpanded) {
+            setState(() {
+              isExpanded = true;
+            });
+          }
+          sheetController.animateTo(
+            minSize,
+            duration: Duration(milliseconds: 100),
+            curve: Curves.easeInOut,
+          );
+        }
       }
     });
 
@@ -156,15 +165,16 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
 
   void _toggleSheetHeight() {
     if (isExpanded) {
+      FocusScope.of(context).unfocus();
       sheetController.animateTo(
         minSize,
-        duration: Duration(milliseconds: 300),
+        duration: Duration(milliseconds: 100),
         curve: Curves.easeInOut,
       );
     } else {
       sheetController.animateTo(
         maxSize,
-        duration: Duration(milliseconds: 300),
+        duration: Duration(milliseconds: 100),
         curve: Curves.easeInOut,
       );
     }
@@ -191,10 +201,13 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
             result["results"].isNotEmpty) {
           print('뷰포트result $result');
 
-          var southwest =
-              result["results"][0]["geometry"]["bounds"]["southwest"];
-          var northeast =
-              result["results"][0]["geometry"]["bounds"]["northeast"];
+          var geometry = result["results"][0]["geometry"];
+          var bounds = geometry["bounds"];
+          var viewport = geometry["viewport"];
+
+          // `bounds`가 null인 경우 `viewport` 사용
+          var southwest = bounds?["southwest"] ?? viewport["southwest"];
+          var northeast = bounds?["northeast"] ?? viewport["northeast"];
 
           viewPortMap = {
             "locationBias": {
