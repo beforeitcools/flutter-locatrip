@@ -28,9 +28,42 @@ class _EditBottomSheetState extends State<EditBottomSheet> {
                 .labelSmall
                 ?.copyWith(color: grayColor, fontWeight: FontWeight.w600),
           ),
-          TextButton(onPressed: () {}, child: Text("여행도시 추가 및 편집")),
-          TextButton(onPressed: () {}, child: Text("여행제목 수정")),
-          TextButton(onPressed: () {}, child: Text("여행 나가기")),
+          SizedBox(
+            height: 10,
+          ),
+          TextButton(
+              onPressed: () {},
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 0),
+                minimumSize: Size(0, 0),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                "여행도시 추가 및 편집",
+                style: Theme.of(context).textTheme.labelSmall,
+              )),
+          TextButton(
+              onPressed: () {},
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 0),
+                minimumSize: Size(0, 0),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                "여행제목 수정",
+                style: Theme.of(context).textTheme.labelSmall,
+              )),
+          TextButton(
+              onPressed: () {},
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 0),
+                minimumSize: Size(0, 0),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                "여행 나가기",
+                style: Theme.of(context).textTheme.labelSmall,
+              )),
         ],
       ),
     );

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:geocoding/geocoding.dart';
@@ -5,6 +7,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 
 import '../../map/model/app_overlay_controller.dart';
+import '../../map/model/distance_method.dart';
 import '../../map/model/location_model.dart';
 import '../../map/model/place.dart';
 import '../../map/model/place_api_model.dart';
@@ -74,8 +77,6 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
 
   Map<String, dynamic> viewPortMap = {};
   List<Map<String, dynamic>> viewPortMapList = [];
-  int _viewCount = 2;
-  List<Map<String, double>> regions = [];
 
   @override
   void initState() {
@@ -119,48 +120,41 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
         });
       } else if ((currentSize - minSize).abs() < tolerance) {
         setState(() {
+          FocusScope.of(context).unfocus();
           isExpanded = false;
         });
       }
     });
 
     _focusNode.addListener(() {
-      if (_focusNode.hasFocus) {
-        // TextField에 커서가 놓일 때 실행할 동작
-        print("TextField is focused");
-        sheetController.animateTo(
-          maxSize,
-          duration: Duration(milliseconds: 100),
-          curve: Curves.easeInOut,
-        );
-      } else {
-        // TextField에서 포커스가 벗어날 때 실행할 동작
-        print("TextField lost focus");
-        sheetController.animateTo(
-          minSize,
-          duration: Duration(milliseconds: 100),
-          curve: Curves.easeInOut,
-        );
+      if (sheetController.isAttached) {
+        if (_focusNode.hasFocus) {
+          if (isExpanded) {
+            setState(() {
+              isExpanded = false;
+            });
+          }
+          sheetController.animateTo(
+            maxSize,
+            duration: Duration(milliseconds: 100),
+            curve: Curves.easeInOut,
+          );
+        } else {
+          if (!isExpanded) {
+            setState(() {
+              isExpanded = true;
+            });
+          }
+          sheetController.animateTo(
+            minSize,
+            duration: Duration(milliseconds: 100),
+            curve: Curves.easeInOut,
+          );
+        }
       }
     });
 
-    _initializeRegions();
-
     _getNearByPlaces(latitude!, longitude!, "POPULARITY", typeAll);
-  }
-
-  void _initializeRegions() async {
-    try {
-      List<Map<String, double>> coordinates =
-          await _getCoordinatesFromAddressList(_tripInfo["selectedRegions"]);
-      setState(() {
-        regions = coordinates;
-        print('regions $regions');
-      });
-      print('Initialized regions: $regions');
-    } catch (e) {
-      print('Error initializing regions: $e');
-    }
   }
 
   @override
@@ -171,15 +165,16 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
 
   void _toggleSheetHeight() {
     if (isExpanded) {
+      FocusScope.of(context).unfocus();
       sheetController.animateTo(
         minSize,
-        duration: Duration(milliseconds: 300),
+        duration: Duration(milliseconds: 100),
         curve: Curves.easeInOut,
       );
     } else {
       sheetController.animateTo(
         maxSize,
-        duration: Duration(milliseconds: 300),
+        duration: Duration(milliseconds: 100),
         curve: Curves.easeInOut,
       );
     }
@@ -191,89 +186,39 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
     return DateFormat('y년 M월 d일').format(date);
   }
 
-  /*void getViewport(double lat, double lng) async {
-    try {
-      Map<String, dynamic> result =
-          await _placeApiModel.getViewPorts(LatLng(lat, lng));
-      print('viewport result $result');
-
-      viewPortMap = {
-        "locationBias": {
-          "rectangle": {
-            "low": {
-              "latitude": result["southwest"]?["lat"] ?? 0.0,
-              "longitude": result["southwest"]?["lng"] ?? 0.0
-            },
-            "high": {
-              "latitude": result["northeast"]?["lat"] ?? 0.0,
-              "longitude": result["northeast"]?["lng"] ?? 0.0
-            }
-          }
-        }
-      };
-
-      print('viewPort $result');
-    } catch (e) {
-      print('에러메시지1 $e');
-    }
-  }*/
-
-  Future<List<Map<String, double>>> _getCoordinatesFromAddressList(
-      List<dynamic> selectRegions) async {
-    List<Map<String, double>> regionCoordinates = [];
-
-    for (var region in selectRegions) {
-      try {
-        // Geocoding: Convert region name to coordinates
-        List<Location> locations = await locationFromAddress(region["region"]);
-
-        // Add the resulting coordinates to the list
-        regionCoordinates.add({
-          "latitude": locations.first.latitude,
-          "longitude": locations.first.longitude,
-        });
-      } catch (e) {
-        print('Geocoding error for region "$region": $e');
-      }
-    }
-
-    return regionCoordinates;
-  }
-
-  Future<void> getViewportsForRegions(List<Map<String, double>> regions) async {
+  // 지역명 리스트로 뷰포트 찾기
+  Future<void> getViewportsForRegions(List<dynamic> selectedRegions) async {
     viewPortMapList.clear();
 
-    for (var region in regions) {
+    for (var regionData in selectedRegions) {
       try {
-        print('Fetching viewport for region: $region');
-
-        Map<String, dynamic> result = await _placeApiModel.getViewPorts(
-          LatLng(region['latitude']!, region['longitude']!),
-        );
+        String region = regionData['region'];
+        print('region$region');
+        Map<String, dynamic> result = await _placeApiModel.getViewPorts(region);
 
         if (result != null &&
-            result["results"][0]["geometry"]["viewport"]["southwest"] != null &&
-            result["results"][0]["geometry"]["viewport"]["northeast"] != null) {
-          print('Viewport result for region: $result');
+            result["results"] != null &&
+            result["results"].isNotEmpty) {
+          print('뷰포트result $result');
+
+          var geometry = result["results"][0]["geometry"];
+          var bounds = geometry["bounds"];
+          var viewport = geometry["viewport"];
+
+          // `bounds`가 null인 경우 `viewport` 사용
+          var southwest = bounds?["southwest"] ?? viewport["southwest"];
+          var northeast = bounds?["northeast"] ?? viewport["northeast"];
 
           viewPortMap = {
             "locationBias": {
               "rectangle": {
                 "low": {
-                  "latitude": result["results"][0]["geometry"]["viewport"]
-                          ["southwest"]?["lat"] ??
-                      0.0,
-                  "longitude": result["results"][0]["geometry"]["viewport"]
-                          ["southwest"]?["lng"] ??
-                      0.0
+                  "latitude": southwest["lat"] ?? 0.0,
+                  "longitude": southwest["lng"] ?? 0.0
                 },
                 "high": {
-                  "latitude": result["results"][0]["geometry"]["viewport"]
-                          ["northeast"]?["lat"] ??
-                      0.0,
-                  "longitude": result["results"][0]["geometry"]["viewport"]
-                          ["northeast"]?["lng"] ??
-                      0.0
+                  "latitude": northeast["lat"] ?? 0.0,
+                  "longitude": northeast["lng"] ?? 0.0
                 }
               }
             }
@@ -432,6 +377,7 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
     });
   }
 
+  // 검색결과 찾기
   Future<void> _getSearchResults(
       List<Map<String, dynamic>> viewPortMapList) async {
     setState(() {
@@ -441,9 +387,16 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
       isSearchLoading = true;
     });
 
-    List<dynamic> aggregatedResults = []; // List to collect all results
+    List<dynamic> aggregatedResults = [];
 
     try {
+      // 지도 중심 위치 얻기
+      LatLng mapCenter = await mapController!
+          .getLatLng(ScreenCoordinate(x: 0, y: 0)); // (중앙 좌표 추출)
+      double mapCenterLat = mapCenter.latitude;
+      double mapCenterLng = mapCenter.longitude;
+      print('mapCenter $mapCenter');
+
       for (var viewPortMap in viewPortMapList) {
         print('Searching with viewPortMap: $viewPortMap');
 
@@ -455,41 +408,66 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
           ...viewPortMap,
         };
 
-        // Fetch results for the current viewport
         List<dynamic> resultList = await _placeApiModel.getSearchPlace(data);
-        print('ResultList for current viewport: $resultList');
+        print(
+            'ResultList for current viewport:${resultList.length} $resultList');
 
         if (resultList.isNotEmpty) {
-          List<dynamic> filteredResults = resultList.where((place) {
-            final double placeLat = place['location']['latitude'];
-            final double placeLng = place['location']['longitude'];
-
-            final double lowLat =
-                viewPortMap["locationBias"]["rectangle"]["low"]["latitude"];
-            final double lowLng =
-                viewPortMap["locationBias"]["rectangle"]["low"]["longitude"];
-            final double highLat =
-                viewPortMap["locationBias"]["rectangle"]["high"]["latitude"];
-            final double highLng =
-                viewPortMap["locationBias"]["rectangle"]["high"]["longitude"];
-
-            // Check if the place is within the bounds
-            return placeLat >= lowLat &&
-                placeLat <= highLat &&
-                placeLng >= lowLng &&
-                placeLng <= highLng;
-          }).toList();
-
-          aggregatedResults.addAll(filteredResults);
-
-          // Add markers for the filtered results
-          for (var place in filteredResults) {
-            _processAndAddPlace(place);
-          }
+          // 결과를 aggregatedResults에 추가
+          aggregatedResults.addAll(resultList);
         }
       }
 
-      print('Aggregated Results: $aggregatedResults');
+      // 모든 viewPortMap 결과 합친 후 처리
+      print('Aggregated Results before filtering: $aggregatedResults');
+
+      // 최종 필터링 (중복 제거 및 거리 기반 필터링)
+      List<dynamic> filteredResults = aggregatedResults.where((place) {
+        final double placeLat = place['location']['latitude'];
+        final double placeLng = place['location']['longitude'];
+
+        // 지도중심에서 50km 이내
+        double distanceFromCenter =
+            calculateDistance(mapCenterLat, mapCenterLng, placeLat, placeLng);
+
+        return distanceFromCenter <= 50;
+      }).toList();
+
+      // 거리 계산하여 정렬
+      filteredResults.sort((a, b) {
+        double aLat = a['location']['latitude'];
+        double aLng = a['location']['longitude'];
+        double bLat = b['location']['latitude'];
+        double bLng = b['location']['longitude'];
+
+        double distanceA =
+            calculateDistance(mapCenterLat, mapCenterLng, aLat, aLng);
+        double distanceB =
+            calculateDistance(mapCenterLat, mapCenterLng, bLat, bLng);
+
+        return distanceA.compareTo(distanceB); // 가까운 순으로 정렬
+      });
+
+      print('Filtered and Sorted Results: $filteredResults');
+
+      if (filteredResults.isNotEmpty) {
+        // 정렬된 결과에서 마커 추가
+        for (var place in filteredResults) {
+          _processAndAddPlace(place); // 비동기적으로 마커 추가 처리
+        }
+
+        mapController!.animateCamera(
+          CameraUpdate.newLatLngZoom(
+              LatLng(filteredResults[0]["location"]["latitude"],
+                  filteredResults[0]["location"]["longitude"]),
+              15.0),
+        );
+      } else {
+        setState(() {
+          isSearchLoading = false;
+          isSearchLoaded = true;
+        });
+      }
     } catch (e) {
       print("Error while processing viewports: $e");
     } finally {
@@ -498,61 +476,14 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
       });
     }
 
-    mapController!.animateCamera(
-      CameraUpdate.newLatLngZoom(
-          LatLng(aggregatedResults[0].location.latitude,
-              aggregatedResults[0].location.longitude),
-          15.0),
-    );
-  }
-
-  /*Future<void> _getSearchResults() async {
-    print('_searchController ${_searchController.text}');
-    print('viewPortMap $viewPortMap');
-
-    Map<String, dynamic> data = {
-      "textQuery": _searchController.text.toString(),
-      "pageSize": "10",
-      "languageCode": "ko",
-      "regionCode": "KR",
-      ...viewPortMap
-    };
-
-    setState(() {
-      _isLoadingMarkers = true;
-      _nearByPlacesList.clear();
-      _markers.clear();
-      isSearchLoading = true;
-    });
-
-    try {
-      List<dynamic> resultList = await _placeApiModel.getSearchPlace(data);
-      print('resultList: $resultList');
-
-      if (resultList.isNotEmpty) {
-        setState(() {
-          isSearchLoading = true;
-          isSearchLoaded = false;
-        });
-
-        mapController!.animateCamera(
-          CameraUpdate.newLatLng(LatLng(resultList[0]['location']['latitude'],
-              resultList[0]['location']['longitude'])),
-        );
-        // 장소 데이터 비동기 처리 및 마커 추가
-        for (var place in resultList) {
-          _processAndAddPlace(place);
-        }
-      }
-    } catch (e) {
-      print("에러메시지3 : $e");
-    } finally {
+    if (aggregatedResults.isEmpty) {
       setState(() {
-        _isLoadingMarkers = false;
+        isSearchLoaded = true;
       });
     }
-  }*/
+  }
 
+  // 카테고리 토글클릭
   void _toggleCategoryClick(Map<String, dynamic> category, LatLng _mapCenter) {
     if (isCategorySelected) {
       setState(() {
@@ -881,6 +812,7 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                                             onPressed: () {
                                               setState(() {
                                                 isSearched = false;
+                                                isSearchLoaded = false;
                                               });
                                               _searchController.clear();
                                               _getNearByPlaces(
@@ -901,8 +833,9 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                                                     Duration(milliseconds: 100),
                                                 curve: Curves.easeInOut,
                                               );
-                                              getViewportsForRegions(regions);
-                                              // if(_searchController.text.isEmpty)
+
+                                              getViewportsForRegions(
+                                                  _tripInfo["selectedRegions"]);
                                             },
                                             icon: Icon(Icons.search))
                                       ],
