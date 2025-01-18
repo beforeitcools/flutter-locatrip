@@ -77,8 +77,9 @@ class AuthModel {
   }
 
   Future<String> login(Map<String, dynamic> loginData) async {
-    final SDio sdio = SDio();
-    final Dio dio = await sdio.createDio();
+    /*final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();*/
+    final dio = Dio();
 
     try {
       final response = await dio.post("$backUrl/auth/login", data: loginData);

@@ -10,8 +10,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class MypageModel {
   Future<Map<String, dynamic>> getMyPageData(BuildContext context) async {
-    final SDio sdio = SDio();
-    final Dio dio = await sdio.createDio();
+    /*final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();*/
+    final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
@@ -30,8 +31,7 @@ class MypageModel {
 
   Future<String> updateProfile(Map<String, String> updatedData, File? image,
       BuildContext context) async {
-    final SDio sdio = SDio();
-    final Dio dio = await sdio.createDio();
+    final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
