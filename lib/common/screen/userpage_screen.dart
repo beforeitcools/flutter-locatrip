@@ -30,6 +30,8 @@ class _UserpageScreenState extends State<UserpageScreen> {
   late String _badgelocalArea = '';
   final MypageModel _mypageModel = MypageModel();
   final ChatModel _chatModel = ChatModel();
+  final LocalAreaAuthController _localAreaAuthController =
+      LocalAreaAuthController();
 
   Future<void> _loadMypageData(int userId) async {
     try {
@@ -45,7 +47,7 @@ class _UserpageScreenState extends State<UserpageScreen> {
           _nickname = _userData['nickname'] ?? '닉네임 없음';
           _ownBadge = _userData['ownBadge'];
           if (_userData['localAreaAuthDate'] != null &&
-              (LocalAreaAuthController.calculateDaysLeftUntilExpiration(
+              (_localAreaAuthController.calculateDaysLeftUntilExpiration(
                       _userData['localAreaAuthDate']) >
                   0)) {
             print("오냐?????");
@@ -269,7 +271,10 @@ class _UserpageScreenState extends State<UserpageScreen> {
                     height: 16,
                   ),
                   TextButton.icon(
-                    onPressed: () { /*TODO 채팅 기능 넣어!!!!!!!!!!!!!*/ _chatModel.chattingRoomForOTO(userId, _nickname, context);},
+                    onPressed: () {
+                      /*TODO 채팅 기능 넣어!!!!!!!!!!!!!*/ _chatModel
+                          .chattingRoomForOTO(userId, _nickname, context);
+                    },
                     icon: Icon(Icons.sms_outlined),
                     label: Text(
                       "채팅하기",

@@ -34,6 +34,8 @@ class _LocalAreaAuthScreenState extends State<LocalAreaAuthScreen> {
   String authenticatedDate = '현지인 인증된 날짜 없음';
   int daysLeftUntilAuthExpire = 0;
   bool _isButtonEnabled = false;
+  final LocalAreaAuthController _localAreaAuthController =
+      LocalAreaAuthController();
 
   // 지도에서 현위치 때 사용
   _getGeoDataAndAuthData() async {
@@ -63,9 +65,8 @@ class _LocalAreaAuthScreenState extends State<LocalAreaAuthScreen> {
         } else {
           authenticatedDate =
               "${result['localAreaAuthDate'][0]}-${result['localAreaAuthDate'][1]}-${result['localAreaAuthDate'][2]}";
-          daysLeftUntilAuthExpire =
-              LocalAreaAuthController.calculateDaysLeftUntilExpiration(
-                  result['localAreaAuthDate']);
+          daysLeftUntilAuthExpire = _localAreaAuthController
+              .calculateDaysLeftUntilExpiration(result['localAreaAuthDate']);
         }
       });
     } catch (e) {
@@ -90,9 +91,8 @@ class _LocalAreaAuthScreenState extends State<LocalAreaAuthScreen> {
         authenticatedLocalArea = result['localArea'];
         authenticatedDate =
             "${result['localAreaAuthDate'][0]}-${result['localAreaAuthDate'][1]}-${result['localAreaAuthDate'][2]}";
-        daysLeftUntilAuthExpire =
-            LocalAreaAuthController.calculateDaysLeftUntilExpiration(
-                result['localAreaAuthDate']);
+        daysLeftUntilAuthExpire = _localAreaAuthController
+            .calculateDaysLeftUntilExpiration(result['localAreaAuthDate']);
       });
     } catch (e) {
       print("!!!!!!!!!!!!!!!!!!현지인 인증중  에러 발생 : $e");
