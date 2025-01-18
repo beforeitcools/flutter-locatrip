@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/map/model/location_model.dart';
 import 'package:flutter_locatrip/map/model/place_api_model.dart';
 import 'package:flutter_locatrip/map/screen/location_detail_screen.dart';
-import 'package:flutter_locatrip/map/widget/map_widget.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-import '../../common/model/navigation_observer.dart';
 import '../../common/widget/color.dart';
 import '../../trip/model/current_position_model.dart';
 import '../../trip/widget/denied_permission_dialog.dart';
@@ -16,7 +14,8 @@ import '../model/place.dart';
 import '../model/toggle_favorite.dart';
 
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  final String region;
+  const MapScreen({super.key, required this.region});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -78,6 +77,8 @@ class _MapScreenState extends State<MapScreen> {
   late String mapCenterAddress;
   Map<String, dynamic> viewPortMap = {};
 
+  late String _regionName;
+
   @override
   void initState() {
     super.initState();
@@ -104,6 +105,9 @@ class _MapScreenState extends State<MapScreen> {
       ...typeTourist
     ];
     _getGeoData();
+
+    _regionName = widget.region;
+    print('_region$_regionName');
 
     // DraggableScrollableController 의 상태 변화 감지
     sheetController.addListener(() {
@@ -151,6 +155,10 @@ class _MapScreenState extends State<MapScreen> {
         }
       }
     });
+  }
+
+  void _mainSearchConnection() {
+    _searchController.text = _regionName;
   }
 
   // 지도에서 현위치 때 사용
@@ -781,6 +789,21 @@ class _MapScreenState extends State<MapScreen> {
                               );
                             });
                           },
+                          onSubmitted: (value) {
+                            FocusScope.of(context).unfocus();
+                            setState(() {
+                              isSearched = true;
+                            });
+
+                            sheetController.animateTo(
+                              maxSize,
+                              duration: Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+
+                            executeSearchSequence(
+                                LatLng(latitude!, longitude!));
+                          },
                           decoration: InputDecoration(
                             hintText: "장소 검색",
                             filled: true,
@@ -822,6 +845,7 @@ class _MapScreenState extends State<MapScreen> {
                                         setState(() {
                                           isSearched = true;
                                         });
+
                                         sheetController.animateTo(
                                           maxSize,
                                           duration: Duration(milliseconds: 300),

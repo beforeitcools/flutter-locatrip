@@ -20,7 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // 탭에 따라 표시할 화면들
   final List<Widget> _pages = [
     MainScreen(),
-    MapScreen(),
+    MapScreen(region: ""),
     PostListScreen(),
     ChattingScreen(),
     MypageScreen(),

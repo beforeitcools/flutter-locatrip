@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/main/model/main_model.dart';
+import 'package:flutter_locatrip/map/screen/map_screen.dart';
 import 'package:flutter_locatrip/mypage/model/mypage_model.dart';
 import 'package:flutter_locatrip/trip/model/recommend_region.dart';
 import 'package:flutter_locatrip/trip/model/trip_model.dart';
 
 import 'package:flutter_locatrip/trip/model/trip_user_model.dart';
 import 'package:flutter_locatrip/trip/screen/first_trip_screen.dart';
-import 'package:flutter_locatrip/checklist/screen/checklist_screen.dart';
-import 'package:flutter_locatrip/expense/screen/expense_screen.dart';
 import 'package:flutter_locatrip/trip/screen/trip_view_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
@@ -44,6 +43,8 @@ class _MainScreenState extends State<MainScreen> {
 
   double _animatedPositionedOffset = 0;
   bool _isTop = false;
+  List<dynamic> _myTripList = [];
+  bool _isTripLoading = true;
 
   @override
   void initState() {
@@ -55,14 +56,14 @@ class _MainScreenState extends State<MainScreen> {
     // 일정에 참여중인 유저인지 확인
     if (_inviteId != null && _hostId != null) _isExistTripUser();
 
-    _getUserInfo();
+    loadData();
     /*
     * 처음에 가져올 목록
-    * 유저 정보 / 알림여부 / 내여행 목록
+    * 유저 정보 / 알림 여부 / 내여행 목록
     *
     * 구현 기능
-    * - 지역 검색 시 맵으로 이동(실제검색으로 이어짐)
-    * - 지역 버튼 클릭 시도 맵으로 이동(실제검색으로 이어짐)
+    * - 지역 검색 시 맵으로 이동(실제 검색으로 이어짐)
+    * - 지역 버튼 클릭 시도 맵으로 이동(실제 검색으로 이어짐)
     *
     * - 내 여행 정렬(무슨 순으로 할지 확인)
     * - 내여행 지역이랑 사진 매칭
@@ -79,6 +80,51 @@ class _MainScreenState extends State<MainScreen> {
         }
       });
     });
+  }
+
+  void loadData() async {
+    // 유저정보 가져오기 / 알림여부
+    await _getUserInfo();
+    // 일정 가져오기
+    await _getMyTrip();
+  }
+
+  // 일정 가져오기
+  _getMyTrip() async {
+    try {
+      Map<String, dynamic> result = await _mypageModel.getMyTripData(context);
+      if (result.isNotEmpty) {
+        print('result["futureTrips"] ${result["futureTrips"]}');
+        _myTripList.addAll(result["futureTrips"]);
+        print('_myTrip$_myTripList');
+        setState(() {
+          _isTripLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isTripLoading = false;
+      });
+      print('일정가져오는 에러메시지 $e');
+    }
+  }
+
+  // 현재 로그인된 사용자 정보
+  _getUserInfo() async {
+    try {
+      Map<String, dynamic> result = await _mypageModel.getMyPageData(context);
+      print('reulst $result');
+      if (result.isNotEmpty) {
+        setState(() {
+          _nickName = result["user"]["nickname"];
+          _isLoading = false;
+          _unreadAlarmExists = result["unreadAlarmExists"];
+        });
+      }
+    } catch (e) {
+      _isLoading = false;
+      print('로그인사용자 에러메시지 $e');
+    }
   }
 
   void _isExistTripUser() async {
@@ -304,22 +350,6 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  // 현재 로그인된 사용자 정보
-  _getUserInfo() async {
-    try {
-      Map<String, dynamic> user = await _mypageModel.getMyPageData(context);
-      if (user.isNotEmpty) {
-        setState(() {
-          _nickName = user["user"]["nickname"];
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      _isLoading = false;
-      print('에러메시지 $e');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -412,6 +442,13 @@ class _MainScreenState extends State<MainScreen> {
                             EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                         child: TextField(
                           controller: _searchController,
+                          onSubmitted: (value) {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        MapScreen(region: value)));
+                          },
                           decoration: InputDecoration(
                             prefixIconConstraints: BoxConstraints(minWidth: 40),
                             prefixIcon: Padding(
@@ -479,99 +516,143 @@ class _MainScreenState extends State<MainScreen> {
                                         .titleMedium
                                         ?.copyWith(
                                             fontWeight: FontWeight.w700)),
-                                IconButton(
-                                    padding: EdgeInsets.zero,
-                                    onPressed: () {},
-                                    icon: Icon(
-                                      Icons.swap_vert_rounded,
-                                      color: grayColor,
-                                    ))
+                                _myTripList.isNotEmpty
+                                    ? IconButton(
+                                        padding: EdgeInsets.zero,
+                                        onPressed: () {},
+                                        icon: Icon(
+                                          Icons.swap_vert_rounded,
+                                          color: grayColor,
+                                        ))
+                                    : SizedBox.shrink()
                               ],
                             ),
                             height: 30,
                           ),
-                          ListView.builder(
-                              shrinkWrap: true, // 부모 위젯 크기에 맞춤
-                              physics: NeverScrollableScrollPhysics(),
-                              padding: EdgeInsets.zero,
-                              itemCount: 4,
-                              itemBuilder: (context, index) {
-                                return GestureDetector(
-                                    onTap: () {
-                                      print('클릭됨');
-                                    },
-                                    child: Container(
-                                      height: 150,
-                                      margin: EdgeInsets.only(top: 15),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(10),
-                                        image: DecorationImage(
-                                          fit: BoxFit.cover,
-                                          image: AssetImage('assets/bg-1.jpg'),
-                                        ),
-                                      ),
-                                      padding: EdgeInsets.all(16),
+                          _isTripLoading
+                              ? Center(
+                                  child: CircularProgressIndicator(),
+                                )
+                              : _myTripList.isNotEmpty
+                                  ? ListView.builder(
+                                      shrinkWrap: true, // 부모 위젯 크기에 맞춤
+                                      physics: NeverScrollableScrollPhysics(),
+                                      padding: EdgeInsets.zero,
+                                      itemCount: _myTripList.length,
+                                      itemBuilder: (context, i) {
+                                        String dateRange = _myTripList
+                                                .isNotEmpty
+                                            ? "${_myTripList[i]["startDate"]}~${_myTripList[i]["endDate"]}"
+                                            : "";
+                                        return GestureDetector(
+                                            onTap: () {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          TripViewScreen(
+                                                              tripId: _myTripList[
+                                                                      i]
+                                                                  ["tripId"])));
+                                            },
+                                            child: Container(
+                                              height: 150,
+                                              margin: EdgeInsets.only(top: 15),
+                                              decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                image: DecorationImage(
+                                                  fit: BoxFit.cover,
+                                                  image: AssetImage(
+                                                      'assets/bg-1.jpg'),
+                                                ),
+                                              ),
+                                              padding: EdgeInsets.all(16),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.end,
+                                                children: [
+                                                  FractionallySizedBox(
+                                                    widthFactor: 1,
+                                                    child: Text(
+                                                      _myTripList[i]["title"],
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .titleMedium
+                                                          ?.copyWith(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w700),
+                                                      softWrap: true,
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    height: 3,
+                                                  ),
+                                                  Row(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Icon(
+                                                        Icons
+                                                            .location_on_outlined,
+                                                        size: 14,
+                                                        color: Colors.white,
+                                                      ),
+                                                      SizedBox(
+                                                        width: 5,
+                                                      ),
+                                                      Text(
+                                                        "지역명",
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .labelSmall
+                                                            ?.copyWith(
+                                                                color: Colors
+                                                                    .white),
+                                                      ),
+                                                      Text(
+                                                        " · ",
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .labelSmall
+                                                            ?.copyWith(
+                                                                color: Colors
+                                                                    .white),
+                                                      ),
+                                                      Text(
+                                                        dateRange,
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .labelSmall
+                                                            ?.copyWith(
+                                                                color: Colors
+                                                                    .white),
+                                                      )
+                                                    ],
+                                                  )
+                                                ],
+                                              ),
+                                            ));
+                                      })
+                                  : Center(
                                       child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
                                         children: [
-                                          Text(
-                                            "여행 타이틀 !",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .titleMedium
-                                                ?.copyWith(
-                                                    color: Colors.white,
-                                                    fontWeight:
-                                                        FontWeight.w700),
-                                          ),
-                                          SizedBox(
-                                            height: 3,
-                                          ),
-                                          Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              Icon(
-                                                Icons.location_on_outlined,
-                                                size: 14,
-                                                color: Colors.white,
-                                              ),
-                                              SizedBox(
-                                                width: 5,
-                                              ),
-                                              Text(
-                                                "지역명",
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .labelSmall
-                                                    ?.copyWith(
-                                                        color: Colors.white),
-                                              ),
-                                              Text(
-                                                " · ",
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .labelSmall
-                                                    ?.copyWith(
-                                                        color: Colors.white),
-                                              ),
-                                              Text(
-                                                "날짜 ~ 날짜",
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .labelSmall
-                                                    ?.copyWith(
-                                                        color: Colors.white),
-                                              )
-                                            ],
-                                          )
+                                          Text("생성된 여행이 없습니다."),
+                                          TextButton(
+                                              onPressed: () {},
+                                              child: Text("여행 추가"))
                                         ],
                                       ),
-                                    ));
-                              })
+                                    )
                         ]))
                   ],
                 ),

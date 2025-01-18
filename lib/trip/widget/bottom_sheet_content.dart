@@ -209,6 +209,11 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
           TextField(
             controller: _searchController,
             onChanged: _filterRegions,
+            onSubmitted: (value) {
+              setState(() {
+                if (_displayedRegions.isEmpty) isNoResult = true;
+              });
+            },
             decoration: InputDecoration(
               hintText: "여행, 어디로 떠나시나요?",
               filled: true,
@@ -242,7 +247,7 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                     IconButton(
                         onPressed: () {
                           setState(() {
-                            isNoResult = true;
+                            if (_displayedRegions.isEmpty) isNoResult = true;
                           });
                           // if(_searchController.text.isEmpty)
                         },
