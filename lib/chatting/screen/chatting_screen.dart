@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/advice/screen/post_view_screen.dart';
 import 'package:flutter_locatrip/chatting/model/chat_model.dart';
 import 'package:flutter_locatrip/chatting/ui/chat_list_ui.dart';
 import 'package:flutter_locatrip/chatting/widgets/test_editting_page.dart';
@@ -75,7 +76,7 @@ class _ChattingScreenState extends State<ChattingScreen> {
                 return ChatListUi(chatroomId: chat["chatroomId"], chatroomName: chat["chatroomName"], currentMessage: chat["currentMessage"] ?? "");
               }),
       floatingActionButton: FloatingActionButton(onPressed: (){
-        Navigator.push(context,MaterialPageRoute(builder: (context) => TestEdittingPage(userId: 2)));
+        Navigator.push(context,MaterialPageRoute(builder: (context) => PostViewScreen(postId: 16)));
       }),
     );
   }
