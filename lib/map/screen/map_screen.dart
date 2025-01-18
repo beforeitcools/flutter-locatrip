@@ -11,6 +11,7 @@ import '../../common/widget/color.dart';
 import '../../trip/model/current_position_model.dart';
 import '../../trip/widget/denied_permission_dialog.dart';
 import '../model/app_overlay_controller.dart';
+import '../model/distance_method.dart';
 import '../model/place.dart';
 import '../model/toggle_favorite.dart';
 
@@ -455,6 +456,17 @@ class _MapScreenState extends State<MapScreen> {
     });
 
     try {
+      /*// 지도 중심 위치 얻기
+      LatLng mapCenter = await mapController!.getLatLng(
+        ScreenCoordinate(
+          x: MediaQuery.of(context).size.width ~/ 2, // 화면 너비의 절반
+          y: MediaQuery.of(context).size.height ~/ 2, // 화면 높이의 절반
+        ),
+      );
+      double mapCenterLat = mapCenter.latitude;
+      double mapCenterLng = mapCenter.latitude;
+      print('지도중심 $mapCenter');*/
+
       List<dynamic> resultList = await _placeApiModel.getSearchPlace(data);
       List<dynamic> filteredResultList = resultList.where((place) {
         double latitude = place['location']['latitude'];
@@ -472,6 +484,21 @@ class _MapScreenState extends State<MapScreen> {
       }).toList();
       print('filteredResultList: $filteredResultList');
 
+      /*// 거리 계산하여 정렬
+      filteredResultList.sort((a, b) {
+        double aLat = a['location']['latitude'];
+        double aLng = a['location']['longitude'];
+        double bLat = b['location']['latitude'];
+        double bLng = b['location']['longitude'];
+
+        double distanceA =
+            calculateDistance(mapCenterLat, mapCenterLng, aLat, aLng);
+        double distanceB =
+            calculateDistance(mapCenterLat, mapCenterLng, bLat, bLng);
+
+        return distanceA.compareTo(distanceB); // 가까운 순으로 정렬
+      });*/
+
       if (filteredResultList.isNotEmpty) {
         setState(() {
           isSearchLoading = true;
@@ -487,6 +514,11 @@ class _MapScreenState extends State<MapScreen> {
         for (var place in filteredResultList) {
           _processAndAddPlace(place);
         }
+      } else {
+        setState(() {
+          isSearchLoaded = true;
+          isSearchLoading = false;
+        });
       }
     } catch (e) {
       print("에러메시지 : $e");
@@ -697,6 +729,7 @@ class _MapScreenState extends State<MapScreen> {
                                       onPressed: () {
                                         setState(() {
                                           isSearched = false;
+                                          isSearchLoaded = false;
                                         });
                                         _searchController.clear();
                                         _getNearByPlaces(

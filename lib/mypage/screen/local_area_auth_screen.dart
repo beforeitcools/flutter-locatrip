@@ -128,13 +128,8 @@ class _LocalAreaAuthScreenState extends State<LocalAreaAuthScreen> {
     try {
       if (latitude == null || longitude == null) return;
 
-      viewPortMap = await _placeApiModel.getViewPortsInKorean(
-        LatLng(latitude!, longitude!),
-        'ko',
-      );
-      print('viewport result $viewPortMap');
-      print(
-          "++++====================================================================");
+      viewPortMap = await _placeApiModel.getViewPorts("대한민국");
+
       if (viewPortMap.containsKey('results') &&
           viewPortMap['results'].isNotEmpty) {
         final addressComponents =

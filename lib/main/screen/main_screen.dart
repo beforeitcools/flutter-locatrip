@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/main/model/main_model.dart';
 import 'package:flutter_locatrip/mypage/model/mypage_model.dart';
+import 'package:flutter_locatrip/trip/model/recommend_region.dart';
 import 'package:flutter_locatrip/trip/model/trip_model.dart';
 
 import 'package:flutter_locatrip/trip/model/trip_user_model.dart';
@@ -13,6 +14,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 
 import '../../trip/model/invite_state.dart';
+import '../widget/header_delegate.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -27,7 +29,11 @@ class _MainScreenState extends State<MainScreen> {
   final MainModel _mainModel = MainModel();
   final MypageModel _mypageModel = MypageModel();
 
+  final TextEditingController _searchController = TextEditingController();
+  final ScrollController _customScrollController = ScrollController();
+
   bool _isLoading = true;
+  bool _unreadAlarmExists = false;
 
   int? _inviteId;
   int? _hostId;
@@ -35,6 +41,9 @@ class _MainScreenState extends State<MainScreen> {
   late String _profilePic;
   late String _hostNickName;
   late String _nickName;
+
+  double _animatedPositionedOffset = 0;
+  bool _isTop = false;
 
   @override
   void initState() {
@@ -47,6 +56,29 @@ class _MainScreenState extends State<MainScreen> {
     if (_inviteId != null && _hostId != null) _isExistTripUser();
 
     _getUserInfo();
+    /*
+    * 처음에 가져올 목록
+    * 유저 정보 / 알림여부 / 내여행 목록
+    *
+    * 구현 기능
+    * - 지역 검색 시 맵으로 이동(실제검색으로 이어짐)
+    * - 지역 버튼 클릭 시도 맵으로 이동(실제검색으로 이어짐)
+    *
+    * - 내 여행 정렬(무슨 순으로 할지 확인)
+    * - 내여행 지역이랑 사진 매칭
+    * */
+
+    _customScrollController.addListener(() {
+      setState(() {
+        _animatedPositionedOffset = _customScrollController.offset;
+
+        if (_animatedPositionedOffset > 80) {
+          _isTop = true;
+        } else {
+          _isTop = false;
+        }
+      });
+    });
   }
 
   void _isExistTripUser() async {
@@ -290,42 +322,265 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 초대 됐는지 확인
-    // String? inviteId = Provider.of<InviteState>(context).inviteId;
+    double screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(64),
-        child: AppBar(
-          leadingWidth: 0,
-          leading: SizedBox.shrink(),
-          title: _isLoading
-              ? SizedBox.shrink()
-              : Text(
-                  "여행자, ${_nickName}님!",
-                  style: TextStyle(fontSize: 20),
-                ),
-          actions: [
-            IconButton(
-                onPressed: () {}, icon: Icon(Icons.notifications_outlined)),
-          ],
-        ),
-      ),
-      body: Column(
+      body: Stack(
         children: [
-          Text("메인"),
-          ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => TripViewScreen(tripId: 1)));
-              },
-              child: Text("일정 불러오는지 테스트")),
-          // if (_inviteId != null) SizedBox.shrink(),
+          // 배경 이미지
+          Positioned(
+            top: -_animatedPositionedOffset,
+            left: 0,
+            right: 0,
+            child: SizedBox(
+              height: 318, // 원하는 높이 설정
+              child: Container(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    fit: BoxFit.cover,
+                    image: AssetImage('assets/bg-1.jpg'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // 스크롤 가능한 내용
+          CustomScrollView(
+            controller: _customScrollController,
+            slivers: [
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: HeaderDelegate(
+                  child: Container(
+                    color: _isTop ? Colors.white : Colors.transparent,
+                    padding: EdgeInsets.fromLTRB(16, 30, 16, 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _isLoading
+                            ? SizedBox.shrink()
+                            : Expanded(
+                                child: Text(
+                                  "여행자, ${_nickName}님!",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.copyWith(
+                                        color:
+                                            _isTop ? blackColor : Colors.white,
+                                        fontSize: 18,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                ),
+                              ),
+                        IconButton(
+                          onPressed: () {},
+                          icon: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Icon(Icons.notifications_outlined,
+                                  color: _isTop ? blackColor : Colors.white),
+                              if (_unreadAlarmExists)
+                                Positioned(
+                                  right: -1,
+                                  top: 1,
+                                  child: Container(
+                                    padding: EdgeInsets.all(3),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: 10,
+                    ),
+                    Container(
+                        padding:
+                            EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            prefixIconConstraints: BoxConstraints(minWidth: 40),
+                            prefixIcon: Padding(
+                                padding: EdgeInsets.zero,
+                                child: Icon(
+                                  Icons.search,
+                                  size: 18,
+                                  color: grayColor,
+                                )),
+                            hintText: "어디로 떠나시나요?",
+                            hintStyle: Theme.of(context)
+                                .textTheme
+                                .labelLarge
+                                ?.copyWith(
+                                    color: grayColor,
+                                    fontWeight: FontWeight.w300),
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: EdgeInsets.zero,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        )),
+                    SizedBox(height: 10),
+                    SingleChildScrollView(
+                        padding:
+                            EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ...mainRegions.map((region) {
+                              int index = mainRegions.indexOf(region);
+                              return Container(
+                                  margin: EdgeInsets.only(right: 10),
+                                  child: TextButton(
+                                      onPressed: () {},
+                                      style: TextButton.styleFrom(
+                                        backgroundColor: Colors.white,
+                                      ),
+                                      child: Text(
+                                        "${region['emoji']} ${region['name']}",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelMedium
+                                            ?.copyWith(
+                                                fontWeight: FontWeight.w600),
+                                      )));
+                            })
+                          ],
+                        )),
+                    SizedBox(height: 120),
+                    Padding(
+                        padding: EdgeInsets.fromLTRB(16, 20, 16, 30),
+                        child: Column(children: [
+                          SizedBox(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text("내 여행",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                            fontWeight: FontWeight.w700)),
+                                IconButton(
+                                    padding: EdgeInsets.zero,
+                                    onPressed: () {},
+                                    icon: Icon(
+                                      Icons.swap_vert_rounded,
+                                      color: grayColor,
+                                    ))
+                              ],
+                            ),
+                            height: 30,
+                          ),
+                          ListView.builder(
+                              shrinkWrap: true, // 부모 위젯 크기에 맞춤
+                              physics: NeverScrollableScrollPhysics(),
+                              padding: EdgeInsets.zero,
+                              itemCount: 4,
+                              itemBuilder: (context, index) {
+                                return GestureDetector(
+                                    onTap: () {
+                                      print('클릭됨');
+                                    },
+                                    child: Container(
+                                      height: 150,
+                                      margin: EdgeInsets.only(top: 15),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        image: DecorationImage(
+                                          fit: BoxFit.cover,
+                                          image: AssetImage('assets/bg-1.jpg'),
+                                        ),
+                                      ),
+                                      padding: EdgeInsets.all(16),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            "여행 타이틀 !",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleMedium
+                                                ?.copyWith(
+                                                    color: Colors.white,
+                                                    fontWeight:
+                                                        FontWeight.w700),
+                                          ),
+                                          SizedBox(
+                                            height: 3,
+                                          ),
+                                          Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.location_on_outlined,
+                                                size: 14,
+                                                color: Colors.white,
+                                              ),
+                                              SizedBox(
+                                                width: 5,
+                                              ),
+                                              Text(
+                                                "지역명",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelSmall
+                                                    ?.copyWith(
+                                                        color: Colors.white),
+                                              ),
+                                              Text(
+                                                " · ",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelSmall
+                                                    ?.copyWith(
+                                                        color: Colors.white),
+                                              ),
+                                              Text(
+                                                "날짜 ~ 날짜",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelSmall
+                                                    ?.copyWith(
+                                                        color: Colors.white),
+                                              )
+                                            ],
+                                          )
+                                        ],
+                                      ),
+                                    ));
+                              })
+                        ]))
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
-      floatingActionButton: Container(
+      floatingActionButton: SizedBox(
         width: 68,
         height: 65,
         child: FloatingActionButton(
