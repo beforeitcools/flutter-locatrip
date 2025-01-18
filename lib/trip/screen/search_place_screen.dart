@@ -787,6 +787,19 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                                     );
                                   });
                                 },
+                                onSubmitted: (value) {
+                                  setState(() {
+                                    isSearched = true;
+                                  });
+                                  sheetController.animateTo(
+                                    maxSize,
+                                    duration: Duration(milliseconds: 100),
+                                    curve: Curves.easeInOut,
+                                  );
+
+                                  getViewportsForRegions(
+                                      _tripInfo["selectedRegions"]);
+                                },
                                 decoration: InputDecoration(
                                   hintText: "장소 검색",
                                   filled: true,
