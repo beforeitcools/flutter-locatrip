@@ -34,7 +34,7 @@ class _ChatRoomSettingState extends State<ChatRoomSetting> {
     return Scaffold(
         appBar: AppBar(
           leading: InkWell(
-            onTap: (){Navigator.pop(context);},
+            onTap: (){Navigator.pop(context, _buttonText);},
             child:  Icon(Icons.close),
           ),
           title: Text("채팅방 설정", style: Theme.of(context).textTheme.bodyLarge),
