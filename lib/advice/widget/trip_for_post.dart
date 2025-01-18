@@ -37,22 +37,34 @@ class _TripForPostState extends State<TripForPost> {
           await _tripDayModel.getTripDay(widget.tripId, context);
       int day = 1;
       for (int i = 0; i < results.length; i++) {
-        if (i > 0 && results[i - 1]["date"] == results[i]["date"]) {
-          continue;
-        } else {
+        if(_days.isNotEmpty){
+          for(var d in _days){
+            if(d["date"] == results[i]["date"]) { continue; }
+            else{
+              String tripDay = "day ${day++}";
+              String tripDate = results[i]["date"];
+
+              _days.add({"day": tripDay, "date": tripDate});
+              print('my days: $_days');
+            }
+          }
+        }
+        else{
           String tripDay = "day ${day++}";
           String tripDate = results[i]["date"];
 
           _days.add({"day": tripDay, "date": tripDate});
+          print('my days: $_days');
         }
 
         setState(() {
           _myTrip = results;
           _days;
-          _schedules = _myTrip.where((trip) => trip["dateIndex"] == (selectedIndex + 1)).toList();
+          _schedules = _myTrip.where((trip) => trip["dateIndex"] == (selectedIndex)).toList();
         });
       }
 
+      print('');
       widget.onTripDataValue(_jsonParser.convertToJSONString(_myTrip));
     } catch (e) {
       print("YOU CANNOT GET YOUR TRIPS $e");
@@ -84,7 +96,7 @@ class _TripForPostState extends State<TripForPost> {
                             onTap: () {
                               setState(() {
                                 selectedIndex = index;
-                                _schedules = _myTrip.where((trip) => trip["dateIndex"] == (selectedIndex + 1)).toList();
+                                _schedules = _myTrip.where((trip) => trip["dateIndex"] == (selectedIndex)).toList();
                               });
                             },
                             child: Container(

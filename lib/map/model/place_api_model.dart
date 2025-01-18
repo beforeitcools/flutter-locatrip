@@ -125,16 +125,16 @@ class PlaceApiModel {
     }
   }
 
-  Future<Map<String, dynamic>> getViewPorts(LatLng latlng) async {
+  // 지역명으로 뷰포트 찾아오기
+  Future<Map<String, dynamic>> getViewPorts(String address) async {
     final dio = Dio();
     String? apiKey = await ApiKeyLoader.getApiKey2('GEOCODING_API_KEY');
     print('apiKey $apiKey');
-    double lat = latlng.latitude;
-    double lng = latlng.longitude;
+
     try {
       final responses = await dio.get(
         "https://maps.googleapis.com/maps/api/geocode/json",
-        queryParameters: {'latlng': "$lat,$lng", 'key': apiKey},
+        queryParameters: {'address': address, 'key': apiKey},
       );
 
       if (responses.statusCode == 200) {
@@ -145,12 +145,12 @@ class PlaceApiModel {
       }
     } catch (e) {
       print(e);
-      throw Exception("Error : $e");
+      throw Exception("Error! : $e");
     }
   }
 
-  Future<Map<String, dynamic>> getViewPortsInKorean(
-      LatLng latlng, String language) async {
+  // 좌표로 주소명 불러오기
+  Future<Map<String, dynamic>> getAddressName(LatLng latlng) async {
     final dio = Dio();
     String? apiKey = await ApiKeyLoader.getApiKey2('GEOCODING_API_KEY');
     print('apiKey $apiKey');
@@ -159,13 +159,8 @@ class PlaceApiModel {
     try {
       final responses = await dio.get(
         "https://maps.googleapis.com/maps/api/geocode/json",
-        queryParameters: {
-          'key': apiKey,
-          'latlng': "$lat,$lng",
-          'language': language
-        },
+        queryParameters: {'latlng': "$lat,$lng", 'key': apiKey},
       );
-
       if (responses.statusCode == 200) {
         print('response $responses.data');
         return responses.data as Map<String, dynamic>;
