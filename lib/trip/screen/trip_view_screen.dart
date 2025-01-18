@@ -989,7 +989,9 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) =>
-                                                  ChecklistScreen(),
+                                                  ChecklistScreen(
+                                                tripId: null,
+                                              ),
                                             ),
                                           );
                                         },
