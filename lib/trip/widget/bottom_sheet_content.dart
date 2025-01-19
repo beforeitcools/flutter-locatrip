@@ -274,18 +274,19 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                           itemBuilder: (context, i) {
                             return ListTile(
                               leading: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(999),
                                 child: Image.asset(
                                   _displayedRegions[i]["imageUrl"].toString() ??
                                       "",
-                                  width: 36,
-                                  height: 36,
+                                  width: 40,
+                                  height: 40,
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) {
+                                    print('$error $stackTrace');
                                     return Image.asset(
                                       defaultImageUrl,
-                                      width: 36,
-                                      height: 36,
+                                      width: 40,
+                                      height: 40,
                                     );
                                   },
                                 ),
@@ -357,15 +358,15 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                                       child: Image.asset(
                                         region["imageUrl"].toString() ??
                                             defaultImageUrl,
-                                        width: 30,
-                                        height: 30,
+                                        width: 36,
+                                        height: 36,
                                         fit: BoxFit.cover,
                                         errorBuilder:
                                             (context, error, stackTrace) {
                                           return Image.asset(
                                             defaultImageUrl,
-                                            width: 30,
-                                            height: 30,
+                                            width: 36,
+                                            height: 36,
                                           );
                                         },
                                       ),
@@ -406,6 +407,7 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                                     ),
                                   ],
                                 ),
+                                SizedBox(height: 5),
                                 Text(
                                   region["name"].toString(),
                                   style: Theme.of(context)

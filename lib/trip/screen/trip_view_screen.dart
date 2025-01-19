@@ -9,6 +9,7 @@ import 'package:flutter_locatrip/common/widget/color.dart';
 
 import 'package:flutter_locatrip/mypage/model/mypage_model.dart';
 import 'package:flutter_locatrip/trip/model/trip_day_model.dart';
+import 'package:flutter_locatrip/trip/screen/share_screen.dart';
 import 'package:flutter_locatrip/trip/widget/edit_close_modal.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geocoding/geocoding.dart' as geocoding;
@@ -17,15 +18,18 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart' as kakao;
+import 'package:provider/provider.dart';
 
 import '../../checklist/screen/checklist_screen.dart';
 import '../../expense/screen/expense_screen.dart';
+import '../../main/model/main_screen_provider.dart';
 import '../../map/model/custom_marker.dart';
 import '../../map/model/place.dart';
 
 import '../model/trip_model.dart';
 import '../widget/drag_bottom_sheet.dart';
 import '../widget/edit_bottom_sheet.dart';
+import '../widget/trip_share_bottom_sheet.dart';
 
 class TripViewScreen extends StatefulWidget {
   final int tripId;
@@ -662,6 +666,8 @@ class _TripViewScreenState extends State<TripViewScreen> {
     return WillPopScope(
         onWillPop: () {
           setState(() {
+            Provider.of<MainScreenProvider>(context, listen: false)
+                .triggerReload();
             Navigator.popUntil(context, (route) => route.isFirst);
           });
           return Future(() => false);
@@ -672,13 +678,17 @@ class _TripViewScreenState extends State<TripViewScreen> {
             backgroundColor: Colors.white,
             leading: IconButton(
                 onPressed: () {
-                  isEditing
-                      ? showDialog(
-                          context: context,
-                          builder: (context) {
-                            return EditCloseModal();
-                          })
-                      : Navigator.popUntil(context, (route) => route.isFirst);
+                  if (isEditing) {
+                    showDialog(
+                        context: context,
+                        builder: (context) {
+                          return EditCloseModal();
+                        });
+                  } else {
+                    Provider.of<MainScreenProvider>(context, listen: false)
+                        .triggerReload();
+                    Navigator.popUntil(context, (route) => route.isFirst);
+                  }
                 },
                 icon: Icon(Icons.arrow_back)),
             title: _isTop
@@ -728,7 +738,13 @@ class _TripViewScreenState extends State<TripViewScreen> {
                       icon: Icon(Icons.ios_share),
                       color: blackColor.withOpacity(0.2),
                     )
-                  : IconButton(onPressed: () {}, icon: Icon(Icons.ios_share)),
+                  : IconButton(
+                      onPressed: () {
+                        showModalBottomSheet(
+                            context: context,
+                            builder: (context) => TripShareBottomSheet());
+                      },
+                      icon: Icon(Icons.ios_share)),
               isEditing
                   ? IconButton(
                       onPressed: null,
@@ -951,7 +967,13 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                                       0)
                                                   : Offset(0, 0),
                                           child: TextButton(
-                                            onPressed: _share,
+                                            onPressed: () {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          ShareScreen()));
+                                            },
                                             style: TextButton.styleFrom(
                                                 backgroundColor: pointBlueColor,
                                                 minimumSize: Size(0, 0),

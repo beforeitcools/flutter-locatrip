@@ -13,7 +13,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 
 import '../../trip/model/invite_state.dart';
+import '../model/main_screen_provider.dart';
 import '../widget/header_delegate.dart';
+import '../widget/sort_bottom_sheet.dart';
 
 class MainScreen extends StatefulWidget {
   final Function(int, String) onTapped;
@@ -52,6 +54,8 @@ class _MainScreenState extends State<MainScreen> {
 
   bool _isShowCancel = false;
 
+  late String _regionImage;
+
   @override
   void initState() {
     super.initState();
@@ -62,17 +66,6 @@ class _MainScreenState extends State<MainScreen> {
     // 일정에 참여중인 유저인지 확인
     if (_inviteId != null && _hostId != null) {
       _isExistTripUser();
-      /*
-    * 처음에 가져올 목록
-    * 유저 정보 / 알림 여부 / 내여행 목록
-    *
-    * 구현 기능
-    * - 지역 검색 시 맵으로 이동(실제 검색으로 이어짐)
-    * - 지역 버튼 클릭 시도 맵으로 이동(실제 검색으로 이어짐)
-    *
-    * - 내 여행 정렬(무슨 순으로 할지 확인)
-    * - 내여행 지역이랑 사진 매칭
-    * */
     }
     loadData();
     _customScrollController.addListener(() {
@@ -89,9 +82,26 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Provider를 통해 상태를 감지하고 loadInfo 실행
+    final provider = Provider.of<MainScreenProvider>(context);
+    if (provider.shouldReload) {
+      print('provider!!!');
+      setState(() {
+        _isTripLoading = true;
+      });
+      _myTripList.clear();
+      _getMyTrip();
+      provider.resetReload(); // 상태 초기화
+    }
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     _customScrollController.dispose();
+
     super.dispose();
   }
 
@@ -126,7 +136,7 @@ class _MainScreenState extends State<MainScreen> {
       Map<String, dynamic> result = await _mypageModel.getMyTripData(context);
       if (result.isNotEmpty) {
         _myTripList.addAll(result["futureTrips"]);
-        // print('_myTrip$_myTripList');
+        print('_myTrip$_myTripList');
         setState(() {
           _isTripLoading = false;
         });
@@ -366,6 +376,27 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  // 정렬하기
+  void sortTrips(String sortBy) {
+    if (sortBy == 'startDate') {
+      setState(() {
+        _myTripList.sort((a, b) {
+          String startDateA = a['startDate'];
+          String startDateB = b['startDate'];
+          return startDateA.compareTo(startDateB);
+        });
+      });
+    } else if (sortBy == 'title') {
+      setState(() {
+        _myTripList.sort((a, b) {
+          String titleA = a['title'];
+          String titleB = b['title'];
+          return titleA.compareTo(titleB);
+        });
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -377,12 +408,13 @@ class _MainScreenState extends State<MainScreen> {
             left: 0,
             right: 0,
             child: SizedBox(
-              height: 318,
+              height: 340,
               child: Container(
                 decoration: BoxDecoration(
                   image: DecorationImage(
                     fit: BoxFit.cover,
-                    image: AssetImage('assets/bg-1.jpg'),
+                    alignment: Alignment.topCenter,
+                    image: AssetImage('assets/bg/bg-1.jpg'),
                   ),
                 ),
               ),
@@ -398,9 +430,10 @@ class _MainScreenState extends State<MainScreen> {
                 delegate: HeaderDelegate(
                   child: Container(
                     color: _isTop ? Colors.white : Colors.transparent,
-                    padding: EdgeInsets.fromLTRB(16, 30, 16, 10),
+                    padding: EdgeInsets.fromLTRB(16, 40, 16, 10),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         _isLoading
                             ? SizedBox.shrink()
@@ -528,8 +561,8 @@ class _MainScreenState extends State<MainScreen> {
                                         widget.onTapped(1, "${region['name']}");
                                       },
                                       style: TextButton.styleFrom(
-                                        backgroundColor: Colors.white,
-                                      ),
+                                          backgroundColor: Colors.white,
+                                          padding: EdgeInsets.zero),
                                       child: Text(
                                         "${region['emoji']} ${region['name']}",
                                         style: Theme.of(context)
@@ -541,7 +574,7 @@ class _MainScreenState extends State<MainScreen> {
                             })
                           ],
                         )),
-                    SizedBox(height: 120),
+                    SizedBox(height: 130),
                     Padding(
                         padding: EdgeInsets.fromLTRB(16, 20, 16, 80),
                         child: Column(children: [
@@ -559,7 +592,13 @@ class _MainScreenState extends State<MainScreen> {
                                                   fontWeight: FontWeight.w700)),
                                       IconButton(
                                           padding: EdgeInsets.zero,
-                                          onPressed: () {},
+                                          onPressed: () {
+                                            showModalBottomSheet(
+                                                context: context,
+                                                builder: (context) =>
+                                                    SortBottomSheet(
+                                                        sortTrips: sortTrips));
+                                          },
                                           icon: Icon(
                                             Icons.swap_vert_rounded,
                                             color: grayColor,
@@ -608,6 +647,15 @@ class _MainScreenState extends State<MainScreen> {
                                           _selectedRegion = _myTripList[i]
                                               ["selectedRegionsList"][0];
                                         }
+                                        if (regionImages[
+                                                selectedRegionList[0]] !=
+                                            null) {
+                                          _regionImage =
+                                              "${regionImages[selectedRegionList[0]]}";
+                                        } else {
+                                          _regionImage = "assets/bg/bg-7.jpg";
+                                        }
+
                                         return GestureDetector(
                                             onTap: () {
                                               Navigator.push(
@@ -620,97 +668,124 @@ class _MainScreenState extends State<MainScreen> {
                                                                   ["tripId"])));
                                             },
                                             child: Container(
-                                              height: 150,
-                                              margin: EdgeInsets.only(top: 15),
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                                image: DecorationImage(
-                                                  fit: BoxFit.cover,
-                                                  image: AssetImage(
-                                                      'assets/bg-1.jpg'),
+                                                height: 150,
+                                                margin:
+                                                    EdgeInsets.only(top: 15),
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
                                                 ),
-                                              ),
-                                              padding: EdgeInsets.all(16),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.end,
-                                                children: [
-                                                  FractionallySizedBox(
-                                                    widthFactor: 1,
-                                                    child: Text(
-                                                      _myTripList[i]["title"],
-                                                      style: Theme.of(context)
-                                                          .textTheme
-                                                          .titleMedium
-                                                          ?.copyWith(
-                                                              color:
-                                                                  Colors.white,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w700),
-                                                      softWrap: true,
-                                                      maxLines: 2,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
+                                                child: Stack(children: [
+                                                  // 배경 이미지
+                                                  ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                    child: Image.asset(
+                                                      _regionImage,
+                                                      fit: BoxFit.cover,
+                                                      height: double.infinity,
+                                                      width: double.infinity,
                                                     ),
                                                   ),
-                                                  SizedBox(
-                                                    height: 3,
+                                                  // 딤 효과 (반투명 레이어)
+                                                  Container(
+                                                    decoration: BoxDecoration(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                      color: Colors.black
+                                                          .withOpacity(
+                                                              0.4), // 원하는 투명도
+                                                    ),
                                                   ),
-                                                  FractionallySizedBox(
-                                                      widthFactor: 1,
-                                                      child: Row(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .center,
-                                                        children: [
-                                                          Icon(
-                                                            Icons
-                                                                .location_on_outlined,
-                                                            size: 14,
-                                                            color: Colors.white,
-                                                          ),
-                                                          SizedBox(
-                                                            width: 5,
-                                                          ),
-                                                          Text(
-                                                            _selectedRegion,
+                                                  Container(
+                                                    padding: EdgeInsets.all(16),
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment.end,
+                                                      children: [
+                                                        FractionallySizedBox(
+                                                          widthFactor: 1,
+                                                          child: Text(
+                                                            _myTripList[i]
+                                                                ["title"],
                                                             style: Theme.of(
                                                                     context)
                                                                 .textTheme
-                                                                .labelSmall
+                                                                .titleMedium
                                                                 ?.copyWith(
                                                                     color: Colors
-                                                                        .white),
+                                                                        .white,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w700),
+                                                            softWrap: true,
+                                                            maxLines: 2,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
                                                           ),
-                                                          Text(
-                                                            " · ",
-                                                            style: Theme.of(
-                                                                    context)
-                                                                .textTheme
-                                                                .labelSmall
-                                                                ?.copyWith(
-                                                                    color: Colors
-                                                                        .white),
-                                                          ),
-                                                          Text(
-                                                            _dateRange,
-                                                            style: Theme.of(
-                                                                    context)
-                                                                .textTheme
-                                                                .labelSmall
-                                                                ?.copyWith(
-                                                                    color: Colors
-                                                                        .white),
-                                                          )
-                                                        ],
-                                                      ))
-                                                ],
-                                              ),
-                                            ));
+                                                        ),
+                                                        SizedBox(
+                                                          height: 3,
+                                                        ),
+                                                        FractionallySizedBox(
+                                                            widthFactor: 1,
+                                                            child: Row(
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .center,
+                                                              children: [
+                                                                Icon(
+                                                                  Icons
+                                                                      .location_on_outlined,
+                                                                  size: 14,
+                                                                  color: Colors
+                                                                      .white,
+                                                                ),
+                                                                SizedBox(
+                                                                  width: 5,
+                                                                ),
+                                                                Text(
+                                                                  _selectedRegion,
+                                                                  style: Theme.of(
+                                                                          context)
+                                                                      .textTheme
+                                                                      .labelSmall
+                                                                      ?.copyWith(
+                                                                          color:
+                                                                              Colors.white),
+                                                                ),
+                                                                Text(
+                                                                  " · ",
+                                                                  style: Theme.of(
+                                                                          context)
+                                                                      .textTheme
+                                                                      .labelSmall
+                                                                      ?.copyWith(
+                                                                          color:
+                                                                              Colors.white),
+                                                                ),
+                                                                Text(
+                                                                  _dateRange,
+                                                                  style: Theme.of(
+                                                                          context)
+                                                                      .textTheme
+                                                                      .labelSmall
+                                                                      ?.copyWith(
+                                                                          color:
+                                                                              Colors.white),
+                                                                )
+                                                              ],
+                                                            ))
+                                                      ],
+                                                    ),
+                                                  )
+                                                ])));
                                       })
                                   : Padding(
                                       padding: EdgeInsets.only(top: 60),

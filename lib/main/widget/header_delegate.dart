@@ -16,10 +16,10 @@ class HeaderDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  double get maxExtent => 80.0; // 헤더의 최대 높이
+  double get maxExtent => 90.0; // 헤더의 최대 높이
 
   @override
-  double get minExtent => 80.0; // 헤더의 최소 높이 (스크롤 시 유지)
+  double get minExtent => 90.0; // 헤더의 최소 높이 (스크롤 시 유지)
 
   @override
   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) {
