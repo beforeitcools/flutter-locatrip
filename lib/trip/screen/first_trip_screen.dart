@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../widget/bottom_sheet_content.dart';
@@ -10,6 +12,27 @@ class TripScreen extends StatefulWidget {
 }
 
 class _TripScreenState extends State<TripScreen> {
+  late String _randomImage;
+
+  @override
+  void initState() {
+    super.initState();
+// 이미지 리스트
+    final List<String> _imageList = [
+      'assets/bg/bg-1.jpg',
+      'assets/bg/bg-2.jpg',
+      'assets/bg/bg-3.jpg',
+      'assets/bg/bg-4.jpg',
+      'assets/bg/bg-5.jpg',
+      'assets/bg/bg-6.jpg',
+      'assets/bg/bg-7.jpg',
+      'assets/bg/bg-8.jpg',
+    ];
+    // 랜덤으로 이미지 선택
+    final random = Random();
+    _randomImage = _imageList[random.nextInt(_imageList.length)];
+  }
+
   void _showBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -39,7 +62,7 @@ class _TripScreenState extends State<TripScreen> {
             decoration: BoxDecoration(
               image: DecorationImage(
                 fit: BoxFit.cover,
-                image: AssetImage('assets/bg-1.jpg'),
+                image: AssetImage(_randomImage),
               ),
             ),
             child: Column(

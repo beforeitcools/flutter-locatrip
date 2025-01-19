@@ -26,6 +26,7 @@ import 'common/model/navigation_observer.dart';
 import 'common/screen/home_screen.dart';
 import 'common/screen/splash_screen.dart';
 import 'common/widget/style.dart' as style;
+import 'main/model/main_screen_provider.dart';
 
 final AppOverlayObserver appOverlayObserver = AppOverlayObserver();
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -123,6 +124,7 @@ class _MyAppState extends State<MyApp> {
 
         String? tripId = uri.queryParameters['tripId'];
         String? userId = uri.queryParameters['userId'];
+        print('공유$tripId$userId');
 
         if (tripId != null && userId != null) handleKakaoScheme(tripId, userId);
       }
@@ -171,8 +173,13 @@ class _MyAppState extends State<MyApp> {
         } else if (snapshot.hasError) {
           return MaterialApp(home: ErrorScreen());
         } else {
-          return ChangeNotifierProvider(
-              create: (context) => InviteState(),
+          return MultiProvider(
+              providers: [
+                ChangeNotifierProvider(create: (context) => InviteState()),
+                ChangeNotifierProvider(
+                    create: (context) =>
+                        MainScreenProvider()), // MainScreenProvider 추가
+              ],
               child: MaterialApp(
                 navigatorKey: navigatorKey,
                 theme: style.theme,
