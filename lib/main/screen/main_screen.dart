@@ -16,7 +16,8 @@ import '../../trip/model/invite_state.dart';
 import '../widget/header_delegate.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final Function(int, String) onTapped;
+  const MainScreen({super.key, required this.onTapped});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -46,6 +47,11 @@ class _MainScreenState extends State<MainScreen> {
   List<dynamic> _myTripList = [];
   bool _isTripLoading = true;
 
+  late String _selectedRegion;
+  late String _dateRange;
+
+  bool _isShowCancel = false;
+
   @override
   void initState() {
     super.initState();
@@ -54,10 +60,9 @@ class _MainScreenState extends State<MainScreen> {
     _hostId = Provider.of<InviteState>(context, listen: false).hostId;
 
     // 일정에 참여중인 유저인지 확인
-    if (_inviteId != null && _hostId != null) _isExistTripUser();
-
-    loadData();
-    /*
+    if (_inviteId != null && _hostId != null) {
+      _isExistTripUser();
+      /*
     * 처음에 가져올 목록
     * 유저 정보 / 알림 여부 / 내여행 목록
     *
@@ -68,7 +73,8 @@ class _MainScreenState extends State<MainScreen> {
     * - 내 여행 정렬(무슨 순으로 할지 확인)
     * - 내여행 지역이랑 사진 매칭
     * */
-
+    }
+    loadData();
     _customScrollController.addListener(() {
       setState(() {
         _animatedPositionedOffset = _customScrollController.offset;
@@ -82,6 +88,13 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _customScrollController.dispose();
+    super.dispose();
+  }
+
   void loadData() async {
     // 유저정보 가져오기 / 알림여부
     await _getUserInfo();
@@ -89,14 +102,31 @@ class _MainScreenState extends State<MainScreen> {
     await _getMyTrip();
   }
 
+  // 호스트 정보 불러오기
+  _getHostUserInfo() async {
+    try {
+      Map<String, dynamic> result =
+          await _mainModel.getHostUserInfo(context, _hostId!);
+
+      if (result.isNotEmpty) {
+        setState(() {
+          _profilePic =
+              result["profilePic"] != null ? result["profilePic"] : "null";
+          _hostNickName = result["users"]["nickname"];
+        });
+      }
+    } catch (e) {
+      print('에러메시지?? $e');
+    }
+  }
+
   // 일정 가져오기
   _getMyTrip() async {
     try {
       Map<String, dynamic> result = await _mypageModel.getMyTripData(context);
       if (result.isNotEmpty) {
-        print('result["futureTrips"] ${result["futureTrips"]}');
         _myTripList.addAll(result["futureTrips"]);
-        print('_myTrip$_myTripList');
+        // print('_myTrip$_myTripList');
         setState(() {
           _isTripLoading = false;
         });
@@ -113,7 +143,7 @@ class _MainScreenState extends State<MainScreen> {
   _getUserInfo() async {
     try {
       Map<String, dynamic> result = await _mypageModel.getMyPageData(context);
-      print('reulst $result');
+      // print('reulst $result');
       if (result.isNotEmpty) {
         setState(() {
           _nickName = result["user"]["nickname"];
@@ -177,39 +207,25 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  // 호스트 정보 불러오기
-  _getHostUserInfo() async {
-    try {
-      Map<String, dynamic> result =
-          await _mainModel.getHostUserInfo(context, _hostId!);
-
-      if (result.isNotEmpty) {
-        setState(() {
-          _profilePic =
-              result["profilePic"] != null ? result["profilePic"] : "null";
-          _hostNickName = result["nickname"];
-        });
-      }
-    } catch (e) {
-      print('에러메시지?? $e');
-    }
-  }
-
   // 초대 모달
   void showInviteModal(BuildContext context, int inviteId) async {
     try {
       Map<String, dynamic> tripInfoMap =
           await _tripModel.selectTrip(inviteId, context);
-      print('tripInfoMap $tripInfoMap');
+      // print('tripInfoMap $tripInfoMap');
       await _getHostUserInfo();
 
       if (tripInfoMap.isNotEmpty) {
         if (_profilePic.isNotEmpty && _hostNickName.isNotEmpty) {
           String defaultImageUrl = "assets/default_profile_image.png";
           _profilePic == "null" ? defaultImageUrl : _profilePic;
-          String region = tripInfoMap["selectedRegions"][0]["region"];
-          int regionLength = tripInfoMap["selectedRegions"].length - 1;
+          String region = tripInfoMap["trip"]["selectedRegions"][0]["region"];
+          int regionLength = tripInfoMap["trip"]["selectedRegions"].length - 1;
           String elseString = regionLength > 0 ? " 외 $regionLength개 도시" : "";
+          String startDate = tripInfoMap["trip"]["startDate"];
+          String endDate = tripInfoMap["trip"]["endDate"];
+          String dateRange =
+              startDate == endDate ? startDate : "$startDate - $endDate";
 
           showDialog(
               context: context,
@@ -245,7 +261,7 @@ class _MainScreenState extends State<MainScreen> {
                             ),
                           ),
                           Text(
-                            "${tripInfoMap["startDate"]} - ${tripInfoMap["endDate"]}",
+                            dateRange,
                             style: Theme.of(context).textTheme.titleSmall,
                             textAlign: TextAlign.center,
                           ),
@@ -292,9 +308,9 @@ class _MainScreenState extends State<MainScreen> {
                       // 수락하기 버튼
                       TextButton(
                         onPressed: () {
-                          // 초대 ID 비우기
-                          /*Provider.of<InviteState>(context, listen: false).setInviteId(null);*/
                           _saveTripUser();
+                          Provider.of<InviteState>(context, listen: false)
+                              .setInviteId(null);
                           // 모달 닫기
                           Navigator.pop(context);
                         },
@@ -313,7 +329,7 @@ class _MainScreenState extends State<MainScreen> {
         }
       }
     } catch (e) {
-      print('에러메시지 $e');
+      print('에러메시지! $e');
     }
   }
 
@@ -352,8 +368,6 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-
     return Scaffold(
       body: Stack(
         children: [
@@ -363,7 +377,7 @@ class _MainScreenState extends State<MainScreen> {
             left: 0,
             right: 0,
             child: SizedBox(
-              height: 318, // 원하는 높이 설정
+              height: 318,
               child: Container(
                 decoration: BoxDecoration(
                   image: DecorationImage(
@@ -443,11 +457,18 @@ class _MainScreenState extends State<MainScreen> {
                         child: TextField(
                           controller: _searchController,
                           onSubmitted: (value) {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        MapScreen(region: value)));
+                            widget.onTapped(1, value);
+                          },
+                          onChanged: (value) {
+                            if (value.length > 0) {
+                              setState(() {
+                                _isShowCancel = true;
+                              });
+                            } else {
+                              setState(() {
+                                _isShowCancel = false;
+                              });
+                            }
                           },
                           decoration: InputDecoration(
                             prefixIconConstraints: BoxConstraints(minWidth: 40),
@@ -472,6 +493,21 @@ class _MainScreenState extends State<MainScreen> {
                               borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide.none,
                             ),
+                            suffixIcon: _isShowCancel
+                                ? IconButton(
+                                    icon: Icon(
+                                      Icons.cancel,
+                                      color: grayColor,
+                                      size: 20,
+                                    ),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() {
+                                        _isShowCancel = false;
+                                      });
+                                    },
+                                  )
+                                : SizedBox.shrink(),
                           ),
                         )),
                     SizedBox(height: 10),
@@ -484,10 +520,13 @@ class _MainScreenState extends State<MainScreen> {
                           children: [
                             ...mainRegions.map((region) {
                               int index = mainRegions.indexOf(region);
+
                               return Container(
                                   margin: EdgeInsets.only(right: 10),
                                   child: TextButton(
-                                      onPressed: () {},
+                                      onPressed: () {
+                                        widget.onTapped(1, "${region['name']}");
+                                      },
                                       style: TextButton.styleFrom(
                                         backgroundColor: Colors.white,
                                       ),
@@ -504,29 +543,30 @@ class _MainScreenState extends State<MainScreen> {
                         )),
                     SizedBox(height: 120),
                     Padding(
-                        padding: EdgeInsets.fromLTRB(16, 20, 16, 30),
+                        padding: EdgeInsets.fromLTRB(16, 20, 16, 80),
                         child: Column(children: [
                           SizedBox(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text("내 여행",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(
-                                            fontWeight: FontWeight.w700)),
-                                _myTripList.isNotEmpty
-                                    ? IconButton(
-                                        padding: EdgeInsets.zero,
-                                        onPressed: () {},
-                                        icon: Icon(
-                                          Icons.swap_vert_rounded,
-                                          color: grayColor,
-                                        ))
-                                    : SizedBox.shrink()
-                              ],
-                            ),
+                            child: _myTripList.isNotEmpty
+                                ? Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text("내 여행",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.copyWith(
+                                                  fontWeight: FontWeight.w700)),
+                                      IconButton(
+                                          padding: EdgeInsets.zero,
+                                          onPressed: () {},
+                                          icon: Icon(
+                                            Icons.swap_vert_rounded,
+                                            color: grayColor,
+                                          ))
+                                    ],
+                                  )
+                                : SizedBox.shrink(),
                             height: 30,
                           ),
                           _isTripLoading
@@ -540,10 +580,34 @@ class _MainScreenState extends State<MainScreen> {
                                       padding: EdgeInsets.zero,
                                       itemCount: _myTripList.length,
                                       itemBuilder: (context, i) {
-                                        String dateRange = _myTripList
-                                                .isNotEmpty
-                                            ? "${_myTripList[i]["startDate"]}~${_myTripList[i]["endDate"]}"
-                                            : "";
+                                        if (_myTripList.isNotEmpty) {
+                                          String startDate =
+                                              _myTripList[i]["startDate"];
+                                          String endDate =
+                                              _myTripList[i]["endDate"];
+
+                                          _dateRange = startDate == endDate
+                                              ? startDate
+                                              : "$startDate ~ $endDate";
+                                        }
+                                        List selectedRegionList = _myTripList[i]
+                                            ["selectedRegionsList"];
+                                        if (selectedRegionList.length > 1) {
+                                          for (int i = 0;
+                                              i < selectedRegionList.length;
+                                              i++) {
+                                            if (i > 0) {
+                                              _selectedRegion +=
+                                                  " ${selectedRegionList[i]}";
+                                            } else {
+                                              _selectedRegion =
+                                                  selectedRegionList[i];
+                                            }
+                                          }
+                                        } else {
+                                          _selectedRegion = _myTripList[i]
+                                              ["selectedRegionsList"][0];
+                                        }
                                         return GestureDetector(
                                             onTap: () {
                                               Navigator.push(
@@ -596,60 +660,88 @@ class _MainScreenState extends State<MainScreen> {
                                                   SizedBox(
                                                     height: 3,
                                                   ),
-                                                  Row(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      Icon(
-                                                        Icons
-                                                            .location_on_outlined,
-                                                        size: 14,
-                                                        color: Colors.white,
-                                                      ),
-                                                      SizedBox(
-                                                        width: 5,
-                                                      ),
-                                                      Text(
-                                                        "지역명",
-                                                        style: Theme.of(context)
-                                                            .textTheme
-                                                            .labelSmall
-                                                            ?.copyWith(
-                                                                color: Colors
-                                                                    .white),
-                                                      ),
-                                                      Text(
-                                                        " · ",
-                                                        style: Theme.of(context)
-                                                            .textTheme
-                                                            .labelSmall
-                                                            ?.copyWith(
-                                                                color: Colors
-                                                                    .white),
-                                                      ),
-                                                      Text(
-                                                        dateRange,
-                                                        style: Theme.of(context)
-                                                            .textTheme
-                                                            .labelSmall
-                                                            ?.copyWith(
-                                                                color: Colors
-                                                                    .white),
-                                                      )
-                                                    ],
-                                                  )
+                                                  FractionallySizedBox(
+                                                      widthFactor: 1,
+                                                      child: Row(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .center,
+                                                        children: [
+                                                          Icon(
+                                                            Icons
+                                                                .location_on_outlined,
+                                                            size: 14,
+                                                            color: Colors.white,
+                                                          ),
+                                                          SizedBox(
+                                                            width: 5,
+                                                          ),
+                                                          Text(
+                                                            _selectedRegion,
+                                                            style: Theme.of(
+                                                                    context)
+                                                                .textTheme
+                                                                .labelSmall
+                                                                ?.copyWith(
+                                                                    color: Colors
+                                                                        .white),
+                                                          ),
+                                                          Text(
+                                                            " · ",
+                                                            style: Theme.of(
+                                                                    context)
+                                                                .textTheme
+                                                                .labelSmall
+                                                                ?.copyWith(
+                                                                    color: Colors
+                                                                        .white),
+                                                          ),
+                                                          Text(
+                                                            _dateRange,
+                                                            style: Theme.of(
+                                                                    context)
+                                                                .textTheme
+                                                                .labelSmall
+                                                                ?.copyWith(
+                                                                    color: Colors
+                                                                        .white),
+                                                          )
+                                                        ],
+                                                      ))
                                                 ],
                                               ),
                                             ));
                                       })
-                                  : Center(
+                                  : Padding(
+                                      padding: EdgeInsets.only(top: 60),
                                       child: Column(
                                         children: [
-                                          Text("생성된 여행이 없습니다."),
+                                          Text(
+                                            "생성된 여행이 없습니다.",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall,
+                                          ),
                                           TextButton(
-                                              onPressed: () {},
-                                              child: Text("여행 추가"))
+                                              onPressed: () {
+                                                Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          TripScreen(),
+                                                      // fullscreenDialog: true,
+                                                    ));
+                                              },
+                                              child: Text(
+                                                "여행 추가",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelMedium
+                                                    ?.copyWith(
+                                                        color: pointBlueColor,
+                                                        fontWeight:
+                                                            FontWeight.w600),
+                                              ))
                                         ],
                                       ),
                                     )

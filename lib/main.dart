@@ -123,6 +123,7 @@ class _MyAppState extends State<MyApp> {
 
         String? tripId = uri.queryParameters['tripId'];
         String? userId = uri.queryParameters['userId'];
+        print('공유$tripId$userId');
 
         if (tripId != null && userId != null) handleKakaoScheme(tripId, userId);
       }
