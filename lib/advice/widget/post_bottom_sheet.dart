@@ -38,6 +38,7 @@ class _PostBottomSheetState extends State<PostBottomSheet> {
     setState(() {
       _isPressed[index] = isPressed;
       _selectedTripId = _trips[index]['tripId'];
+      print(_selectedTripId);
     });
   }
 

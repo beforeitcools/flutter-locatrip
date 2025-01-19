@@ -59,6 +59,7 @@ flutter:
   assets:
     - assets/
     - assets/icon/
+    - assets/ca_bundle.crt
   fonts:
     - family: NotoSansKR
       fonts:
