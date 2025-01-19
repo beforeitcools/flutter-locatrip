@@ -154,7 +154,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                                                 return Padding(
                                                   padding:
                                                       const EdgeInsets.fromLTRB(
-                                                          0, 0, 20, 0),
+                                                          0, 0, 20, 10),
                                                   child: Column(
                                                     mainAxisAlignment:
                                                         MainAxisAlignment
@@ -181,6 +181,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                                                               defaultImageUrl,
                                                               width: 36,
                                                               height: 36,
+                                                              fit: BoxFit.cover,
                                                             );
                                                           },
                                                         ),

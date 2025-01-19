@@ -574,7 +574,7 @@ class _MainScreenState extends State<MainScreen> {
                             })
                           ],
                         )),
-                    SizedBox(height: 130),
+                    SizedBox(height: 140),
                     Padding(
                         padding: EdgeInsets.fromLTRB(16, 20, 16, 80),
                         child: Column(children: [
@@ -653,7 +653,8 @@ class _MainScreenState extends State<MainScreen> {
                                           _regionImage =
                                               "${regionImages[selectedRegionList[0]]}";
                                         } else {
-                                          _regionImage = "assets/bg/bg-7.jpg";
+                                          _regionImage =
+                                              "assets/images/default.jpg";
                                         }
 
                                         return GestureDetector(
@@ -695,8 +696,7 @@ class _MainScreenState extends State<MainScreen> {
                                                           BorderRadius.circular(
                                                               10),
                                                       color: Colors.black
-                                                          .withOpacity(
-                                                              0.4), // 원하는 투명도
+                                                          .withOpacity(0.5),
                                                     ),
                                                   ),
                                                   Container(

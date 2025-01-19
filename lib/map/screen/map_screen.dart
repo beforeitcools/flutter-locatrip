@@ -1196,12 +1196,18 @@ class _MapScreenState extends State<MapScreen> {
                                                   )),
                                             ],
                                           ),
-                                          SingleChildScrollView(
-                                            scrollDirection: Axis.horizontal,
-                                            child: Row(
-                                              children: _nearByPlacesList[index]
-                                                  .photoUrl!
-                                                  .map((photo) {
+                                          if (_nearByPlacesList[index] !=
+                                                  null &&
+                                              _nearByPlacesList[index]
+                                                      .photoUrl !=
+                                                  null)
+                                            SingleChildScrollView(
+                                              scrollDirection: Axis.horizontal,
+                                              child: Row(
+                                                  children:
+                                                      _nearByPlacesList[index]
+                                                          .photoUrl!
+                                                          .map((photo) {
                                                 return Container(
                                                   margin: EdgeInsets.only(
                                                       right: 16),
@@ -1218,9 +1224,8 @@ class _MapScreenState extends State<MapScreen> {
                                                     ),
                                                   ),
                                                 );
-                                              }).toList(),
-                                            ),
-                                          )
+                                              }).toList()),
+                                            )
                                         ],
                                       ),
                                     ),

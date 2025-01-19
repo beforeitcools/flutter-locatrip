@@ -25,7 +25,7 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
   List<Map<String, String>> _recommendedRegions = [];
 
   // 기본 이미지 (이미지가 없는 경우)
-  final String defaultImageUrl = "assets/imgPlaceholder.png";
+  final String defaultImageUrl = "assets/images/default.jpg";
 
   // 검색결과 리스트
   List<Map<String, String>> _displayedRegions = [];
@@ -287,6 +287,7 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                                       defaultImageUrl,
                                       width: 40,
                                       height: 40,
+                                      fit: BoxFit.cover,
                                     );
                                   },
                                 ),
@@ -367,6 +368,7 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                                             defaultImageUrl,
                                             width: 36,
                                             height: 36,
+                                            fit: BoxFit.cover,
                                           );
                                         },
                                       ),

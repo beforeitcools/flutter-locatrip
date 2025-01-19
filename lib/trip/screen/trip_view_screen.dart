@@ -972,7 +972,13 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                                   context,
                                                   MaterialPageRoute(
                                                       builder: (context) =>
-                                                          ShareScreen()));
+                                                          ShareScreen(
+                                                              title: tripInfo[
+                                                                  "title"],
+                                                              num:
+                                                                  _tripUsersProfileList
+                                                                      .length,
+                                                              share: _share)));
                                             },
                                             style: TextButton.styleFrom(
                                                 backgroundColor: pointBlueColor,
