@@ -108,6 +108,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     // 해당 키워드와 일치하는 메세지들 다 찾고 그쪽으로 1씩 위로 올라갈 수 있음?
   }
 
+  Future<void> _pushToSetting(BuildContext context) async{
+    final result = await Navigator.push(context, MaterialPageRoute(builder: (context)=>ChatRoomSetting(chatRoom: widget.chatroomName, chatroomId: widget.chatroomId,)));
+    setState(() {
+      widget.chatroomName = result;
+    });
+  }
+
   @override
   void dispose() {
     _updateLastReadMessageId();
@@ -133,7 +140,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
             },
               icon: Icon(Icons.search), color: grayColor),
-          IconButton(onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (context)=>ChatRoomSetting(chatRoom: widget.chatroomName, chatroomId: widget.chatroomId,)));}, icon: Icon(Icons.settings_outlined), color: grayColor)
+          IconButton(onPressed: (){_pushToSetting(context);},
+              icon: Icon(Icons.settings_outlined), color: grayColor)
         ],),
         body: Container(
           height: MediaQuery.of(context).size.height,

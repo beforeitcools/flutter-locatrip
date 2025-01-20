@@ -38,7 +38,9 @@ class _TripForPostState extends State<TripForAdvice> {
       for (int i = 0; i < _myTrip.length; i++) {
         if(_days.isNotEmpty){
           for(var d in _days){
-            if(d["date"] == _myTrip[i]["date"]) { continue; }
+            if(d["date"] == _myTrip[i]["date"]) {
+              print('${d["data"]}랑 ${_myTrip[i]["date"]} d이녓긍은 무조건 달라야 하긔');
+              continue; }
             else{
               String tripDay = "day ${day++}";
               String tripDate = _myTrip[i]["date"];

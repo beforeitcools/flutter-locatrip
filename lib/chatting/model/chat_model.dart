@@ -184,4 +184,44 @@ class ChatModel {
       throw Exception("Error   $e");
     }
   }
+
+  // 기존 채팅방 불러오기(trip)
+  Future<int> getExistTripChatroom(BuildContext context, int chatroomId) async{
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    try{
+      final response = await dio.get("$backUrl/chatroom/createNewChatroom");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print("Success to get your chatroom!");
+        return response.data as int;
+      }
+      else {
+        throw Exception("FAILED TO GET YOUR CHATROOM : ${response.statusCode}");
+      }
+    }catch(e){
+      throw Exception("Error   $e");
+    }
+  }
+
+  // 채팅방 생성(trip)
+  Future<int> createTripChatroom(BuildContext context) async{
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    try{
+      final response = await dio.post("$backUrl/chatroom/getExistChatroom");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print("Success to create your chatroom!");
+        return response.data as int;
+      }
+      else {
+        throw Exception("FAILED TO CREATE YOUR CHATROOM : ${response.statusCode}");
+      }
+    }catch(e){
+      throw Exception("Error   $e");
+    }
+  }
 }
