@@ -14,10 +14,11 @@ class StartScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(
-              height: 106,
+              height: 120,
             ),
             Image(
               image: AssetImage('assets/logo_with_image.png'),
+              width: 250,
             ),
             SizedBox(
               height: 30,

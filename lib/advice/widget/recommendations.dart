@@ -23,16 +23,19 @@ class Recommendations extends StatelessWidget {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: postsInMyRegion.isEmpty
-                  ? Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "$localArea 이/가 포함된 포스트가 없습니다.",
-                          style: Theme.of(context).textTheme.bodySmall,
-                          textAlign: TextAlign.start,
-                        ),
-                      ],
+                  ? Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "$localArea 이/가 포함된 포스트가 없습니다.",
+                            style: Theme.of(context).textTheme.bodySmall,
+                            textAlign: TextAlign.start,
+                          ),
+                        ],
+                      ),
                     )
                   : Row(
                       children: postsInMyRegion.map((post) {

@@ -93,30 +93,6 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
       ),
       body: Stack(
         children: [
-          // 점선
-          /*Positioned(
-            left: 210, // 점선 위치 조정
-            top: 75, // 헤더의 대략적 높이에서 시작 (고정값)
-            bottom: 0, // 하단 끝까지 점선
-            child: Container(
-              width: 1,
-              color: Colors.transparent,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final totalHeight = constraints.maxHeight;
-                  return Column(
-                    children: List.generate(
-                      (totalHeight / 8).floor(),
-                      (i) => i.isEven
-                          ? Container(height: 4, color: grayColor)
-                          : Container(height: 4, color: Colors.transparent),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),*/
-
           // 콘텐츠
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
