@@ -75,23 +75,30 @@ class _PostViewScreenState extends State<PostViewScreen> {
           children: [
             Container(
                 child: _postData == null ? Center(child: CircularProgressIndicator())
-                    : Column(children: [
-                  Text(_postData["title"], style: Theme.of(context).textTheme.titleLarge),
-                  SizedBox(height: 16),
-                  Text(_postData["contents"], style: Theme.of(context).textTheme.bodyMedium),
-                  SizedBox(height: 16),
-                  ElevatedButton(onPressed: (){},
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0,
-                          minimumSize: Size(140, 50),
-                          backgroundColor: pointBlueColor
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                    : Column(mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(_postData["title"], style: Theme.of(context).textTheme.titleLarge),
+                      SizedBox(height: 16),
+                      Text(_postData["contents"], style: Theme.of(context).textTheme.bodyMedium),
+                      SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text("채택하러가기 ", style: Theme.of(context).textTheme.labelLarge!.copyWith(color: Colors.white)),
-                          Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18)
-                        ],))
+                          SizedBox(width: 30,),
+                          ElevatedButton(onPressed: (){},
+                            style: ElevatedButton.styleFrom(
+                                elevation: 0,
+                                minimumSize: Size(140, 45),
+                                backgroundColor: pointBlueColor
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text("채택하러가기 ", style: Theme.of(context).textTheme.labelLarge!.copyWith(color: Colors.white)),
+                                Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18)
+                              ],))
+                  ],)
                 ])
             ),
             SizedBox(height: 16),
@@ -108,7 +115,7 @@ class _PostViewScreenState extends State<PostViewScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text("전체 첨삭", style: Theme.of(context).textTheme.titleMedium),
-                      IconButton(onPressed: (){}, icon: Icon(Icons.forum_outlined, color: blackColor))
+                      IconButton(onPressed: (){/*바텀시트*/ showAdviceBottomSheet();}, icon: Icon(Icons.forum_outlined, color: blackColor))
                     ]
                 )),
             SizedBox(height: 16),
@@ -117,5 +124,23 @@ class _PostViewScreenState extends State<PostViewScreen> {
           ],
         ),)
     );
+  }
+
+  void showAdviceBottomSheet()
+  {
+    showModalBottomSheet(context: context, builder: (context){
+      return Container(
+        width: MediaQuery.of(context).size.width,
+        padding: EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextButton(onPressed: (){/*TODO 첨삭하기 페이지*/}, child: Text("첨삭하기", style: Theme.of(context).textTheme.labelLarge!.copyWith(color: blackColor),)),
+            TextButton(onPressed: (){/*TODO 첨삭보기 페이지*/}, child: Text("첨삭보기", style: Theme.of(context).textTheme.labelLarge!.copyWith(color: blackColor))),
+            TextButton(onPressed: (){Navigator.pop(context);}, child: Text("취소", style: Theme.of(context).textTheme.labelLarge!.copyWith(color: blackColor))),
+          ],
+        ),
+      );
+    });
   }
 }

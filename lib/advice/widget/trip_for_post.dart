@@ -39,11 +39,12 @@ class _TripForPostState extends State<TripForPost> {
       for (int i = 0; i < results.length; i++) {
         if(_days.isNotEmpty){
           for(var d in _days){
-            if(d["date"] == results[i]["date"]) { continue; }
+            if(d["date"] == results[i]["date"]) {
+              print('${d["date"]}랑 ${results[i]["date"]}랑 같니? 대체 뭘 불러오는 거임?');
+              continue; }
             else{
               String tripDay = "day ${day++}";
               String tripDate = results[i]["date"];
-
               _days.add({"day": tripDay, "date": tripDate});
               print('my days: $_days');
             }
@@ -52,7 +53,6 @@ class _TripForPostState extends State<TripForPost> {
         else{
           String tripDay = "day ${day++}";
           String tripDate = results[i]["date"];
-
           _days.add({"day": tripDay, "date": tripDate});
           print('my days: $_days');
         }
