@@ -5,6 +5,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_locatrip/advice/screen/post_screen.dart';
+import 'package:flutter_locatrip/chatting/model/chat_model.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
 import 'package:flutter_locatrip/mypage/model/mypage_model.dart';
@@ -44,6 +45,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
   final TripModel _tripModel = TripModel();
   final TripDayModel _tripDayModel = TripDayModel();
   final MypageModel _mypageModel = MypageModel();
+  final ChatModel _chatModel = ChatModel();
 
   late final int userId;
 
@@ -892,8 +894,10 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                               if (tripInfo["chattingId"] !=
                                                   null) {
                                                 // 채팅방 들어가기
+                                                _chatModel.getExistTripChatroom(context, tripInfo["chattingId"]);
                                               } else {
                                                 // 채팅방 만들기
+                                                _chatModel.createTripChatroom(context);
                                               }
                                             },
                                             icon: Icon(
