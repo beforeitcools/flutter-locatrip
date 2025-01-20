@@ -24,7 +24,7 @@ class _ChatListUiState extends State<ChatListUi> {
   final ChatModel _chatModel = ChatModel();
 
   final FlutterSecureStorage _storage = FlutterSecureStorage();
-  final _channel =  WebSocketChannel.connect(Uri.parse("ws://localhost:8082"));
+  final _channel =  WebSocketChannel.connect(Uri.parse("wss://www.beforeitcools.site:7777"));
   List<dynamic> _unreadCounts = [];
 
   Future<void> _getToken() async{
