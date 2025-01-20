@@ -89,4 +89,25 @@ class AdviceModel {
       throw Exception("Error: $e");
     }
   }
+
+  Future<String> insertAdvice(
+      BuildContext context, Map<String, Object> adviceData) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    try {
+      final response = await dio.post("$backUrl/advice/insertAdvice",
+          data: adviceData,
+          options: Options(headers: {"Content-Type": "application/json"}));
+
+      if (response.statusCode == 200) {
+        return response.data as String;
+      } else {
+        throw Exception("데이터 로드 실패");
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error: $e");
+    }
+  }
 }

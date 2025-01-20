@@ -59,6 +59,7 @@ flutter:
   assets:
     - assets/
     - assets/icon/
+    - assets/images/
     - assets/ca_bundle.crt
     - assets/bg/
     - assets/images/
