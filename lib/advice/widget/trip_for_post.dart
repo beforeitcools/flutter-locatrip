@@ -35,19 +35,21 @@ class _TripForPostState extends State<TripForPost> {
     try {
       List<Map<String, dynamic>> results =
           await _tripDayModel.getTripDay(widget.tripId, context);
+      print('나의 결과 ===> $results');
       int day = 1;
+      int dateIndex = 0;
       for (int i = 0; i < results.length; i++) {
+        print('${results[i]["date"]}');
         if(_days.isNotEmpty){
-          for(var d in _days){
-            if(d["date"] == results[i]["date"]) {
-              print('${d["date"]}랑 ${results[i]["date"]}랑 같니? 대체 뭘 불러오는 거임?');
-              continue; }
-            else{
-              String tripDay = "day ${day++}";
-              String tripDate = results[i]["date"];
-              _days.add({"day": tripDay, "date": tripDate});
-              print('my days: $_days');
-            }
+          if(results[i]["dateIndex"] <= dateIndex) {
+            print('${results[i]["dateIndex"]}가 $dateIndex보다 작거나 크면 continue');
+            continue; }
+          else{
+            String tripDay = "day ${day++}";
+            String tripDate = results[i]["date"];
+            _days.add({"day": tripDay, "date": tripDate});
+            print('my days: $_days');
+            dateIndex++;
           }
         }
         else{
