@@ -52,6 +52,8 @@ class _LocalAreaAuthScreenState extends State<LocalAreaAuthScreen> {
         latitude = position!.latitude;
         longitude = position!.longitude;
       });
+      print("latitude : $latitude");
+      print("longitude : $longitude");
       await _getAdministrativeDistrict();
       // 현지인 인증 데이터 로드
       Map<String, dynamic> result =
@@ -128,7 +130,11 @@ class _LocalAreaAuthScreenState extends State<LocalAreaAuthScreen> {
     try {
       if (latitude == null || longitude == null) return;
 
-      viewPortMap = await _placeApiModel.getViewPorts("대한민국");
+      // viewPortMap = await _placeApiModel.getViewPorts("대한민국");
+      viewPortMap = await _placeApiModel.getViewPortsInKorean(
+        LatLng(latitude!, longitude!),
+        'ko',
+      );
 
       if (viewPortMap.containsKey('results') &&
           viewPortMap['results'].isNotEmpty) {

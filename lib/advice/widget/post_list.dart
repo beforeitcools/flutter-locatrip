@@ -1,20 +1,25 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/advice/screen/post_view_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
 class PostList extends StatelessWidget {
   final List<dynamic> filteredPost;
+  final Function(int) navigateToPostViewPage;
 
-  const PostList({
-    super.key,
-    required this.filteredPost,
-  });
+  const PostList(
+      {super.key,
+      required this.filteredPost,
+      required this.navigateToPostViewPage});
 
   @override
   Widget build(BuildContext context) {
     return filteredPost.isEmpty
         ? Row(
             children: [
+              SizedBox(
+                width: 16,
+              ),
               Text(
                 "해당하는 포스트가 없습니다.",
                 style: Theme.of(context).textTheme.bodySmall,
@@ -32,7 +37,9 @@ class PostList extends StatelessWidget {
                         color: Colors.transparent,
                         child: InkWell(
                           // 포스트 페이지로 연결(postId)
-                          onTap: () {},
+                          onTap: () {
+                            navigateToPostViewPage(post['postId']);
+                          },
                           splashColor: Color.fromARGB(50, 43, 192, 228),
                           highlightColor: Color.fromARGB(30, 43, 192, 228),
                           child: Container(

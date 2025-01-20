@@ -1169,20 +1169,18 @@ class _MapScreenState extends State<MapScreen> {
                                               ),
                                               IconButton(
                                                   onPressed: () {
-                                                    _toggleFavorite
-                                                        .toggleFavoriteStatus(
-                                                            place,
-                                                            isFavorite,
-                                                            // _favoriteStatus,
-                                                            // _favoriteStatusList,
-                                                            context,
-                                                            () => _updateFavoriteStatus(
-                                                                !(_favoriteStatus[
-                                                                        _nearByPlacesList[index]
-                                                                            .name] ??
-                                                                    false),
-                                                                _nearByPlacesList[
-                                                                    index]));
+                                                    _toggleFavorite.toggleFavoriteStatus(
+                                                        place,
+                                                        isFavorite,
+                                                        context,
+                                                        () => _updateFavoriteStatus(
+                                                            !(_favoriteStatus[
+                                                                    _nearByPlacesList[
+                                                                            index]
+                                                                        .name] ??
+                                                                false),
+                                                            _nearByPlacesList[
+                                                                index]));
                                                   },
                                                   padding: EdgeInsets.zero,
                                                   icon: Icon(

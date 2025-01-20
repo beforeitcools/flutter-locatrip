@@ -20,31 +20,11 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
       'date': '2024-12-13',
       'content': '부산은 아름다운 항구 도시입니다...'
     },
-    {
-      'author': '서울나그네',
-      'date': '2024-12-14',
-      'content': '서울의 밤은 화려합니다...'
-    },
-    {
-      'author': '광주빛고을',
-      'date': '2024-12-15',
-      'content': '광주는 문화의 중심지입니다...'
-    },
-    {
-      'author': '경주빛고을',
-      'date': '2024-12-15',
-      'content': '경주는 문화의 중심지입니다...'
-    },
-    {
-      'author': '서울고을',
-      'date': '2024-12-15',
-      'content': '서울는 문화의 중심지입니다...'
-    },
-    {
-      'author': '동작구고을',
-      'date': '2024-12-15',
-      'content': '동작구는 문화의 중심지입니다...'
-    },
+    {'author': '서울나그네', 'date': '2024-12-14', 'content': '서울의 밤은 화려합니다...'},
+    {'author': '광주빛고을', 'date': '2024-12-15', 'content': '광주는 문화의 중심지입니다...'},
+    {'author': '경주빛고을', 'date': '2024-12-15', 'content': '경주는 문화의 중심지입니다...'},
+    {'author': '서울고을', 'date': '2024-12-15', 'content': '서울는 문화의 중심지입니다...'},
+    {'author': '동작구고을', 'date': '2024-12-15', 'content': '동작구는 문화의 중심지입니다...'},
   ];
 
   @override
@@ -77,14 +57,13 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
         mainAxisAlignment: MainAxisAlignment.start, // 점선 시작 위치 설정
         children: List.generate(
           5, // 점선 길이 설정
-              (index) => index.isEven
-                  ? Container(height: 4, color: grayColor)
-                  : Container(height: 4, color: Colors.transparent), // 점선 간격
+          (index) => index.isEven
+              ? Container(height: 4, color: grayColor)
+              : Container(height: 4, color: Colors.transparent), // 점선 간격
         ),
       ),
     );
   }
-
 
   void _showBottomSheet() {
     showModalBottomSheet(
@@ -147,15 +126,17 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
               if (!_isSelected) {
                 _onSelect();
               }
-              Navigator.push(
+              /*Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => EditorsListScreen(),
                 ),
-              );
+              );*/
             },
-            icon: Icon(Icons.recommend,
-              color: _isSelected ? pointBlueColor : grayColor,),
+            icon: Icon(
+              Icons.recommend,
+              color: _isSelected ? pointBlueColor : grayColor,
+            ),
             label: Text(
               '채택하기',
               style: TextStyle(
@@ -194,14 +175,13 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
 
           SliverList(
             delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    print(adviceList[index]);
-                return _buildAdviceCard(adviceList[index+1]);
-                },
+              (context, index) {
+                print(adviceList[index]);
+                return _buildAdviceCard(adviceList[index + 1]);
+              },
               childCount: 1,
             ),
           ),
-
 
           SliverToBoxAdapter(
             child: _buildSectionHeader('2', '강남역', '관광명소 · 서울 강남구'),
@@ -218,8 +198,8 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
 
           SliverList(
             delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                return _buildAdviceCard(adviceList[index+2]);
+              (context, index) {
+                return _buildAdviceCard(adviceList[index + 2]);
               },
               childCount: 1,
             ),
@@ -240,8 +220,8 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
 
           SliverList(
             delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                return _buildAdviceCard(adviceList[index+3]);
+              (context, index) {
+                return _buildAdviceCard(adviceList[index + 3]);
               },
               childCount: 1,
             ),
@@ -260,15 +240,13 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
             ),
           ),
           SliverList(
-
             delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                return _buildAdviceCard(adviceList[index+4]);
+              (context, index) {
+                return _buildAdviceCard(adviceList[index + 4]);
               },
               childCount: 1,
             ),
           ),
-
         ],
       ),
     );
@@ -506,5 +484,4 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
       ),
     );
   }
-
 }

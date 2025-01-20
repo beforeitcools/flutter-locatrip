@@ -10,9 +10,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class MypageModel {
   Future<Map<String, dynamic>> getMyPageData(BuildContext context) async {
-    /*final SDio sdio = SDio();
-    final Dio dio = await sdio.createDio();*/
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
@@ -31,7 +31,9 @@ class MypageModel {
 
   Future<String> updateProfile(Map<String, String> updatedData, File? image,
       BuildContext context) async {
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
@@ -62,7 +64,9 @@ class MypageModel {
   }
 
   Future<Map<String, dynamic>> getMyTripData(BuildContext context) async {
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
@@ -80,7 +84,9 @@ class MypageModel {
   }
 
   Future<String> deleteTrip(BuildContext context, int tripId) async {
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
@@ -98,7 +104,9 @@ class MypageModel {
   }
 
   Future<List<dynamic>> getMypostData(BuildContext context) async {
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     final FlutterSecureStorage storage = FlutterSecureStorage();
@@ -120,7 +128,9 @@ class MypageModel {
   }
 
   Future<List<dynamic>> getMyAdviceData(BuildContext context) async {
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     final FlutterSecureStorage storage = FlutterSecureStorage();
@@ -142,7 +152,9 @@ class MypageModel {
   }
 
   Future<Map<String, dynamic>> getMyFavoriteData(BuildContext context) async {
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     final FlutterSecureStorage storage = FlutterSecureStorage();
@@ -164,7 +176,9 @@ class MypageModel {
   }
 
   Future<dynamic> insertFavoritePost(BuildContext context, int postId) async {
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     final FlutterSecureStorage storage = FlutterSecureStorage();
@@ -190,7 +204,9 @@ class MypageModel {
   }
 
   Future<String> deleteFavoritePost(BuildContext context, int postId) async {
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     final FlutterSecureStorage storage = FlutterSecureStorage();
@@ -217,7 +233,9 @@ class MypageModel {
 
   Future<Map<String, dynamic>> getMyLocalAreaAuthData(
       BuildContext context) async {
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     final FlutterSecureStorage storage = FlutterSecureStorage();
@@ -240,7 +258,9 @@ class MypageModel {
 
   Future<Map<String, dynamic>> updateLocalAreaAuthentication(
       BuildContext context, String region) async {
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     final FlutterSecureStorage storage = FlutterSecureStorage();
@@ -268,7 +288,9 @@ class MypageModel {
 
   Future<Map<String, dynamic>> getUserPageData(
       BuildContext context, int userId) async {
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
@@ -286,7 +308,9 @@ class MypageModel {
   }
 
   Future<List<dynamic>> getMyAlarmData(BuildContext context) async {
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     final FlutterSecureStorage storage = FlutterSecureStorage();

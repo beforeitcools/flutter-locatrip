@@ -136,6 +136,12 @@ class _TripViewScreenState extends State<TripViewScreen> {
       isLoading = true;
     });
     try {
+      final FlutterSecureStorage _storage = FlutterSecureStorage();
+      final dynamic stringId = await _storage.read(key: 'userId');
+      setState(() {
+        userId = int.parse(stringId);
+      });
+
       Map<String, dynamic> result =
           await _tripModel.selectTrip(widget.tripId, context);
 
@@ -534,6 +540,115 @@ class _TripViewScreenState extends State<TripViewScreen> {
   // 첨삭받기 버튼 눌렀을 때
   void _addPostOrShowModal() async {
     int tripId = tripInfo["id"];
+
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            contentPadding: EdgeInsets.all(20),
+            actionsPadding: EdgeInsets.all(5),
+            insetPadding: EdgeInsets.all(30),
+            title: Text(
+              "여행 첨삭 기능안내",
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            content: RichText(
+              text: TextSpan(
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: blackColor, // 기본 텍스트 색상
+                      height: 1.5, // 줄 간격
+                    ),
+                children: [
+                  TextSpan(
+                    text: "나만의 여정, 현지인에게 확인해 보세요!\n",
+                  ),
+                  TextSpan(
+                    text: "현지인들의 생생한 경험을 바탕으로 여행 일정을 완성해보세요.\n\n",
+                  ),
+                  TextSpan(
+                      text: "단, 게시글 작성 후에 일정 변경 시 여행첨삭소에는 반영되지않습니다.\n\n",
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(fontWeight: FontWeight.w500)),
+                  TextSpan(
+                      text: "지금 게시글을 등록하시겠습니까?",
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(fontWeight: FontWeight.w500)),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero, minimumSize: Size(0, 0)),
+                  child: Text(
+                    "취소",
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: grayColor, fontWeight: FontWeight.w500),
+                  )),
+              TextButton(
+                  onPressed: () {
+                    _isPossibleWrite();
+                  },
+                  style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero, minimumSize: Size(0, 0)),
+                  child: Text(
+                    "확인",
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: pointBlueColor, fontWeight: FontWeight.w500),
+                  ))
+            ],
+          );
+        });
+
+    /*int count = await _tripDayModel.getTripDayCount(tripId, context);
+      if (count >= 3) {
+        // 첨삭소로 이동
+        Navigator.push(
+            // 뭔가 넘겨줘야하나????
+            context,
+            MaterialPageRoute(
+                builder: (context) => PostScreen(tripId: tripId)));
+      } else if (count < 3) {
+        showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                contentPadding: EdgeInsets.all(20),
+                actionsPadding: EdgeInsets.all(5),
+                content: Text(
+                  "첨삭글을 작성하려면 3개 이상의 장소를 등록하세요.",
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                actions: [
+                  TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: Text(
+                        "확인",
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: pointBlueColor, fontWeight: FontWeight.w500),
+                      ))
+                ],
+              );
+            });
+      }*/
+  }
+
+  // 첨삭받기 버튼 눌렀을 때
+  void _isPossibleWrite() async {
+    int tripId = tripInfo["id"];
     try {
       int count = await _tripDayModel.getTripDayCount(tripId, context);
       if (count >= 3) {
@@ -558,6 +673,7 @@ class _TripViewScreenState extends State<TripViewScreen> {
                 actions: [
                   TextButton(
                       onPressed: () {
+                        Navigator.pop(context);
                         Navigator.pop(context);
                       },
                       child: Text(

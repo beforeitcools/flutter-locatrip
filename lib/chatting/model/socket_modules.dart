@@ -10,6 +10,7 @@ class SocketModules {
   Future<dynamic> getEditingState(int tripId, BuildContext context) async {
     final SDio sdio = SDio();
     final Dio dio = await sdio.createDio();
+    // final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
@@ -27,6 +28,7 @@ class SocketModules {
       int tripId, bool state, BuildContext context) async {
     final SDio sdio = SDio();
     final Dio dio = await sdio.createDio();
+    // final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     print('changeEditingState 들어갔어?');

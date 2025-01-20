@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/advice/model/advice_model.dart';
 import 'package:flutter_locatrip/advice/screen/advice_post_screen.dart';
 import 'package:flutter_locatrip/advice/screen/advice_view_screen.dart';
+import 'package:flutter_locatrip/advice/screen/post_view_screen.dart';
 import 'package:flutter_locatrip/advice/widget/post_bottom_sheet.dart';
 import 'package:flutter_locatrip/advice/widget/post_filter.dart';
 import 'package:flutter_locatrip/advice/widget/post_list.dart';
@@ -191,6 +192,17 @@ class _PostListScreen extends State<PostListScreen> {
     }
   }
 
+  Future<void> _navigateToPostViewPage(int postId) async {
+    final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => PostViewScreen(postId: postId)));
+
+    if (result == true) {
+      _reloadPageData();
+    }
+  }
+
   void _reloadPageData() async {
     setState(() {
       _isLoading = true; // Indicate loading while fetching data
@@ -244,19 +256,6 @@ class _PostListScreen extends State<PostListScreen> {
                       )
                   ],
                 )),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => AdviceViewScreen(locationId: 1)),
-                );
-              },
-              child: Text(
-                '첨삭보기 (임시)',
-                style: TextStyle(color: blackColor),
-              ),
-            ),
           ],
         ),
         body: Container(
@@ -278,7 +277,9 @@ class _PostListScreen extends State<PostListScreen> {
             SizedBox(
               height: 16,
             ),
-            PostList(filteredPost: _filteredPost)
+            PostList(
+                filteredPost: _filteredPost,
+                navigateToPostViewPage: _navigateToPostViewPage)
           ]),
         ),
         floatingActionButton: Container(

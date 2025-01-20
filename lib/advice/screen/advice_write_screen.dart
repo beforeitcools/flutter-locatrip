@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/mypage/widget/custom_dialog.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -65,40 +66,48 @@ class _AdviceWriteScreenState extends State<AdviceWriteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: Row(
-          children: [
-            IconButton(
+        appBar: AppBar(
+          leading: IconButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: Icon(Icons.close_outlined)),
+          // tripDayLocationId로 해당 항목의 Location name
+          title: Text(_tripDayLocationId == 0 ? "전체 첨삭" : _locationName),
+
+          actions: [
+            TextButton(
+                // 등록하는 함수
                 onPressed: () {
-                  Navigator.pop(context);
+                  _insertAdvice(_postId, _tripDayLocationId);
                 },
-                icon: Icon(Icons.close_outlined)),
-            // tripDayLocationId로 해당 항목의 Location name
-            Text(_tripDayLocationId == 0 ? "전체 첨삭" : _locationName),
+                child: Text("등록",
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(color: pointBlueColor)))
           ],
         ),
-        actions: [
-          TextButton(
-              // 등록하는 함수
-              onPressed: () {
-                _insertAdvice(_postId, _tripDayLocationId);
-              },
-              child: Text("등록",
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(color: pointBlueColor)))
-        ],
-      ),
-      body: TextField(
-        controller: _contentsController,
-        decoration: InputDecoration(
-            hintText: "이 장소일정에 대해 첨삭해주세요",
-            hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: grayColor,
-                ),
-            contentPadding: EdgeInsets.fromLTRB(16, 0, 16, 0)),
-      ),
-    );
+        body: SizedBox(
+          height: MediaQuery.of(context).size.height,
+          child: SingleChildScrollView(
+            child: TextField(
+              controller: _contentsController,
+              maxLines: null,
+              inputFormatters: [
+                LengthLimitingTextInputFormatter(
+                    200), // Limit to 200 characters
+              ],
+              decoration: InputDecoration(
+                hintText: "이 장소일정에 대해 첨삭해주세요",
+                hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: grayColor,
+                    ),
+                contentPadding: EdgeInsets.fromLTRB(16, 0, 16, 0),
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+        ));
   }
 }

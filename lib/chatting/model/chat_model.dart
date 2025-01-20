@@ -13,6 +13,7 @@ class ChatModel {
     // dio.interceptors.add(AuthInterceptor(dio, context));
     final SDio sdio = SDio();
     final Dio dio = await sdio.createDio();
+    // final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
@@ -32,6 +33,7 @@ class ChatModel {
   Future<List<dynamic>> fetchSearchMessageData(String searchKeyword, BuildContext context) async {
     final SDio sdio = SDio();
     final Dio dio = await sdio.createDio();
+    // final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
@@ -52,6 +54,7 @@ class ChatModel {
     // dio.interceptors.add(AuthInterceptor(dio, context));
     final SDio sdio = SDio();
     final Dio dio = await sdio.createDio();
+    // final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
@@ -74,6 +77,7 @@ class ChatModel {
   Future<void> saveMessage(dynamic message, BuildContext context) async {
     final SDio sdio = SDio();
     final Dio dio = await sdio.createDio();
+    // final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
@@ -95,6 +99,7 @@ class ChatModel {
   Future<void> updateChatroomName(int chatroomId, String chatroomName, BuildContext context) async {
     final SDio sdio = SDio();
     final Dio dio = await sdio.createDio();
+    // final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     print('$chatroomId 는 나의 채팅방 아이디, $chatroomName 는 내가 바꿀 이름');
@@ -121,6 +126,7 @@ class ChatModel {
     // dio.interceptors.add(AuthInterceptor(dio, context));
     final SDio sdio = SDio();
     final Dio dio = await sdio.createDio();
+    // final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     //TODO 새 채팅방 넣는 로직
@@ -181,6 +187,7 @@ class ChatModel {
     }
   }
 
+
   Future<void> updateLastReadMessage(BuildContext context, int chatroomId) async {
     // final dio = Dio();
     // dio.interceptors.add(AuthInterceptor(dio, context));
@@ -205,6 +212,7 @@ class ChatModel {
   }
 
   // 기존 채팅방 불러오기(trip)
+
   Future<int> getExistTripChatroom(BuildContext context, int chatroomId) async{
     // final dio = Dio();
     // dio.interceptors.add(AuthInterceptor(dio, context));
@@ -212,17 +220,16 @@ class ChatModel {
     final Dio dio = await sdio.createDio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
-    try{
+    try {
       final response = await dio.get("$backUrl/chatroom/createNewChatroom");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         print("Success to get your chatroom!");
         return response.data as int;
-      }
-      else {
+      } else {
         throw Exception("FAILED TO GET YOUR CHATROOM : ${response.statusCode}");
       }
-    }catch(e){
+    } catch (e) {
       throw Exception("Error   $e");
     }
   }
@@ -235,17 +242,17 @@ class ChatModel {
     final Dio dio = await sdio.createDio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
-    try{
+    try {
       final response = await dio.post("$backUrl/chatroom/getExistChatroom");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         print("Success to create your chatroom!");
         return response.data as int;
+      } else {
+        throw Exception(
+            "FAILED TO CREATE YOUR CHATROOM : ${response.statusCode}");
       }
-      else {
-        throw Exception("FAILED TO CREATE YOUR CHATROOM : ${response.statusCode}");
-      }
-    }catch(e){
+    } catch (e) {
       throw Exception("Error   $e");
     }
   }

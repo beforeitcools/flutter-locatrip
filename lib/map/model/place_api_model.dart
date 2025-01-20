@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter_locatrip/common/model/create_dio.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import 'api_key_loader.dart';
@@ -127,7 +128,9 @@ class PlaceApiModel {
 
   // 지역명으로 뷰포트 찾아오기
   Future<Map<String, dynamic>> getViewPorts(String address) async {
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
     String? apiKey = await ApiKeyLoader.getApiKey2('GEOCODING_API_KEY');
     print('apiKey $apiKey');
 
@@ -161,6 +164,35 @@ class PlaceApiModel {
         "https://maps.googleapis.com/maps/api/geocode/json",
         queryParameters: {'latlng': "$lat,$lng", 'key': apiKey},
       );
+      if (responses.statusCode == 200) {
+        print('response $responses.data');
+        return responses.data as Map<String, dynamic>;
+      } else {
+        throw Exception("로드 실패");
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error : $e");
+    }
+  }
+
+  Future<Map<String, dynamic>> getViewPortsInKorean(
+      LatLng latlng, String language) async {
+    final dio = Dio();
+    String? apiKey = await ApiKeyLoader.getApiKey2('GEOCODING_API_KEY');
+    print('apiKey $apiKey');
+    double lat = latlng.latitude;
+    double lng = latlng.longitude;
+    try {
+      final responses = await dio.get(
+        "https://maps.googleapis.com/maps/api/geocode/json",
+        queryParameters: {
+          'key': apiKey,
+          'latlng': "$lat,$lng",
+          'language': language
+        },
+      );
+
       if (responses.statusCode == 200) {
         print('response $responses.data');
         return responses.data as Map<String, dynamic>;
