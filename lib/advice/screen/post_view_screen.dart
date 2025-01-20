@@ -64,8 +64,7 @@ class _PostViewScreenState extends State<PostViewScreen> {
     //query parameter로 넘겨주는 postID
     _postData = await _postModel.getPostById(postId, context);
     // 로그인한 유저의 현지인 인증이 유효한지 검사
-    Map<String, dynamic> isValidAndLocalArea =
-        await checkUserLocalAreaAuthIsValid();
+    Map<String, dynamic> isValidAndLocalArea = await checkUserLocalAreaAuthIsValid();
     // 유효성 여부 통과 확인
     if (!isValidAndLocalArea['isValid']) {
       _isLocal = false;
@@ -119,11 +118,7 @@ class _PostViewScreenState extends State<PostViewScreen> {
               Container(
                 color: Colors.black54,
                 child: Center(
-                  child: Image.asset(
-                    'assets/splash_screen_image.gif',
-                    width: 100,
-                    height: 100,
-                  ),
+                  child: Image.asset('assets/splash_screen_image.gif', width: 100, height: 100,),
                 ),
               ),
             Scaffold(
@@ -152,66 +147,31 @@ class _PostViewScreenState extends State<PostViewScreen> {
                                 child: _postData == null
                                     ? Center(child: CircularProgressIndicator())
                                     : Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                            Text(_postData["title"],
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .titleLarge),
+                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [Text(_postData["title"], style: Theme.of(context).textTheme.titleLarge),
                                             SizedBox(height: 16),
-                                            Text(_postData["contents"],
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodyMedium),
+                                            Text(_postData["contents"], style: Theme.of(context).textTheme.bodyMedium),
                                             SizedBox(height: 24),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
+                                            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                               children: [
-                                                SizedBox(
-                                                  width: 30,
-                                                ),
+                                                SizedBox(width: 30,),
                                                 ElevatedButton(
                                                     onPressed:
-                                                        _isUserAndPostCreatorSame
-                                                            ? () {
-                                                                Navigator.push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                        builder:
-                                                                            (context) =>
-                                                                                EditorsListScreen(postId: widget.postId)));
-                                                              }
+                                                        _isUserAndPostCreatorSame ? () {Navigator.push(context, MaterialPageRoute(builder: (context) => EditorsListScreen(postId: widget.postId)));}
                                                             : () {},
                                                     style: ElevatedButton.styleFrom(
                                                         elevation: 0,
                                                         minimumSize:
                                                             Size(140, 45),
-                                                        backgroundColor:
-                                                            _isUserAndPostCreatorSame
-                                                                ? pointBlueColor
-                                                                : grayColor),
+                                                        backgroundColor: _isUserAndPostCreatorSame ? pointBlueColor : grayColor),
                                                     child: Row(
                                                       mainAxisSize:
                                                           MainAxisSize.min,
                                                       children: [
                                                         Text("채택하러가기 ",
-                                                            style: Theme.of(
-                                                                    context)
-                                                                .textTheme
-                                                                .labelLarge!
-                                                                .copyWith(
-                                                                    color: Colors
-                                                                        .white)),
-                                                        Icon(
-                                                            Icons
-                                                                .arrow_forward_ios,
-                                                            color: Colors.white,
-                                                            size: 18)
+                                                            style: Theme.of(context).textTheme.labelLarge!.copyWith(color: Colors.white)),
+                                                        Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18)
                                                       ],
                                                     ))
                                               ],
@@ -232,32 +192,23 @@ class _PostViewScreenState extends State<PostViewScreen> {
                                     ],
                                     color: Colors.white),
                                 child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text("전체 첨삭",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .titleMedium),
+                                          style: Theme.of(context).textTheme.titleMedium),
                                       IconButton(
-                                          onPressed: () {
-                                            /*바텀시트*/ showAdviceBottomSheet(
-                                                widget.postId,
-                                                0,
-                                                "",
-                                                _canAdvice);
+                                          onPressed: () {/*바텀시트*/ showAdviceBottomSheet(widget.postId, 0, "", _canAdvice);
                                           },
-                                          icon: Icon(Icons.forum_outlined,
-                                              color: blackColor))
+                                          icon: Icon(Icons.forum_outlined, color: blackColor))
                                     ])),
                             SizedBox(height: 16),
-                            _tripData.isEmpty
-                                ? Center(child: CircularProgressIndicator())
-                                : TripForAdvice(
-                                    tripData: _tripData,
-                                    postId: widget.postId,
-                                    canAdvice: _canAdvice,
-                                  )
+                           Expanded(child:  _tripData.isEmpty
+                               ? Center(child: CircularProgressIndicator())
+                               : TripForAdvice(
+                             tripData: _tripData,
+                             postId: widget.postId,
+                             //canAdvice: _canAdvice, //TODO 얘는머지
+                           ))
                           ],
                         ),
                       )),
