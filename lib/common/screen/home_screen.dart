@@ -16,21 +16,41 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  late List<Widget> _pages;
+  String _submittedValue = "";
 
-  // 탭에 따라 표시할 화면들
-  final List<Widget> _pages = [
-    MainScreen(),
-    MapScreen(),
-    PostListScreen(),
-    ChattingScreen(),
-    MypageScreen(),
-  ];
+  @override
+  void initState() {
+    // 탭에 따라 표시할 화면들
+
+    _pages = [
+      MainScreen(onTapped: _onTappedMap),
+      // Key를 사용하여 MapScreen을 리빌드
+      MapScreen(region: _submittedValue),
+      PostListScreen(),
+      ChattingScreen(),
+      MypageScreen(),
+    ];
+  }
 
   // 탭 선택 시 호출 함수
   void _onTapped(int index) {
     setState(() {
-      _selectedIndex = index;
       AppOverlayController.removeOverlay();
+      _submittedValue = "";
+      _pages[1] = MapScreen(region: _submittedValue);
+      _selectedIndex = index;
+    });
+  }
+
+  // 메인에서 맵 이동
+  void _onTappedMap(int index, String value) {
+    setState(() {
+      AppOverlayController.removeOverlay();
+      _submittedValue = value;
+      _selectedIndex = index;
+
+      _pages[1] = MapScreen(region: "$_submittedValue 추천 여행지");
     });
   }
 

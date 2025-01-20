@@ -2,20 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/map/model/location_model.dart';
 import 'package:flutter_locatrip/map/model/place_api_model.dart';
 import 'package:flutter_locatrip/map/screen/location_detail_screen.dart';
-import 'package:flutter_locatrip/map/widget/map_widget.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-import '../../common/model/navigation_observer.dart';
 import '../../common/widget/color.dart';
 import '../../trip/model/current_position_model.dart';
 import '../../trip/widget/denied_permission_dialog.dart';
 import '../model/app_overlay_controller.dart';
+import '../model/distance_method.dart';
 import '../model/place.dart';
 import '../model/toggle_favorite.dart';
 
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  final String region;
+  const MapScreen({Key? key, required this.region});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -73,7 +74,12 @@ class _MapScreenState extends State<MapScreen> {
   Map<String, bool> _favoriteStatus = {};
   bool isSearchLoading = false;
   bool isSearchLoaded = false;
-  // List<Map<String, bool>> _favoriteStatusList = [];
+
+  late String mapCenterAddress;
+  Map<String, dynamic> viewPortMap = {};
+
+  late String _regionName;
+  late LatLng _regionCenter;
 
   @override
   void initState() {
@@ -100,12 +106,14 @@ class _MapScreenState extends State<MapScreen> {
       ...typeLodging,
       ...typeTourist
     ];
-    _getGeoData();
 
     // DraggableScrollableController 의 상태 변화 감지
     sheetController.addListener(() {
       double currentSize = sheetController.size;
-      sheetSize = sheetController.size;
+      setState(() {
+        sheetSize = sheetController.size;
+      });
+
       if ((currentSize - maxSize).abs() < tolerance) {
         setState(() {
           isExpanded = true;
@@ -113,29 +121,60 @@ class _MapScreenState extends State<MapScreen> {
       } else if ((currentSize - minSize).abs() < tolerance) {
         setState(() {
           isExpanded = false;
+          FocusScope.of(context).unfocus();
         });
       }
     });
 
     _focusNode.addListener(() {
-      if (_focusNode.hasFocus) {
-        // TextField에 커서가 놓일 때 실행할 동작
-        print("TextField is focused");
-        sheetController.animateTo(
-          maxSize,
-          duration: Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-      } else {
-        // TextField에서 포커스가 벗어날 때 실행할 동작
-        print("TextField lost focus");
-        sheetController.animateTo(
-          minSize,
-          duration: Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
+      if (sheetController.isAttached) {
+        if (_focusNode.hasFocus) {
+          if (isExpanded) {
+            setState(() {
+              isExpanded = false;
+            });
+          }
+          sheetController.animateTo(
+            maxSize,
+            duration: Duration(milliseconds: 100),
+            curve: Curves.easeInOut,
+          );
+        } else {
+          if (!isExpanded) {
+            setState(() {
+              isExpanded = true;
+            });
+          }
+          sheetController.animateTo(
+            minSize,
+            duration: Duration(milliseconds: 100),
+            curve: Curves.easeInOut,
+          );
+        }
       }
     });
+
+    // 메인에서 넘어온값
+    _regionName = widget.region.split(' ')[0];
+    _searchController.text = widget.region;
+    print('_length${_regionName.length}');
+    _getGeoData();
+    // _regionName.length == 0 ? _getGeoData() : regionSearchSequence();
+  }
+
+  // 지역 장소검색 연달아서 로직
+  void regionSearchSequence() async {
+    try {
+      await _getViewPorts(_regionName);
+      print('1번끝났니?');
+
+      await _getSearchResults(_regionCenter);
+      print('2번은?');
+
+      print('!!All steps completed successfully!');
+    } catch (e) {
+      print('Error during search sequence: $e');
+    }
   }
 
   // 지도에서 현위치 때 사용
@@ -145,11 +184,13 @@ class _MapScreenState extends State<MapScreen> {
       // print("position $position");
       setState(() {
         latitude = position!.latitude;
-        longitude = position!.longitude;
+        longitude = position.longitude;
         isLoading = false;
       });
       _moveMapToCurrentLocation();
-      _getNearByPlaces(latitude!, longitude!, "POPULARITY", typeAll);
+      _regionName.length > 0
+          ? regionSearchSequence()
+          : _getNearByPlaces(latitude!, longitude!, "POPULARITY", typeAll);
     } catch (e) {
       _showPermissionDialog();
     }
@@ -172,15 +213,16 @@ class _MapScreenState extends State<MapScreen> {
 
   void _toggleSheetHeight() {
     if (isExpanded) {
+      FocusScope.of(context).unfocus();
       sheetController.animateTo(
         minSize,
-        duration: Duration(milliseconds: 300),
+        duration: Duration(milliseconds: 100),
         curve: Curves.easeInOut,
       );
     } else {
       sheetController.animateTo(
         maxSize,
-        duration: Duration(milliseconds: 300),
+        duration: Duration(milliseconds: 100),
         curve: Curves.easeInOut,
       );
     }
@@ -189,7 +231,7 @@ class _MapScreenState extends State<MapScreen> {
   // 근처 장소 검색
   void _getNearByPlaces(double _latitude, double _longitude,
       String rankPreference, List typeList) async {
-    // print('_latitude $_latitude _longitude $_longitude');
+    print('_latitude $_latitude _longitude $_longitude');
 
     setState(() {
       _isLoadingMarkers = true;
@@ -431,20 +473,93 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  void _getSearchResults() async {
-    print('_searchController ${_searchController.text}');
+  // 장소검색 연달아서 로직
+  void executeSearchSequence(LatLng mapCenter) async {
+    try {
+      // 1. 지도 중심 좌표로 주소 가져오기
+      print('Step 1: Get Address');
+      await _getAddressName(mapCenter);
 
+      // 2. 가져온 주소로 뷰포트 계산
+      print('Step 2: Get Viewports');
+      await _getViewPorts(mapCenterAddress);
+
+      // 3. 계산된 뷰포트로 장소 검색
+      print('Step 3: Get Search Results');
+      await _getSearchResults(mapCenter);
+
+      print('All steps completed successfully!');
+    } catch (e) {
+      print('Error during search sequence: $e');
+    }
+  }
+
+  _getAddressName(LatLng mapCenter) async {
+    try {
+      Map<String, dynamic> result =
+          await _placeApiModel.getAddressName(mapCenter);
+      if (result != null) {
+        mapCenterAddress = result["results"][0]["formatted_address"];
+      }
+    } catch (e) {
+      print('주소가져오기_에러메시지 $e');
+    }
+  }
+
+  _getViewPorts(String region) async {
+    try {
+      Map<String, dynamic> result = await _placeApiModel.getViewPorts(region);
+      print('1번res$result');
+      if (result != null &&
+          result["results"] != null &&
+          result["results"].isNotEmpty) {
+        var geometry = result["results"][0]["geometry"];
+        var bounds = geometry["bounds"];
+        var viewport = geometry["viewport"];
+
+        // `bounds`가 null인 경우 `viewport` 사용
+        var southwest = bounds?["southwest"] ?? viewport["southwest"];
+        var northeast = bounds?["northeast"] ?? viewport["northeast"];
+
+        viewPortMap = {
+          "locationBias": {
+            "rectangle": {
+              "low": {
+                "latitude": southwest["lat"] ?? 0.0,
+                "longitude": southwest["lng"] ?? 0.0
+              },
+              "high": {
+                "latitude": northeast["lat"] ?? 0.0,
+                "longitude": northeast["lng"] ?? 0.0
+              }
+            }
+          }
+        };
+
+        _regionCenter = LatLng(geometry["location"]["lat"] ?? 0.0,
+            geometry["location"]["lng"] ?? 0.0);
+      }
+    } catch (e) {
+      print('viewport에러메시지 $e');
+    }
+  }
+
+  _getSearchResults(LatLng mapCenter) async {
+    print('mapCenter $mapCenter $viewPortMap');
+    print(
+        '_searchController.text.toString() ${_searchController.text.toString()}');
     Map<String, dynamic> data = {
       "textQuery": _searchController.text.toString(),
       "pageSize": "10",
       "languageCode": "ko",
       "regionCode": "KR",
-      "locationRestriction": {
+      /*"locationRestriction": {
         "rectangle": {
           "low": {"latitude": 33.0, "longitude": 124.0},
-          "high": {"latitude": 38.5, "longitude": 132.0}
+          "high": {"latitude": 38.5, "longitude": 130.9}
         }
-      }
+      }*/
+      ...viewPortMap
     };
 
     setState(() {
@@ -455,14 +570,23 @@ class _MapScreenState extends State<MapScreen> {
     });
 
     try {
+      // 지도 중심 위치 얻기
+      double? mapCenterLat = mapCenter.latitude;
+      double? mapCenterLng = mapCenter.longitude;
+
       List<dynamic> resultList = await _placeApiModel.getSearchPlace(data);
+      print('resultList $resultList');
       List<dynamic> filteredResultList = resultList.where((place) {
         double latitude = place['location']['latitude'];
         double longitude = place['location']['longitude'];
         double minLatitude = 33.0; // 남쪽
         double maxLatitude = 38.5; // 북쪽
         double minLongitude = 124.0; // 서쪽
-        double maxLongitude = 132.0; // 동쪽
+        double maxLongitude = 130.9; // 동쪽
+
+        if (latitude == null || longitude == null) {
+          return false; // 위도 또는 경도가 null인 경우 필터링
+        }
 
         // 대한민국 범위 내에 있는지 확인
         return latitude >= minLatitude &&
@@ -472,24 +596,54 @@ class _MapScreenState extends State<MapScreen> {
       }).toList();
       print('filteredResultList: $filteredResultList');
 
+      if (_regionName.length < 0) {
+        print('이거안되지?');
+        // 거리 계산하여 정렬
+        filteredResultList.sort((a, b) {
+          double aLat = a['location']['latitude'];
+          double aLng = a['location']['longitude'];
+          double bLat = b['location']['latitude'];
+          double bLng = b['location']['longitude'];
+
+          if (aLat == null || aLng == null || bLat == null || bLng == null) {
+            return 0; // null 값이 있을 경우 정렬하지 않음
+          }
+
+          double distanceA =
+              calculateDistance(mapCenterLat!, mapCenterLng!, aLat, aLng);
+          double distanceB =
+              calculateDistance(mapCenterLat, mapCenterLng, bLat, bLng);
+
+          return distanceA.compareTo(distanceB); // 가까운 순으로 정렬
+        });
+      }
+
       if (filteredResultList.isNotEmpty) {
         setState(() {
           isSearchLoading = true;
           isSearchLoaded = false;
         });
 
-        mapController!.animateCamera(
-          CameraUpdate.newLatLng(LatLng(
-              filteredResultList[0]['location']['latitude'] - 0.005,
-              filteredResultList[0]['location']['longitude'])),
-        );
+        if (mapController != null) {
+          mapController!.animateCamera(
+            CameraUpdate.newLatLng(LatLng(
+                filteredResultList[0]['location']['latitude'] - 0.005,
+                filteredResultList[0]['location']['longitude'])),
+          );
+        }
+
         // 장소 데이터 비동기 처리 및 마커 추가
         for (var place in filteredResultList) {
           _processAndAddPlace(place);
         }
+      } else {
+        setState(() {
+          isSearchLoaded = true;
+          isSearchLoading = false;
+        });
       }
     } catch (e) {
-      print("에러메시지 : $e");
+      print("_getSearchResults 에러메시지 : $e");
     } finally {
       setState(() {
         _isLoadingMarkers = false;
@@ -672,6 +826,21 @@ class _MapScreenState extends State<MapScreen> {
                               );
                             });
                           },
+                          onSubmitted: (value) {
+                            FocusScope.of(context).unfocus();
+                            setState(() {
+                              isSearched = true;
+                            });
+
+                            sheetController.animateTo(
+                              maxSize,
+                              duration: Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+
+                            executeSearchSequence(
+                                LatLng(latitude!, longitude!));
+                          },
                           decoration: InputDecoration(
                             hintText: "장소 검색",
                             filled: true,
@@ -697,6 +866,7 @@ class _MapScreenState extends State<MapScreen> {
                                       onPressed: () {
                                         setState(() {
                                           isSearched = false;
+                                          isSearchLoaded = false;
                                         });
                                         _searchController.clear();
                                         _getNearByPlaces(
@@ -708,16 +878,19 @@ class _MapScreenState extends State<MapScreen> {
                                     ),
                                   IconButton(
                                       onPressed: () {
+                                        FocusScope.of(context).unfocus();
                                         setState(() {
                                           isSearched = true;
                                         });
+
                                         sheetController.animateTo(
                                           maxSize,
                                           duration: Duration(milliseconds: 300),
                                           curve: Curves.easeInOut,
                                         );
-                                        _getSearchResults();
-                                        // if(_searchController.text.isEmpty)
+
+                                        executeSearchSequence(
+                                            LatLng(latitude!, longitude!));
                                       },
                                       icon: Icon(Icons.search))
                                 ],
@@ -801,7 +974,6 @@ class _MapScreenState extends State<MapScreen> {
                                                                             () {
                                                                           setState(
                                                                               () {
-                                                                            // print(orderByList[index]);
                                                                             orderBy =
                                                                                 orderByList[index];
                                                                           });
@@ -1024,12 +1196,18 @@ class _MapScreenState extends State<MapScreen> {
                                                   )),
                                             ],
                                           ),
-                                          SingleChildScrollView(
-                                            scrollDirection: Axis.horizontal,
-                                            child: Row(
-                                              children: _nearByPlacesList[index]
-                                                  .photoUrl!
-                                                  .map((photo) {
+                                          if (_nearByPlacesList[index] !=
+                                                  null &&
+                                              _nearByPlacesList[index]
+                                                      .photoUrl !=
+                                                  null)
+                                            SingleChildScrollView(
+                                              scrollDirection: Axis.horizontal,
+                                              child: Row(
+                                                  children:
+                                                      _nearByPlacesList[index]
+                                                          .photoUrl!
+                                                          .map((photo) {
                                                 return Container(
                                                   margin: EdgeInsets.only(
                                                       right: 16),
@@ -1046,9 +1224,8 @@ class _MapScreenState extends State<MapScreen> {
                                                     ),
                                                   ),
                                                 );
-                                              }).toList(),
-                                            ),
-                                          )
+                                              }).toList()),
+                                            )
                                         ],
                                       ),
                                     ),
@@ -1067,7 +1244,6 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _syncFavoriteStatus() async {
-    print('실행돼?');
     List<String> locationNameList =
         _nearByPlacesList.map((place) => place.name).toList();
 
@@ -1075,7 +1251,7 @@ class _MapScreenState extends State<MapScreen> {
     List<Map<String, bool>>? fetchedStatusList = await _locationModel
         .fetchFavoriteStatusFromServer(locationNameList, context);
 
-    print('fetchedStatusList $fetchedStatusList');
+    // print('fetchedStatusList $fetchedStatusList');
 
     if (fetchedStatusList != null) {
       setState(() {
@@ -1091,13 +1267,6 @@ class _MapScreenState extends State<MapScreen> {
   void _updateFavoriteStatus(bool isFavorite, Place place) {
     setState(() {
       _favoriteStatus[place.name] = isFavorite;
-      /*if (isFavorite) {
-        _favoriteStatusList.add(_favoriteStatus);
-      } else {
-        _favoriteStatusList.remove(_favoriteStatus);
-      }
-
-      print('_favoriteStatusList $_favoriteStatusList');*/
     });
   }
 
@@ -1122,6 +1291,8 @@ class _MapScreenState extends State<MapScreen> {
     LatLng _mapCenter = latitude != null && longitude != null
         ? LatLng(latitude!, longitude!)
         : LatLng(37.514575, 127.0495556);
+
+    print('build _mapCenter$_mapCenter');
 
     List<String> orderByListEn = ["POPULARITY", "DISTANCE"];
 
@@ -1181,11 +1352,12 @@ class _MapScreenState extends State<MapScreen> {
                   },
                   markers: _markers,
                   onCameraMove: (CameraPosition position) {
+                    _mapCenter = position.target;
+                  },
+                  onCameraIdle: () {
                     setState(() {
-                      _mapCenter = position.target;
                       latitude = _mapCenter.latitude;
                       longitude = _mapCenter.longitude;
-                      print('_mapCenter $_mapCenter');
                     });
                   },
                   zoomGesturesEnabled: true,
@@ -1209,7 +1381,7 @@ class _MapScreenState extends State<MapScreen> {
                         _searchController.clear();
                         _nearByPlacesList.clear();
                       });
-                      print('_mapCenter $_mapCenter');
+
                       _getNearByPlaces(_mapCenter.latitude,
                           _mapCenter.longitude, "POPULARITY", typeAll);
                     },

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
+import '../../trip/model/recommend_region.dart';
+
 class Recommendations extends StatelessWidget {
   final List<dynamic> postsInMyRegion;
   final String localArea;
@@ -49,7 +51,9 @@ class Recommendations extends StatelessWidget {
                                         borderRadius: BorderRadius.circular(6),
                                         color: grayColor),
                                     child: Image.asset(
-                                      "assets/icon/delete.png",
+                                      regionImages.keys.contains(localArea)
+                                          ? "${regionImages[localArea]}"
+                                          : "assets/icon/delete.png",
                                       width: 24,
                                       height: 24,
                                       fit: BoxFit.cover,

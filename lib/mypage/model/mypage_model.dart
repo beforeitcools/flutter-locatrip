@@ -4,11 +4,14 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/Auth/auth_dio_interceptor.dart';
+import 'package:flutter_locatrip/common/model/create_dio.dart';
 import 'package:flutter_locatrip/common/widget/url.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class MypageModel {
   Future<Map<String, dynamic>> getMyPageData(BuildContext context) async {
+    /*final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();*/
     final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 

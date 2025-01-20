@@ -3,7 +3,9 @@ import 'package:flutter_locatrip/advice/screen/advice_post_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
 class AdviceViewScreen extends StatefulWidget {
-  const AdviceViewScreen({Key? key}) : super(key: key);
+  final int locationId;
+
+  const AdviceViewScreen({super.key, required this.locationId});
 
   @override
   State<AdviceViewScreen> createState() => _AdviceViewScreenState();
@@ -28,19 +30,23 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
     },
   ];
 
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           '첨삭보기',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
-        leading: IconButton(
+        /*leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
-        ),
+        ),*/
       ),
       body: Stack(
         children: [
@@ -58,7 +64,7 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
                   return Column(
                     children: List.generate(
                       (totalHeight / 8).floor(),
-                          (i) => i.isEven
+                      (i) => i.isEven
                           ? Container(height: 4, color: grayColor)
                           : Container(height: 4, color: Colors.transparent),
                     ),
@@ -82,7 +88,6 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
     );
   }
 
-
   // 헤더 영역
   Widget _buildHeader() {
     return Stack(
@@ -101,7 +106,7 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
                 return Column(
                   children: List.generate(
                     (totalHeight / 8).floor(),
-                        (i) => i.isEven
+                    (i) => i.isEven
                         ? Container(height: 4, color: grayColor)
                         : Container(height: 4, color: Colors.transparent),
                   ),
@@ -174,7 +179,6 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
     );
   }
 
-
   // 게시글 리스트 영역
   Widget _buildAdviceList() {
     return ListView.builder(
@@ -230,8 +234,7 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
                   const SizedBox(width: 8),
                   Text(
                     date,
-                    style: const TextStyle(
-                        fontSize: 12, color: grayColor),
+                    style: const TextStyle(fontSize: 12, color: grayColor),
                   ),
                 ],
               ),
@@ -272,7 +275,8 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const AdvicePostScreen(), // AdvicePostScreen으로 이동
+                      builder: (context) =>
+                          const AdvicePostScreen(), // AdvicePostScreen으로 이동
                     ),
                   );
                 },
@@ -283,5 +287,4 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
       },
     );
   }
-
 }

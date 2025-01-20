@@ -9,6 +9,8 @@ class AdviceModel {
   Future<Map<String, dynamic>> checkUserLocalAreaAuthIsValid(
       BuildContext context) async {
     final dio = Dio();
+    final LocalAreaAuthController _localAreaAuthController =
+        LocalAreaAuthController();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     final FlutterSecureStorage storage = FlutterSecureStorage();
@@ -24,7 +26,7 @@ class AdviceModel {
         Map<String, dynamic> _localAreaAuthData =
             response.data as Map<String, dynamic>;
         if (_localAreaAuthData['localArea'] != null) {
-          if (LocalAreaAuthController.calculateDaysLeftUntilExpiration(
+          if (_localAreaAuthController.calculateDaysLeftUntilExpiration(
                   _localAreaAuthData['localAreaAuthDate']) >
               0) {
             return {
@@ -79,6 +81,27 @@ class AdviceModel {
 
       if (response.statusCode == 200) {
         return response.data as List<dynamic>;
+      } else {
+        throw Exception("데이터 로드 실패");
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Error: $e");
+    }
+  }
+
+  Future<String> insertAdvice(
+      BuildContext context, Map<String, Object> adviceData) async {
+    final dio = Dio();
+    dio.interceptors.add(AuthInterceptor(dio, context));
+
+    try {
+      final response = await dio.post("$backUrl/advice/insertAdvice",
+          data: adviceData,
+          options: Options(headers: {"Content-Type": "application/json"}));
+
+      if (response.statusCode == 200) {
+        return response.data as String;
       } else {
         throw Exception("데이터 로드 실패");
       }

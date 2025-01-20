@@ -248,7 +248,8 @@ class _PostListScreen extends State<PostListScreen> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => AdviceViewScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => AdviceViewScreen(locationId: 1)),
                 );
               },
               child: Text(
