@@ -75,9 +75,9 @@ class _ChattingScreenState extends State<ChattingScreen> {
                 final chat = _chats[index];
                 return ChatListUi(chatroomId: chat["chatroomId"], chatroomName: chat["chatroomName"], currentMessage: chat["currentMessage"] ?? "");
               }),
-      floatingActionButton: FloatingActionButton(onPressed: (){
-        Navigator.push(context,MaterialPageRoute(builder: (context) => PostViewScreen(postId: 25)));
-      }),
+      // floatingActionButton: FloatingActionButton(onPressed: (){
+      //   Navigator.push(context,MaterialPageRoute(builder: (context) => PostViewScreen(postId: 25)));
+      // }),
     );
   }
 }
