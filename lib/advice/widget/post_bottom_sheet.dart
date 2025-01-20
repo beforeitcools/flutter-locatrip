@@ -147,7 +147,7 @@ class _PostBottomSheetState extends State<PostBottomSheet> {
                         builder: (context) =>
                             PostScreen(tripId: _selectedTripId)));
               },
-              child: Text("첨삭받기",
+              child: Text("글쓰기",
                   style: Theme.of(context)
                       .textTheme
                       .labelLarge

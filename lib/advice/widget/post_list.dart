@@ -5,11 +5,12 @@ import 'package:flutter_locatrip/common/widget/color.dart';
 
 class PostList extends StatelessWidget {
   final List<dynamic> filteredPost;
+  final Function(int) navigateToPostViewPage;
 
-  const PostList({
-    super.key,
-    required this.filteredPost,
-  });
+  const PostList(
+      {super.key,
+      required this.filteredPost,
+      required this.navigateToPostViewPage});
 
   @override
   Widget build(BuildContext context) {
@@ -37,11 +38,7 @@ class PostList extends StatelessWidget {
                         child: InkWell(
                           // 포스트 페이지로 연결(postId)
                           onTap: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => PostViewScreen(
-                                        postId: post['postId'])));
+                            navigateToPostViewPage(post['postId']);
                           },
                           splashColor: Color.fromARGB(50, 43, 192, 228),
                           highlightColor: Color.fromARGB(30, 43, 192, 228),

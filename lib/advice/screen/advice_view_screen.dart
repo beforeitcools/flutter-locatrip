@@ -26,7 +26,7 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
   late String _locationAddress;
   late String _locationCategory;
   late int _orderIndex;
-  late Map<String, dynamic> _adviceList;
+  late List<dynamic> _adviceList;
 
   Future<void> _loadMyAdviceData(int postId, int tripDayLocationId) async {
     try {
@@ -44,6 +44,11 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
           _locationAddress = result['locationAddress'];
           _locationCategory = result['locationCategory'];
           _orderIndex = result['orderIndex'];
+        } else {
+          _locationName = '';
+          _locationAddress = '';
+          _locationCategory = '';
+          _orderIndex = 0;
         }
         _adviceList = result['adviceList'];
         print("locationName: $_locationName");
@@ -54,7 +59,7 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print("!!!!!!!!!!!!!!!!!!마이 트립 로드 중 에러 발생 : $e");
+      print("!!!!!!!!!!!!!!!!!!첨삭 로드 중 에러 발생 : $e");
     } finally {
       LoadingOverlay.hide();
     }
@@ -84,15 +89,11 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
           '첨삭보기',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
-        /*leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),*/
       ),
       body: Stack(
         children: [
           // 점선
-          Positioned(
+          /*Positioned(
             left: 210, // 점선 위치 조정
             top: 75, // 헤더의 대략적 높이에서 시작 (고정값)
             bottom: 0, // 하단 끝까지 점선
@@ -113,14 +114,13 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
                 },
               ),
             ),
-          ),
+          ),*/
 
           // 콘텐츠
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(), // 헤더
-              const SizedBox(height: 10),
               Expanded(child: _buildAdviceList()), // 리스트
             ],
           ),
@@ -134,7 +134,7 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
     return Stack(
       children: [
         // 점선 추가
-        Positioned(
+        /*Positioned(
           left: 210, // 박스 중앙에 맞추기 위한 조정
           top: 50, // 헤더 중앙에서 시작
           bottom: 0, // 아래로 끝까지 이어짐
@@ -155,7 +155,7 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
               },
             ),
           ),
-        ),
+        ),*/
 
         _tripDayLocationId != 0
             // 헤더 콘텐츠
@@ -219,7 +219,14 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
                 ),
               )
             : Container(
-                child: Text("전체 첨삭"),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 16,
+                    ),
+                    Text("전체 첨삭")
+                  ],
+                ),
               ),
       ],
     );
@@ -251,26 +258,25 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
       required String profilePic,
       required String nickname,
       required String createdAt}) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      padding: const EdgeInsets.all(12.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8.0),
-        boxShadow: [
-          BoxShadow(
-            color: grayColor.withOpacity(0.2),
-            blurRadius: 4,
-            spreadRadius: 1,
-            offset: const Offset(0, 2),
+    return Column(
+      children: [
+        Container(
+          margin: EdgeInsets.symmetric(horizontal: 6, vertical: 16),
+          padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8.0),
+            boxShadow: [
+              BoxShadow(
+                color: grayColor.withOpacity(0.2),
+                blurRadius: 4,
+                spreadRadius: 1,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
@@ -279,57 +285,80 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
                           child: CachedNetworkImage(
                             imageUrl: profilePic,
                             placeholder: (context, url) => SizedBox(
-                              width: 30,
-                              height: 30,
+                              width: 15,
+                              height: 15,
                               child: Center(
                                 child: CircularProgressIndicator(),
                               ),
                             ),
                             errorWidget: (context, url, error) => Icon(
                               Icons.error_outline,
-                              size: 28,
+                              size: 10,
                             ),
                             fit: BoxFit.cover,
-                            width: 60,
-                            height: 60,
+                            width: 20,
+                            height: 20,
                           ),
                         )
                       : CircleAvatar(
-                          radius: 30,
+                          radius: 10,
                           backgroundImage:
                               AssetImage('assets/default_profile_image.png')
                                   as ImageProvider),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     nickname,
                     style: const TextStyle(
                         fontWeight: FontWeight.bold, fontSize: 14),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     createdAt,
                     style: const TextStyle(fontSize: 12, color: grayColor),
                   ),
+                  Spacer(),
+                  // 로그인 된 사용자의 id와 비교해서 보여줄지 말지
+                  IconButton(
+                    icon: const Icon(Icons.more_vert),
+                    onPressed: () {
+                      _showOptions(context);
+                    },
+                  ),
                 ],
               ),
-              // 로그인 된 사용자의 id와 비교해서 보여줄지 말지
-              IconButton(
-                icon: const Icon(Icons.more_vert),
-                onPressed: () {
-                  _showOptions(context);
-                },
+              SizedBox(height: 5),
+              Text(
+                contents,
+                style: const TextStyle(fontSize: 13),
+                overflow: TextOverflow.ellipsis,
+                // maxLines: 3,
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            contents,
-            style: const TextStyle(fontSize: 13),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 3,
+        ),
+        Center(
+          /*left: 210, // 점선 위치 조정
+          top: 75, // 헤더의 대략적 높이에서 시작 (고정값)
+          bottom: 0, // 하단 끝까지 점선*/
+          child: Container(
+            width: 1,
+            color: Colors.transparent,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final totalHeight = constraints.maxHeight;
+                return Column(
+                  children: List.generate(
+                    (totalHeight / 8).floor(),
+                    (i) => i.isEven
+                        ? Container(height: 4, color: grayColor)
+                        : Container(height: 4, color: Colors.transparent),
+                  ),
+                );
+              },
+            ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
