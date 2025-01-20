@@ -9,8 +9,7 @@ import 'package:flutter_locatrip/common/widget/url.dart';
 class ChatModel {
   // 최신 메세지 가져옴
   Future<List<dynamic>> fetchMessageData(BuildContext context) async {
-    final SDio sdio = SDio();
-    final Dio dio = await sdio.createDio();
+    final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
@@ -29,8 +28,7 @@ class ChatModel {
   // 검색 메세지 가져옴
   Future<List<dynamic>> fetchSearchMessageData(
       String searchKeyword, BuildContext context) async {
-    final SDio sdio = SDio();
-    final Dio dio = await sdio.createDio();
+    final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
@@ -48,8 +46,7 @@ class ChatModel {
 
   Future<List<dynamic>> fetchChatRoomData(
       int chatroomId, BuildContext context) async {
-    final SDio sdio = SDio();
-    final Dio dio = await sdio.createDio();
+    final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
@@ -65,8 +62,7 @@ class ChatModel {
   }
 
   Future<void> saveMessage(dynamic message, BuildContext context) async {
-    final SDio sdio = SDio();
-    final Dio dio = await sdio.createDio();
+    final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
@@ -87,8 +83,7 @@ class ChatModel {
 
   Future<void> updateChatroomName(
       int chatroomId, String chatroomName, BuildContext context) async {
-    final SDio sdio = SDio();
-    final Dio dio = await sdio.createDio();
+    final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     print('$chatroomId 는 나의 채팅방 아이디, $chatroomName 는 내가 바꿀 이름');
@@ -111,8 +106,7 @@ class ChatModel {
       int userId, String chatroomName, BuildContext context) async {
     // 이거는 1:1 one to one 이라서 OTO 했어요 ...
     print("CHATTING ROOM FOR ONE TO ONE");
-    final SDio sdio = SDio();
-    final Dio dio = await sdio.createDio();
+    final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     //TODO 새 채팅방 넣는 로직
