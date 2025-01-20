@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/mypage/widget/custom_dialog.dart';
+import 'package:flutter_locatrip/trip/model/recommend_region.dart';
 
 class MytripListTileWidget extends StatelessWidget {
   final int selectedIndex;
@@ -30,7 +31,10 @@ class MytripListTileWidget extends StatelessWidget {
           child: Row(
             children: [
               Image.asset(
-                "assets/icon/delete.png",
+                regionImages.keys.contains(
+                        myTrips[selectedIndex][index]['selectedRegionsList'][0])
+                    ? "${regionImages['${myTrips[selectedIndex][index]['selectedRegionsList'][0]}']}"
+                    : "assets/icon/delete.png",
                 width: 64,
                 height: 64,
                 fit: BoxFit.cover,

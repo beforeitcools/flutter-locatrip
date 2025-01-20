@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/advice/screen/post_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
+import 'package:flutter_locatrip/trip/model/recommend_region.dart';
 
 class PostBottomSheet extends StatefulWidget {
   final List<dynamic> trips;
@@ -85,9 +86,17 @@ class _PostBottomSheetState extends State<PostBottomSheet> {
                                 _updateClickState(index, true);
                               },
                               leading: CircleAvatar(
-                                  backgroundColor: grayColor,
-                                  child: Icon(Icons.trip_origin,
-                                      color: subPointColor)),
+                                backgroundColor: grayColor,
+                                child: Image.asset(
+                                  regionImages.keys
+                                          .contains(trip['selectedRegion'])
+                                      ? "${regionImages['${trip['selectedRegion']}']}"
+                                      : "assets/icon/delete.png",
+                                  /*width: 64,
+                                  height: 64,*/
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
                               title: Text(
                                 trip["title"],
                                 style: !_isPressed[index]
