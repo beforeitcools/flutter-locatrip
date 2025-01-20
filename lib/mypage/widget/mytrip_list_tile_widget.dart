@@ -30,14 +30,17 @@ class MytripListTileWidget extends StatelessWidget {
           padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: Row(
             children: [
-              Image.asset(
-                regionImages.keys.contains(
-                        myTrips[selectedIndex][index]['selectedRegionsList'][0])
-                    ? "${regionImages['${myTrips[selectedIndex][index]['selectedRegionsList'][0]}']}"
-                    : "assets/images/default.jpg",
-                width: 64,
-                height: 64,
-                fit: BoxFit.cover,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: Image.asset(
+                  regionImages.keys.contains(myTrips[selectedIndex][index]
+                          ['selectedRegionsList'][0])
+                      ? "${regionImages['${myTrips[selectedIndex][index]['selectedRegionsList'][0]}']}"
+                      : "assets/images/default.jpg",
+                  width: 64,
+                  height: 64,
+                  fit: BoxFit.cover,
+                ),
               ),
               SizedBox(
                 width: 16,

@@ -85,15 +85,15 @@ class _PostBottomSheetState extends State<PostBottomSheet> {
                                 _resetState();
                                 _updateClickState(index, true);
                               },
-                              leading: CircleAvatar(
-                                backgroundColor: grayColor,
+                              leading: ClipRRect(
+                                borderRadius: BorderRadius.circular(999),
                                 child: Image.asset(
                                   regionImages.keys
                                           .contains(trip['selectedRegion'])
                                       ? "${regionImages['${trip['selectedRegion']}']}"
                                       : "assets/icon/delete.png",
-                                  /*width: 64,
-                                  height: 64,*/
+                                  width: 40,
+                                  height: 40,
                                   fit: BoxFit.cover,
                                 ),
                               ),

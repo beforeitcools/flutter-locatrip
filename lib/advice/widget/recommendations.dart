@@ -24,10 +24,13 @@ class Recommendations extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               child: postsInMyRegion.isEmpty
                   ? Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           "$localArea 이/가 포함된 포스트가 없습니다.",
                           style: Theme.of(context).textTheme.bodySmall,
+                          textAlign: TextAlign.start,
                         ),
                       ],
                     )

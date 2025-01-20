@@ -16,6 +16,9 @@ class PostList extends StatelessWidget {
     return filteredPost.isEmpty
         ? Row(
             children: [
+              SizedBox(
+                width: 16,
+              ),
               Text(
                 "해당하는 포스트가 없습니다.",
                 style: Theme.of(context).textTheme.bodySmall,

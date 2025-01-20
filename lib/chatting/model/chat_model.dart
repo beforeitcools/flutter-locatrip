@@ -9,7 +9,9 @@ import 'package:flutter_locatrip/common/widget/url.dart';
 class ChatModel {
   // 최신 메세지 가져옴
   Future<List<dynamic>> fetchMessageData(BuildContext context) async {
-    final Dio dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
@@ -28,7 +30,9 @@ class ChatModel {
   // 검색 메세지 가져옴
   Future<List<dynamic>> fetchSearchMessageData(
       String searchKeyword, BuildContext context) async {
-    final Dio dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
@@ -46,7 +50,9 @@ class ChatModel {
 
   Future<List<dynamic>> fetchChatRoomData(
       int chatroomId, BuildContext context) async {
-    final Dio dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
@@ -62,7 +68,9 @@ class ChatModel {
   }
 
   Future<void> saveMessage(dynamic message, BuildContext context) async {
-    final Dio dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
@@ -83,7 +91,9 @@ class ChatModel {
 
   Future<void> updateChatroomName(
       int chatroomId, String chatroomName, BuildContext context) async {
-    final Dio dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     print('$chatroomId 는 나의 채팅방 아이디, $chatroomName 는 내가 바꿀 이름');
@@ -106,7 +116,9 @@ class ChatModel {
       int userId, String chatroomName, BuildContext context) async {
     // 이거는 1:1 one to one 이라서 OTO 했어요 ...
     print("CHATTING ROOM FOR ONE TO ONE");
-    final Dio dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     //TODO 새 채팅방 넣는 로직
@@ -139,7 +151,9 @@ class ChatModel {
 
   Future<dynamic> getUnreadMessageCount(
       BuildContext context, int chatroomId) async {
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     print("did you come here?");
@@ -166,7 +180,9 @@ class ChatModel {
 
   Future<void> updateLastReadMessage(
       BuildContext context, int chatroomId) async {
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     print("updateLastReadMessage --- this is my chatroom Id: $chatroomId");
@@ -186,41 +202,44 @@ class ChatModel {
   }
 
   // 기존 채팅방 불러오기(trip)
-  Future<int> getExistTripChatroom(BuildContext context, int chatroomId) async{
-    final dio = Dio();
+  Future<int> getExistTripChatroom(BuildContext context, int chatroomId) async {
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
-    try{
+    try {
       final response = await dio.get("$backUrl/chatroom/createNewChatroom");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         print("Success to get your chatroom!");
         return response.data as int;
-      }
-      else {
+      } else {
         throw Exception("FAILED TO GET YOUR CHATROOM : ${response.statusCode}");
       }
-    }catch(e){
+    } catch (e) {
       throw Exception("Error   $e");
     }
   }
 
   // 채팅방 생성(trip)
-  Future<int> createTripChatroom(BuildContext context) async{
-    final dio = Dio();
+  Future<int> createTripChatroom(BuildContext context) async {
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
-    try{
+    try {
       final response = await dio.post("$backUrl/chatroom/getExistChatroom");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         print("Success to create your chatroom!");
         return response.data as int;
+      } else {
+        throw Exception(
+            "FAILED TO CREATE YOUR CHATROOM : ${response.statusCode}");
       }
-      else {
-        throw Exception("FAILED TO CREATE YOUR CHATROOM : ${response.statusCode}");
-      }
-    }catch(e){
+    } catch (e) {
       throw Exception("Error   $e");
     }
   }

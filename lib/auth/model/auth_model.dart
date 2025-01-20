@@ -10,7 +10,9 @@ import '../../common/model/create_dio.dart';
 
 class AuthModel {
   Future<String> checkUserId(String userId) async {
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
 
     try {
       final response =
@@ -28,7 +30,9 @@ class AuthModel {
   }
 
   Future<String> checkNickname(String nickname) async {
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
 
     try {
       final response =
@@ -46,7 +50,9 @@ class AuthModel {
   }
 
   Future<String> signup(Map<String, String> signupData, File? image) async {
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
 
     try {
       FormData formData = FormData.fromMap({
@@ -77,9 +83,9 @@ class AuthModel {
   }
 
   Future<String> login(Map<String, dynamic> loginData) async {
-    /*final SDio sdio = SDio();
-    final Dio dio = await sdio.createDio();*/
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
 
     try {
       final response = await dio.post("$backUrl/auth/login", data: loginData);
@@ -117,7 +123,9 @@ class AuthModel {
   }
 
   Future<String> logout() async {
-    final dio = Dio();
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
+    // final dio = Dio();
     final FlutterSecureStorage _storage = FlutterSecureStorage();
     final prefs = await SharedPreferences.getInstance();
 
