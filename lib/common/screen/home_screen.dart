@@ -21,11 +21,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
-    // 탭에 따라 표시할 화면들
+    super.initState();
 
+    // 탭에 따라 표시할 화면들
     _pages = [
       MainScreen(onTapped: _onTappedMap),
-      // Key를 사용하여 MapScreen을 리빌드
       MapScreen(region: _submittedValue),
       PostListScreen(),
       ChattingScreen(),
