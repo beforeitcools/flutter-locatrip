@@ -13,8 +13,8 @@ class SplashScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image(
-              width: 200,
-              height: 200,
+              width: 180,
+              height: 180,
               image: AssetImage('assets/locat_app_icon.png'),
             )
           ],

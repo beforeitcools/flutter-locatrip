@@ -112,13 +112,13 @@ class AdviceModel {
   }
 
   Future<Map<String, dynamic>> getAdviceData(
-      BuildContext context, Map<String, Object> postIdAndLocattionIdDTO) async {
+      BuildContext context, Map<String, Object> postIdAndLocationIdDTO) async {
     final dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {
       final response = await dio.get("$backUrl/advice/getAdvice",
-          data: postIdAndLocattionIdDTO,
+          data: postIdAndLocationIdDTO,
           options: Options(headers: {"Content-Type": "application/json"}));
 
       if (response.statusCode == 200) {

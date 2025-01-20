@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/advice/screen/post_view_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
 import '../../trip/model/recommend_region.dart';
@@ -39,7 +40,13 @@ class Recommendations extends StatelessWidget {
                             color: Colors.transparent,
                             child: InkWell(
                               // 포스트 페이지로 연결(postId)
-                              onTap: () {},
+                              onTap: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => PostViewScreen(
+                                            postId: post['postId'])));
+                              },
                               splashColor: Color.fromARGB(50, 43, 192, 228),
                               highlightColor: Color.fromARGB(30, 43, 192, 228),
                               child: Column(
