@@ -134,6 +134,12 @@ class _TripViewScreenState extends State<TripViewScreen> {
       isLoading = true;
     });
     try {
+      final FlutterSecureStorage _storage = FlutterSecureStorage();
+      final dynamic stringId = await _storage.read(key: 'userId');
+      setState(() {
+        userId = int.parse(stringId);
+      });
+
       Map<String, dynamic> result =
           await _tripModel.selectTrip(widget.tripId, context);
 
