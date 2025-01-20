@@ -14,7 +14,7 @@ class _WebsocketPageState extends State<WebsocketPage> {
   final chatList = <String>[];
   final scrollController = ScrollController();
   final textController = TextEditingController();
-  final uri = Uri.parse('ws://localhost:8082/chattingServer');
+  final uri = Uri.parse('wss://www.beforeitcools.site:7777/chattingServer');
 
   @override
   void initState() {
