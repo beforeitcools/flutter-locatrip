@@ -34,7 +34,7 @@ class MytripListTileWidget extends StatelessWidget {
                 regionImages.keys.contains(
                         myTrips[selectedIndex][index]['selectedRegionsList'][0])
                     ? "${regionImages['${myTrips[selectedIndex][index]['selectedRegionsList'][0]}']}"
-                    : "assets/icon/delete.png",
+                    : "assets/images/default.jpg",
                 width: 64,
                 height: 64,
                 fit: BoxFit.cover,

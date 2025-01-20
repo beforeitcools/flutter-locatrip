@@ -53,7 +53,7 @@ class Recommendations extends StatelessWidget {
                                     child: Image.asset(
                                       regionImages.keys.contains(localArea)
                                           ? "${regionImages[localArea]}"
-                                          : "assets/icon/delete.png",
+                                          : "assets/images/default.jpg",
                                       width: 24,
                                       height: 24,
                                       fit: BoxFit.cover,

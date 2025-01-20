@@ -244,7 +244,7 @@ class _PostListScreen extends State<PostListScreen> {
                       )
                   ],
                 )),
-            TextButton(
+            /*TextButton(
               onPressed: () {
                 Navigator.push(
                   context,
@@ -256,7 +256,7 @@ class _PostListScreen extends State<PostListScreen> {
                 '첨삭보기 (임시)',
                 style: TextStyle(color: blackColor),
               ),
-            ),
+            ),*/
           ],
         ),
         body: Container(

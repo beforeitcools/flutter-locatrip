@@ -1,42 +1,83 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/advice/screen/advice_post_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
+import 'package:flutter_locatrip/common/widget/loading_screen.dart';
+
+import '../model/advice_model.dart';
 
 class AdviceViewScreen extends StatefulWidget {
-  final int locationId;
+  final int postId;
+  final int tripDayLocationId;
 
-  const AdviceViewScreen({super.key, required this.locationId});
+  const AdviceViewScreen(
+      {super.key, required this.postId, required this.tripDayLocationId});
 
   @override
   State<AdviceViewScreen> createState() => _AdviceViewScreenState();
 }
 
 class _AdviceViewScreenState extends State<AdviceViewScreen> {
-  final List<Map<String, String>> adviceList = [
-    {
-      'author': '부산갈매기',
-      'date': '2024-12-13',
-      'content': '안녕하세요, 정재빈입니다. 부산은 제7영화제와...'
-    },
-    {
-      'author': '부산나그네',
-      'date': '2024-12-14',
-      'content': '안녕하세요, 이정재입니다. 부산은 제7영화제와...'
-    },
-    {
-      'author': '부산빛고을',
-      'date': '2024-12-15',
-      'content': '부산은 바다의 도시로 알려져 있습니다...'
-    },
-  ];
+  bool _isLoading = true;
+  final AdviceModel _adviceModel = AdviceModel();
+  late int _postId;
+  late int _tripDayLocationId;
+  late String _locationName;
+  late String _locationAddress;
+  late String _locationCategory;
+  late int _orderIndex;
+  late Map<String, dynamic> _adviceList;
+
+  Future<void> _loadMyAdviceData(int postId, int tripDayLocationId) async {
+    try {
+      LoadingOverlay.show(context);
+      Map<String, Object> postIdAndLocattionIdDTO = {
+        "postId": postId,
+        "locationId": tripDayLocationId
+      };
+      Map<String, dynamic> result =
+          await _adviceModel.getAdviceData(context, postIdAndLocattionIdDTO);
+      print("result: $result");
+      setState(() {
+        if (tripDayLocationId != 0) {
+          _locationName = result['locationName'];
+          _locationAddress = result['locationAddress'];
+          _locationCategory = result['locationCategory'];
+          _orderIndex = result['orderIndex'];
+        }
+        _adviceList = result['adviceList'];
+        print("locationName: $_locationName");
+        print(_locationAddress);
+        print(_locationCategory);
+        print(_orderIndex);
+        print("adviceList: $_adviceList");
+        _isLoading = false;
+      });
+    } catch (e) {
+      print("!!!!!!!!!!!!!!!!!!마이 트립 로드 중 에러 발생 : $e");
+    } finally {
+      LoadingOverlay.hide();
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    _postId = widget.postId;
+    _tripDayLocationId = widget.tripDayLocationId;
+    _loadMyAdviceData(_postId, _tripDayLocationId);
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -116,65 +157,70 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
           ),
         ),
 
-        // 헤더 콘텐츠
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: pointBlueColor,
-                child: Text(
-                  '1',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: grayColor.withOpacity(0.2),
-                        spreadRadius: 1,
-                        blurRadius: 5,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        '강남역',
+        _tripDayLocationId != 0
+            // 헤더 콘텐츠
+            ? Container(
+                margin:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: pointBlueColor,
+                      child: Text(
+                        _orderIndex as String,
                         style: TextStyle(
-                          fontSize: 16,
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        '관광명소 · 서울 강남구',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: grayColor,
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: grayColor.withOpacity(0.2),
+                              spreadRadius: 1,
+                              blurRadius: 5,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _locationName,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              '$_locationCategory · $_locationAddress',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: grayColor,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    SizedBox(width: 16),
+                  ],
                 ),
+              )
+            : Container(
+                child: Text("전체 첨삭"),
               ),
-              const SizedBox(width: 16),
-            ],
-          ),
-        ),
       ],
     );
   }
@@ -183,24 +229,28 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
   Widget _buildAdviceList() {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: adviceList.length,
+      itemCount: _adviceList.length,
       itemBuilder: (context, index) {
-        final advice = adviceList[index];
+        final advice = _adviceList[index];
         return _buildAdviceCard(
-          author: advice['author']!,
-          date: advice['date']!,
-          content: advice['content']!,
-        );
+            localAdviceId: advice['localAdviceId'] as int,
+            contents: advice['contents'] as String,
+            userId: advice['userId'] as int,
+            profilePic: advice['profilePic'] ?? '',
+            nickname: advice['nickname'] as String,
+            createdAt: advice['createdAt'] as String);
       },
     );
   }
 
   // 첨삭 카드 섹션
-  Widget _buildAdviceCard({
-    required String author,
-    required String date,
-    required String content,
-  }) {
+  Widget _buildAdviceCard(
+      {required int localAdviceId,
+      required String contents,
+      required int userId,
+      required String profilePic,
+      required String nickname,
+      required String createdAt}) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       padding: const EdgeInsets.all(12.0),
@@ -224,20 +274,45 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.person, color: grayColor),
+                  profilePic.isNotEmpty
+                      ? ClipOval(
+                          child: CachedNetworkImage(
+                            imageUrl: profilePic,
+                            placeholder: (context, url) => SizedBox(
+                              width: 30,
+                              height: 30,
+                              child: Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Icon(
+                              Icons.error_outline,
+                              size: 28,
+                            ),
+                            fit: BoxFit.cover,
+                            width: 60,
+                            height: 60,
+                          ),
+                        )
+                      : CircleAvatar(
+                          radius: 30,
+                          backgroundImage:
+                              AssetImage('assets/default_profile_image.png')
+                                  as ImageProvider),
                   const SizedBox(width: 8),
                   Text(
-                    author,
+                    nickname,
                     style: const TextStyle(
                         fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    date,
+                    createdAt,
                     style: const TextStyle(fontSize: 12, color: grayColor),
                   ),
                 ],
               ),
+              // 로그인 된 사용자의 id와 비교해서 보여줄지 말지
               IconButton(
                 icon: const Icon(Icons.more_vert),
                 onPressed: () {
@@ -248,7 +323,7 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            content,
+            contents,
             style: const TextStyle(fontSize: 13),
             overflow: TextOverflow.ellipsis,
             maxLines: 3,
