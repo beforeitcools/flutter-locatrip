@@ -394,7 +394,10 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
                     height: 20,
                   ),
                   // 사진
-                  if (_placeDetail!.place.photoUrl!.isNotEmpty)
+                  // if (_placeDetail!.place.photoUrl!.isNotEmpty)
+                  if (_placeDetail != null &&
+                      _placeDetail?.place != null &&
+                      _placeDetail?.place.photoUrl != null)
                     _placeDetail!.place.photoUrl!.length > 1
                         ? Stack(
                             children: [

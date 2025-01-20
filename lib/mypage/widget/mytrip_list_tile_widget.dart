@@ -66,21 +66,47 @@ class MytripListTileWidget extends StatelessWidget {
                     SizedBox(
                       height: 1,
                     ),
-                    myTrips[selectedIndex][index]['memberCount'] == 0
-                        ? Text(
-                            "${myTrips[selectedIndex][index]['regionCount']}개 지역",
-                            style: Theme.of(context).textTheme.labelSmall,
-                            overflow:
-                                TextOverflow.ellipsis, // 텍스트 삐져나옴 방지(길면...)
-                            maxLines: 1,
-                          )
-                        : Text(
-                            "${myTrips[selectedIndex][index]['memberCount']}명과 함께, ${myTrips[selectedIndex][index]['regionCount']}개 지역",
-                            style: Theme.of(context).textTheme.labelSmall,
-                            overflow:
-                                TextOverflow.ellipsis, // 텍스트 삐져나옴 방지(길면...)
-                            maxLines: 1,
-                          ),
+                    if (myTrips[selectedIndex][index]['memberCount'] == 0 &&
+                        myTrips[selectedIndex][index]['selectedRegionsList']
+                                .length ==
+                            1)
+                      Text(
+                        "${myTrips[selectedIndex][index]['selectedRegionsList'][0]}",
+                        style: Theme.of(context).textTheme.labelSmall,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      )
+                    else if (myTrips[selectedIndex][index]['memberCount'] ==
+                            0 &&
+                        myTrips[selectedIndex][index]['selectedRegionsList']
+                                .length >
+                            1)
+                      Text(
+                        "${myTrips[selectedIndex][index]['selectedRegionsList'][0]} 외 ${myTrips[selectedIndex][index]['selectedRegionsList'].length - 1}개 지역",
+                        style: Theme.of(context).textTheme.labelSmall,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      )
+                    else if (myTrips[selectedIndex][index]['memberCount'] > 0 &&
+                        myTrips[selectedIndex][index]['selectedRegionsList']
+                                .length ==
+                            1)
+                      Text(
+                        "${myTrips[selectedIndex][index]['memberCount']}명과 함께, ${myTrips[selectedIndex][index]['selectedRegionsList'][0]}",
+                        style: Theme.of(context).textTheme.labelSmall,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      )
+                    else if (myTrips[selectedIndex][index]['memberCount'] > 0 &&
+                        myTrips[selectedIndex][index]['selectedRegionsList']
+                                .length >
+                            1)
+                      Text(
+                        "${myTrips[selectedIndex][index]['memberCount']}명과 함께, ${myTrips[selectedIndex][index]['selectedRegionsList'][0]} 외 ${myTrips[selectedIndex][index]['selectedRegionsList'].length - 1}개 지역",
+                        style: Theme.of(context).textTheme.labelSmall,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                   ],
                 ),
               ),

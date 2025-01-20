@@ -27,6 +27,7 @@ class SearchPlaceScreen extends StatefulWidget {
 }
 
 class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
+  List<GlobalKey> _keys = [];
   late Map<String, dynamic> _tripInfo;
 
   final PlaceApiModel _placeApiModel = PlaceApiModel();
@@ -38,6 +39,7 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
   final DraggableScrollableController sheetController =
       DraggableScrollableController();
   final ScrollController _categoryScrollController = ScrollController();
+
   final TextEditingController _searchController = TextEditingController();
 
   bool isLoading = true; // 지도 로딩
@@ -292,6 +294,121 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
     }
   }
 
+  /* void _onMarkerTapped(int index) {
+    print('index$index');
+    // GlobalKey를 사용하여 해당 항목의 위치를 찾음
+    print('_keys$_keys');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final context = _keys[index].currentContext;
+        print('context$context');
+
+        if (context != null) {
+          final renderBox = context.findRenderObject() as RenderBox;
+          final position = renderBox.localToGlobal(Offset.zero); // 화면에서의 위치를 추출
+          print('position$position');
+
+          // DraggableScrollableController로 스크롤 이동
+          sheetController.animateTo(
+            position.dy, // 항목의 위치
+            duration: Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
+      }
+    });
+  }*/
+
+  // 장소 정보 하단 시트
+  void _showPlaceInfoSheet(Place place) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      elevation: 3.0,
+      builder: (BuildContext context) {
+        return Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  LocationDetailScreen(place: place)));
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: MediaQuery.of(context).size.width * 0.7,
+                              child: Text(
+                                place.name,
+                                style: Theme.of(context).textTheme.titleMedium,
+                                softWrap: true,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Container(
+                              width: MediaQuery.of(context).size.width * 0.7,
+                              child: Text(
+                                place.address,
+                                style: Theme.of(context).textTheme.bodySmall,
+                                softWrap: true,
+                              ),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            icon: Icon(Icons.close))
+                      ],
+                    )),
+                SizedBox(height: 16),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: place.photoUrl!.map((url) {
+                      return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        LocationDetailScreen(place: place)));
+                          },
+                          child: Container(
+                            margin: EdgeInsets.only(right: 8),
+                            width: 100,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              image: DecorationImage(
+                                image: NetworkImage(url),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ));
+                    }).toList(),
+                  ),
+                ),
+              ]),
+        );
+      },
+    );
+  }
+
   // 개별 장소 데이터 처리 및 리스트 추가
   void _processAndAddPlace(dynamic place) async {
     final location = LatLng(
@@ -322,16 +439,17 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
     );
 
     _nearByPlacesList.add(newPlace);
+    _keys = List.generate(_nearByPlacesList.length, (index) => GlobalKey());
 
     // 마커 추가 및 장소 리스트 업데이트
     setState(() {
       _markers.add(Marker(
           markerId: MarkerId(newPlace.id),
           position: newPlace.location,
-          infoWindow: InfoWindow(
+          /*infoWindow: InfoWindow(
             title: newPlace.name,
             snippet: newPlace.address,
-          ),
+          ),*/
           icon: newPlace.icon,
           onTap: () {
             // newPlace.id와 일치하는 장소 찾기
@@ -368,7 +486,10 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                         selectedPlace.location.longitude),
                     15.0),
               );
-
+              /*int tappedIndex = _nearByPlacesList.indexOf(newPlace);
+              print('tapped$tappedIndex');*/
+              // _onMarkerTapped(tappedIndex);
+              _showPlaceInfoSheet(selectedPlace);
               // 새로운 장소 등록 시키는 팝업 추가
             }
           }));
@@ -1031,8 +1152,24 @@ class _SearchPlaceScreenState extends State<SearchPlaceScreen> {
                                       itemCount: _nearByPlacesList.length,
                                       itemBuilder: (context, index) {
                                         Place place = _nearByPlacesList[index];
+                                        _keys[index] = GlobalKey();
+                                        WidgetsBinding.instance
+                                            .addPostFrameCallback((_) {
+                                          final context =
+                                              _keys[index].currentContext;
+                                          if (context != null) {
+                                            final renderBox =
+                                                context.findRenderObject()
+                                                    as RenderBox;
+                                            final position = renderBox
+                                                .localToGlobal(Offset.zero);
+                                            print(
+                                                "Position of item $index: $position");
+                                          }
+                                        });
 
                                         return Container(
+                                          key: _keys[index],
                                           padding: EdgeInsets.fromLTRB(
                                               16, 0, 16, 16),
                                           child: GestureDetector(

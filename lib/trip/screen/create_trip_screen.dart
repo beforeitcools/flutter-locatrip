@@ -154,8 +154,14 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                                                 return Padding(
                                                   padding:
                                                       const EdgeInsets.fromLTRB(
-                                                          0, 0, 20, 20),
+                                                          0, 0, 20, 10),
                                                   child: Column(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .center,
                                                     children: [
                                                       ClipRRect(
                                                         borderRadius:
@@ -165,16 +171,17 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                                                           region["imageUrl"]
                                                                   .toString() ??
                                                               defaultImageUrl,
-                                                          width: 30,
-                                                          height: 30,
+                                                          width: 36,
+                                                          height: 36,
                                                           fit: BoxFit.cover,
                                                           errorBuilder:
                                                               (context, error,
                                                                   stackTrace) {
                                                             return Image.asset(
                                                               defaultImageUrl,
-                                                              width: 30,
-                                                              height: 30,
+                                                              width: 36,
+                                                              height: 36,
+                                                              fit: BoxFit.cover,
                                                             );
                                                           },
                                                         ),

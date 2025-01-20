@@ -6,6 +6,8 @@ import 'package:flutter_locatrip/common/widget/url.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../common/model/create_dio.dart';
+
 class AuthModel {
   Future<String> checkUserId(String userId) async {
     final dio = Dio();
@@ -75,6 +77,8 @@ class AuthModel {
   }
 
   Future<String> login(Map<String, dynamic> loginData) async {
+    /*final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();*/
     final dio = Dio();
 
     try {

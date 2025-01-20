@@ -9,6 +9,8 @@ class AdviceModel {
   Future<Map<String, dynamic>> checkUserLocalAreaAuthIsValid(
       BuildContext context) async {
     final dio = Dio();
+    final LocalAreaAuthController _localAreaAuthController =
+        LocalAreaAuthController();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     final FlutterSecureStorage storage = FlutterSecureStorage();
@@ -24,7 +26,7 @@ class AdviceModel {
         Map<String, dynamic> _localAreaAuthData =
             response.data as Map<String, dynamic>;
         if (_localAreaAuthData['localArea'] != null) {
-          if (LocalAreaAuthController.calculateDaysLeftUntilExpiration(
+          if (_localAreaAuthController.calculateDaysLeftUntilExpiration(
                   _localAreaAuthData['localAreaAuthDate']) >
               0) {
             return {

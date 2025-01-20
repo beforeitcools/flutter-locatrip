@@ -46,7 +46,7 @@ List<Map<String, String>> mainRegions = [
   {"name": "부산", "emoji": "😻"},
   {"name": "광주", "emoji": "😘"},
   {"name": "제주", "emoji": "🥰"},
-  {"name": "경주", "emoji": "😛"},
+  {"name": "강릉", "emoji": "🤗"},
   {"name": "인천", "emoji": "😎"},
   {"name": "여수", "emoji": "🤤"},
 ];

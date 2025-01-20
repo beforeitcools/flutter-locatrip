@@ -1,8 +1,8 @@
 class LocalAreaAuthController {
-  static final int _expirationPeriod = 30;
+  final int _expirationPeriod = 30;
 
   // 남은 유효기간을 계산해주는 함수
-  static int calculateDaysLeftUntilExpiration(List<dynamic> localAreaAuthDate) {
+  int calculateDaysLeftUntilExpiration(List<dynamic> localAreaAuthDate) {
     DateTime authDate = DateTime(
       localAreaAuthDate[0], // year
       localAreaAuthDate[1], // month
