@@ -631,30 +631,32 @@ class _MainScreenState extends State<MainScreen> {
                                         }
                                         List selectedRegionList = _myTripList[i]
                                             ["selectedRegionsList"];
-                                        if (selectedRegionList.length > 1) {
-                                          for (int i = 0;
-                                              i < selectedRegionList.length;
-                                              i++) {
-                                            if (i > 0) {
-                                              _selectedRegion +=
-                                                  " ${selectedRegionList[i]}";
-                                            } else {
-                                              _selectedRegion =
-                                                  selectedRegionList[i];
+                                        if (selectedRegionList != null) {
+                                          if (selectedRegionList.length > 1) {
+                                            for (int i = 0;
+                                                i < selectedRegionList.length;
+                                                i++) {
+                                              if (i > 0) {
+                                                _selectedRegion +=
+                                                    " ${selectedRegionList[i]}";
+                                              } else {
+                                                _selectedRegion =
+                                                    selectedRegionList[i];
+                                              }
                                             }
+                                          } else {
+                                            _selectedRegion = _myTripList[i]
+                                                ["selectedRegionsList"][0];
                                           }
-                                        } else {
-                                          _selectedRegion = _myTripList[i]
-                                              ["selectedRegionsList"][0];
-                                        }
-                                        if (regionImages[
-                                                selectedRegionList[0]] !=
-                                            null) {
-                                          _regionImage =
-                                              "${regionImages[selectedRegionList[0]]}";
-                                        } else {
-                                          _regionImage =
-                                              "assets/images/default.jpg";
+                                          if (regionImages[
+                                                  selectedRegionList[0]] !=
+                                              null) {
+                                            _regionImage =
+                                                "${regionImages[selectedRegionList[0]]}";
+                                          } else {
+                                            _regionImage =
+                                                "assets/images/default.jpg";
+                                          }
                                         }
 
                                         return GestureDetector(
@@ -734,54 +736,39 @@ class _MainScreenState extends State<MainScreen> {
                                                           height: 3,
                                                         ),
                                                         FractionallySizedBox(
-                                                            widthFactor: 1,
-                                                            child: Row(
-                                                              crossAxisAlignment:
-                                                                  CrossAxisAlignment
-                                                                      .center,
+                                                          widthFactor: 1,
+                                                          child: RichText(
+                                                            text: TextSpan(
                                                               children: [
-                                                                Icon(
-                                                                  Icons
-                                                                      .location_on_outlined,
-                                                                  size: 14,
-                                                                  color: Colors
-                                                                      .white,
+                                                                WidgetSpan(
+                                                                  child: Icon(
+                                                                    Icons
+                                                                        .location_on_outlined,
+                                                                    size: 14,
+                                                                    color: Colors
+                                                                        .white,
+                                                                  ),
                                                                 ),
-                                                                SizedBox(
-                                                                  width: 5,
-                                                                ),
-                                                                Text(
-                                                                  _selectedRegion,
+                                                                TextSpan(
+                                                                  text:
+                                                                      ' $_selectedRegion · $_dateRange',
                                                                   style: Theme.of(
                                                                           context)
                                                                       .textTheme
                                                                       .labelSmall
                                                                       ?.copyWith(
-                                                                          color:
-                                                                              Colors.white),
+                                                                        color: Colors
+                                                                            .white,
+                                                                      ),
                                                                 ),
-                                                                Text(
-                                                                  " · ",
-                                                                  style: Theme.of(
-                                                                          context)
-                                                                      .textTheme
-                                                                      .labelSmall
-                                                                      ?.copyWith(
-                                                                          color:
-                                                                              Colors.white),
-                                                                ),
-                                                                Text(
-                                                                  _dateRange,
-                                                                  style: Theme.of(
-                                                                          context)
-                                                                      .textTheme
-                                                                      .labelSmall
-                                                                      ?.copyWith(
-                                                                          color:
-                                                                              Colors.white),
-                                                                )
                                                               ],
-                                                            ))
+                                                            ),
+                                                            softWrap: true,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .visible,
+                                                          ),
+                                                        )
                                                       ],
                                                     ),
                                                   )
