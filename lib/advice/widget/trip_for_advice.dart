@@ -61,7 +61,7 @@ class _TripForPostState extends State<TripForAdvice> {
           _days;
           _schedules = _myTrip.where((trip) => trip["dateIndex"] == (selectedIndex)).toList();
         });
-
+        
       }
     } catch (e) {
       print("YOU CANNOT GET YOUR TRIPS $e");
@@ -159,8 +159,8 @@ class _TripForPostState extends State<TripForAdvice> {
                                   borderRadius: BorderRadius.all(Radius.circular(6)),
                                   boxShadow: [BoxShadow(color: lightGrayColor, blurRadius: 4)],
                                   color: Colors.white),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              child: Expanded(child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Column(
                                       mainAxisSize: MainAxisSize.min,
@@ -174,7 +174,7 @@ class _TripForPostState extends State<TripForAdvice> {
                                             overflow: TextOverflow.ellipsis,
                                             style: Theme.of(context).textTheme.bodySmall!.copyWith(color: grayColor))],),
                                     IconButton(onPressed: (){/*TODO 바텀바로 첨삭보기, 첨삭하기(현지인의 경우)*/}, icon: Icon(Icons.forum_outlined), color: blackColor,)
-                              ])
+                                  ]))
                             ))
                       ]));
                 }),

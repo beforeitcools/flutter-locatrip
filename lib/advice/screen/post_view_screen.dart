@@ -71,37 +71,36 @@ class _PostViewScreenState extends State<PostViewScreen> {
         ),
         body: _tripData.isEmpty ? Center(child: CircularProgressIndicator(),)
             : Padding(padding: EdgeInsets.all(16),
-          child: Column(
+          child: Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+          Container(
+          child: _postData == null ? Center(child: CircularProgressIndicator())
+                : Column(mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                  child: _postData == null ? Center(child: CircularProgressIndicator())
-                      : Column(mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(_postData["title"], style: Theme.of(context).textTheme.titleLarge),
-                        SizedBox(height: 16),
-                        Text(_postData["contents"], style: Theme.of(context).textTheme.bodyMedium),
-                        SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            SizedBox(width: 30,),
-                            ElevatedButton(onPressed: (){},
-                                style: ElevatedButton.styleFrom(
-                                    elevation: 0,
-                                    minimumSize: Size(140, 45),
-                                    backgroundColor: pointBlueColor
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text("채택하러가기 ", style: Theme.of(context).textTheme.labelLarge!.copyWith(color: Colors.white)),
-                                    Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18)
-                                  ],))
-                          ],)
-                      ])
-              ),
+              Text(_postData["title"], style: Theme.of(context).textTheme.titleLarge),
+              SizedBox(height: 16),
+              Text(_postData["contents"], style: Theme.of(context).textTheme.bodyMedium),
+              SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  SizedBox(width: 30,),
+                  ElevatedButton(onPressed: (){},
+                      style: ElevatedButton.styleFrom(
+                          elevation: 0,
+                          minimumSize: Size(140, 45),
+                          backgroundColor: pointBlueColor
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text("채택하러가기 ", style: Theme.of(context).textTheme.labelLarge!.copyWith(color: Colors.white)),
+                          Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18)
+                        ],))
+                ],)
+            ])),
               SizedBox(height: 16),
               Container(
                   width: MediaQuery.of(context).size.width,
@@ -124,6 +123,7 @@ class _PostViewScreenState extends State<PostViewScreen> {
                   : TripForAdvice(tripData: _tripData)
             ],
           ),)
+        )
     );
   }
 
