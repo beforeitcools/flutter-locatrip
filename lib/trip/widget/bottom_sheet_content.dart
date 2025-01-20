@@ -25,7 +25,7 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
   List<Map<String, String>> _recommendedRegions = [];
 
   // 기본 이미지 (이미지가 없는 경우)
-  final String defaultImageUrl = "assets/imgPlaceholder.png";
+  final String defaultImageUrl = "assets/images/default.jpg";
 
   // 검색결과 리스트
   List<Map<String, String>> _displayedRegions = [];
@@ -274,18 +274,20 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                           itemBuilder: (context, i) {
                             return ListTile(
                               leading: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(999),
                                 child: Image.asset(
                                   _displayedRegions[i]["imageUrl"].toString() ??
                                       "",
-                                  width: 36,
-                                  height: 36,
+                                  width: 40,
+                                  height: 40,
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) {
+                                    print('$error $stackTrace');
                                     return Image.asset(
                                       defaultImageUrl,
-                                      width: 36,
-                                      height: 36,
+                                      width: 40,
+                                      height: 40,
+                                      fit: BoxFit.cover,
                                     );
                                   },
                                 ),
@@ -357,15 +359,16 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                                       child: Image.asset(
                                         region["imageUrl"].toString() ??
                                             defaultImageUrl,
-                                        width: 30,
-                                        height: 30,
+                                        width: 36,
+                                        height: 36,
                                         fit: BoxFit.cover,
                                         errorBuilder:
                                             (context, error, stackTrace) {
                                           return Image.asset(
                                             defaultImageUrl,
-                                            width: 30,
-                                            height: 30,
+                                            width: 36,
+                                            height: 36,
+                                            fit: BoxFit.cover,
                                           );
                                         },
                                       ),
@@ -406,6 +409,7 @@ class _BottomSheetContentState extends State<BottomSheetContent> {
                                     ),
                                   ],
                                 ),
+                                SizedBox(height: 5),
                                 Text(
                                   region["name"].toString(),
                                   style: Theme.of(context)
