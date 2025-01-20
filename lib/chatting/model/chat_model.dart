@@ -9,6 +9,8 @@ import 'package:flutter_locatrip/common/widget/url.dart';
 class ChatModel {
   // 최신 메세지 가져옴
   Future<List<dynamic>> fetchMessageData(BuildContext context) async {
+    // final dio = Dio();
+    // dio.interceptors.add(AuthInterceptor(dio, context));
     final SDio sdio = SDio();
     final Dio dio = await sdio.createDio();
     dio.interceptors.add(AuthInterceptor(dio, context));
@@ -27,8 +29,7 @@ class ChatModel {
   }
 
   // 검색 메세지 가져옴
-  Future<List<dynamic>> fetchSearchMessageData(
-      String searchKeyword, BuildContext context) async {
+  Future<List<dynamic>> fetchSearchMessageData(String searchKeyword, BuildContext context) async {
     final SDio sdio = SDio();
     final Dio dio = await sdio.createDio();
     dio.interceptors.add(AuthInterceptor(dio, context));
@@ -46,8 +47,9 @@ class ChatModel {
     }
   }
 
-  Future<List<dynamic>> fetchChatRoomData(
-      int chatroomId, BuildContext context) async {
+  Future<List<dynamic>> fetchChatRoomData(int chatroomId, BuildContext context) async {
+    // final dio = Dio();
+    // dio.interceptors.add(AuthInterceptor(dio, context));
     final SDio sdio = SDio();
     final Dio dio = await sdio.createDio();
     dio.interceptors.add(AuthInterceptor(dio, context));
@@ -55,6 +57,11 @@ class ChatModel {
     try {
       final response = await dio.get("$backUrl/api/chat/$chatroomId");
       if (response.statusCode == 200) {
+        if(response.data == null)
+          {
+            List<dynamic> nullList = [{"":""}];
+            return nullList;
+          }
         return response.data as List<dynamic>;
       } else {
         throw Exception("메세지 로드 실패");
@@ -85,8 +92,7 @@ class ChatModel {
     }
   }
 
-  Future<void> updateChatroomName(
-      int chatroomId, String chatroomName, BuildContext context) async {
+  Future<void> updateChatroomName(int chatroomId, String chatroomName, BuildContext context) async {
     final SDio sdio = SDio();
     final Dio dio = await sdio.createDio();
     dio.interceptors.add(AuthInterceptor(dio, context));
@@ -107,10 +113,12 @@ class ChatModel {
     }
   }
 
-  Future<void> chattingRoomForOTO(
-      int userId, String chatroomName, BuildContext context) async {
+  Future<void> chattingRoomForOTO(int userId, String chatroomName, BuildContext context) async {
     // 이거는 1:1 one to one 이라서 OTO 했어요 ...
     print("CHATTING ROOM FOR ONE TO ONE");
+
+    // final dio = Dio();
+    // dio.interceptors.add(AuthInterceptor(dio, context));
     final SDio sdio = SDio();
     final Dio dio = await sdio.createDio();
     dio.interceptors.add(AuthInterceptor(dio, context));
@@ -143,9 +151,12 @@ class ChatModel {
     }
   }
 
-  Future<dynamic> getUnreadMessageCount(
-      BuildContext context, int chatroomId) async {
-    final dio = Dio();
+  Future<dynamic> getUnreadMessageCount(BuildContext context, int chatroomId) async {
+    // final dio = Dio();
+    // dio.interceptors.add(AuthInterceptor(dio, context));
+
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     print("did you come here?");
@@ -170,9 +181,11 @@ class ChatModel {
     }
   }
 
-  Future<void> updateLastReadMessage(
-      BuildContext context, int chatroomId) async {
-    final dio = Dio();
+  Future<void> updateLastReadMessage(BuildContext context, int chatroomId) async {
+    // final dio = Dio();
+    // dio.interceptors.add(AuthInterceptor(dio, context));
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     print("updateLastReadMessage --- this is my chatroom Id: $chatroomId");
@@ -193,7 +206,10 @@ class ChatModel {
 
   // 기존 채팅방 불러오기(trip)
   Future<int> getExistTripChatroom(BuildContext context, int chatroomId) async{
-    final dio = Dio();
+    // final dio = Dio();
+    // dio.interceptors.add(AuthInterceptor(dio, context));
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try{
@@ -213,7 +229,10 @@ class ChatModel {
 
   // 채팅방 생성(trip)
   Future<int> createTripChatroom(BuildContext context) async{
-    final dio = Dio();
+    // final dio = Dio();
+    // dio.interceptors.add(AuthInterceptor(dio, context));
+    final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try{

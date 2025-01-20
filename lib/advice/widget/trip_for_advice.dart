@@ -35,28 +35,32 @@ class _TripForPostState extends State<TripForAdvice> {
   void _initTripSchedules() async {
     try {
       int day = 1;
+      int dateIndex = 0;
       for (int i = 0; i < _myTrip.length; i++) {
         if(_days.isNotEmpty){
-          for(var d in _days){
-            if(d["date"] == _myTrip[i]["date"]) {
-              print('${d["data"]}랑 ${_myTrip[i]["date"]} d이녓긍은 무조건 달라야 하긔');
-              continue; }
-            else{
-              String tripDay = "day ${day++}";
-              String tripDate = _myTrip[i]["date"];
-
-              _days.add({"day": tripDay, "date": tripDate});
-              print('my days: $_days');
-            }
+          if(_myTrip[i]["dateIndex"] <= dateIndex) {
+            print('${_myTrip[i]["dateIndex"]}가 $dateIndex보다 작거나 크면 continue');
+            continue; }
+          else{
+            String tripDay = "day ${day++}";
+            String tripDate = _myTrip[i]["date"];
+            _days.add({"day": tripDay, "date": tripDate});
+            print('my days: $_days');
+            dateIndex++;
           }
         }
         else{
           String tripDay = "day ${day++}";
           String tripDate = _myTrip[i]["date"];
-
           _days.add({"day": tripDay, "date": tripDate});
           print('my days: $_days');
         }
+
+        setState(() {
+          _myTrip;
+          _days;
+          _schedules = _myTrip.where((trip) => trip["dateIndex"] == (selectedIndex)).toList();
+        });
 
       }
     } catch (e) {

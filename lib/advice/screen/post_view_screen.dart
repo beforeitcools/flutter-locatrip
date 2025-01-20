@@ -69,60 +69,61 @@ class _PostViewScreenState extends State<PostViewScreen> {
             // TextButton(onPressed: (){/**/}, child: child) 현재 글이 내가 쓴 글인지 검사해서 삭제버튼을 보여줘야함
           ],
         ),
-        body: Padding(padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-                child: _postData == null ? Center(child: CircularProgressIndicator())
-                    : Column(mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(_postData["title"], style: Theme.of(context).textTheme.titleLarge),
-                      SizedBox(height: 16),
-                      Text(_postData["contents"], style: Theme.of(context).textTheme.bodyMedium),
-                      SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          SizedBox(width: 30,),
-                          ElevatedButton(onPressed: (){},
-                            style: ElevatedButton.styleFrom(
-                                elevation: 0,
-                                minimumSize: Size(140, 45),
-                                backgroundColor: pointBlueColor
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text("채택하러가기 ", style: Theme.of(context).textTheme.labelLarge!.copyWith(color: Colors.white)),
-                                Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18)
-                              ],))
-                  ],)
-                ])
-            ),
-            SizedBox(height: 16),
-            Container(
-                width: MediaQuery.of(context).size.width,
-                height: 60,
-                alignment: Alignment.centerLeft,
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.all(Radius.circular(6)),
-                    boxShadow: [BoxShadow(color: lightGrayColor, blurRadius: 4)],
-                    color: Colors.white),
-                child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("전체 첨삭", style: Theme.of(context).textTheme.titleMedium),
-                      IconButton(onPressed: (){/*바텀시트*/ showAdviceBottomSheet();}, icon: Icon(Icons.forum_outlined, color: blackColor))
-                    ]
-                )),
-            SizedBox(height: 16),
-            _tripData.isEmpty ? Center(child: CircularProgressIndicator())
-                : TripForAdvice(tripData: _tripData)
-          ],
-        ),)
+        body: _tripData.isEmpty ? Center(child: CircularProgressIndicator(),)
+            : Padding(padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                  child: _postData == null ? Center(child: CircularProgressIndicator())
+                      : Column(mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(_postData["title"], style: Theme.of(context).textTheme.titleLarge),
+                        SizedBox(height: 16),
+                        Text(_postData["contents"], style: Theme.of(context).textTheme.bodyMedium),
+                        SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            SizedBox(width: 30,),
+                            ElevatedButton(onPressed: (){},
+                                style: ElevatedButton.styleFrom(
+                                    elevation: 0,
+                                    minimumSize: Size(140, 45),
+                                    backgroundColor: pointBlueColor
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text("채택하러가기 ", style: Theme.of(context).textTheme.labelLarge!.copyWith(color: Colors.white)),
+                                    Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18)
+                                  ],))
+                          ],)
+                      ])
+              ),
+              SizedBox(height: 16),
+              Container(
+                  width: MediaQuery.of(context).size.width,
+                  height: 60,
+                  alignment: Alignment.centerLeft,
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.all(Radius.circular(6)),
+                      boxShadow: [BoxShadow(color: lightGrayColor, blurRadius: 4)],
+                      color: Colors.white),
+                  child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("전체 첨삭", style: Theme.of(context).textTheme.titleMedium),
+                        IconButton(onPressed: (){/*바텀시트*/ showAdviceBottomSheet();}, icon: Icon(Icons.forum_outlined, color: blackColor))
+                      ]
+                  )),
+              SizedBox(height: 16),
+              _tripData.isEmpty ? Center(child: CircularProgressIndicator())
+                  : TripForAdvice(tripData: _tripData)
+            ],
+          ),)
     );
   }
 

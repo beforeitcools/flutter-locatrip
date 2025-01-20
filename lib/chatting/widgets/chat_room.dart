@@ -130,7 +130,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       appBar: AppBar(
 
         leading: InkWell(
-          onTap: (){Navigator.pop(context);},
+          onTap: (){Navigator.pop(context, _chats.last["messageContents"]);},
           child:  Icon(Icons.arrow_back),
         ),
         title: Text(widget.chatroomName),
