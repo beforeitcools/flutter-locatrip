@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/advice/model/post_model.dart';
 import 'package:flutter_locatrip/advice/screen/advice_view_screen.dart';
 import 'package:flutter_locatrip/advice/screen/advice_write_screen.dart';
+import 'package:flutter_locatrip/advice/screen/editors_list_screen.dart';
 import 'package:flutter_locatrip/advice/widget/trip_for_advice.dart';
 import 'package:flutter_locatrip/common/model/json_parser.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
@@ -60,68 +61,122 @@ class _PostViewScreenState extends State<PostViewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          leading: IconButton(onPressed: (){Navigator.pop(context);Navigator.pop(context);}, icon: Icon(Icons.arrow_back_outlined)),
-          actions: [
-            // TextButton(onPressed: (){/**/}, child: child) 현재 글이 내가 쓴 글인지 검사해서 삭제버튼을 보여줘야함
-          ],
-        ),
-        body: _tripData.isEmpty ? Center(child: CircularProgressIndicator(),)
-            : Padding(padding: EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                  child: _postData == null ? Center(child: CircularProgressIndicator())
-                      : Column(mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(_postData["title"], style: Theme.of(context).textTheme.titleLarge),
-                        SizedBox(height: 16),
-                        Text(_postData["contents"], style: Theme.of(context).textTheme.bodyMedium),
-                        SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            SizedBox(width: 30,),
-                            ElevatedButton(onPressed: (){},
-                                style: ElevatedButton.styleFrom(
-                                    elevation: 0,
-                                    minimumSize: Size(140, 45),
-                                    backgroundColor: pointBlueColor
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text("채택하러가기 ", style: Theme.of(context).textTheme.labelLarge!.copyWith(color: Colors.white)),
-                                    Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18)
-                                  ],))
-                          ],)
-                      ])
-              ),
-              SizedBox(height: 16),
-              Container(
-                  width: MediaQuery.of(context).size.width,
-                  height: 60,
-                  alignment: Alignment.centerLeft,
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.all(Radius.circular(6)),
-                      boxShadow: [BoxShadow(color: lightGrayColor, blurRadius: 4)],
-                      color: Colors.white),
-                  child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("전체 첨삭", style: Theme.of(context).textTheme.titleMedium),
-                        IconButton(onPressed: (){/*바텀시트*/ showAdviceBottomSheet();}, icon: Icon(Icons.forum_outlined, color: blackColor))
-                      ]
-                  )),
-              SizedBox(height: 16),
-              _tripData.isEmpty ? Center(child: CircularProgressIndicator())
-                  : TripForAdvice(tripData: _tripData)
+    return WillPopScope(
+      onWillPop: () async {
+        // Pass true when the back button is pressed
+        Navigator.pop(context, true);
+        return false; // Prevent default back navigation
+      },
+      child: Scaffold(
+          appBar: AppBar(
+            actions: [
+              // TextButton(onPressed: (){/**/}, child: child) 현재 글이 내가 쓴 글인지 검사해서 삭제버튼을 보여줘야함
             ],
-          ),)
+          ),
+          body: _tripData.isEmpty
+              ? Center(
+                  child: CircularProgressIndicator(),
+                )
+              : Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                          child: _postData == null
+                              ? Center(child: CircularProgressIndicator())
+                              : Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                      Text(_postData["title"],
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleLarge),
+                                      SizedBox(height: 16),
+                                      Text(_postData["contents"],
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium),
+                                      SizedBox(height: 24),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          SizedBox(
+                                            width: 30,
+                                          ),
+                                          ElevatedButton(
+                                              onPressed: () {
+                                                Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            EditorsListScreen(
+                                                                postId: widget
+                                                                    .postId)));
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                  elevation: 0,
+                                                  minimumSize: Size(140, 45),
+                                                  backgroundColor:
+                                                      pointBlueColor),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text("채택하러가기 ",
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .labelLarge!
+                                                          .copyWith(
+                                                              color: Colors
+                                                                  .white)),
+                                                  Icon(Icons.arrow_forward_ios,
+                                                      color: Colors.white,
+                                                      size: 18)
+                                                ],
+                                              ))
+                                        ],
+                                      )
+                                    ])),
+                      SizedBox(height: 16),
+                      Container(
+                          width: MediaQuery.of(context).size.width,
+                          height: 60,
+                          alignment: Alignment.centerLeft,
+                          padding: EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(6)),
+                              boxShadow: [
+                                BoxShadow(color: lightGrayColor, blurRadius: 4)
+                              ],
+                              color: Colors.white),
+                          child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text("전체 첨삭",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium),
+                                IconButton(
+                                    onPressed: () {
+                                      /*바텀시트*/ showAdviceBottomSheet(
+                                          widget.postId, 0, "");
+                                    },
+                                    icon: Icon(Icons.forum_outlined,
+                                        color: blackColor))
+                              ])),
+                      SizedBox(height: 16),
+                      _tripData.isEmpty
+                          ? Center(child: CircularProgressIndicator())
+                          : TripForAdvice(
+                              tripData: _tripData,
+                              postId: widget.postId,
+                            )
+                    ],
+                  ),
+                )),
     );
   }
 

@@ -41,12 +41,11 @@ class _TripForPostState extends State<TripForAdvice> {
       int day = 1;
       int dateIndex = 0;
       for (int i = 0; i < _myTrip.length; i++) {
-
-        if(_days.isNotEmpty){
-          if(_myTrip[i]["dateIndex"] <= dateIndex) {
+        if (_days.isNotEmpty) {
+          if (_myTrip[i]["dateIndex"] <= dateIndex) {
             print('${_myTrip[i]["dateIndex"]}가 $dateIndex보다 작거나 크면 continue');
-            continue; }
-          else{
+            continue;
+          } else {
             String tripDay = "day ${day++}";
             String tripDate = _myTrip[i]["date"];
             _days.add({"day": tripDay, "date": tripDate});
@@ -62,7 +61,9 @@ class _TripForPostState extends State<TripForAdvice> {
         setState(() {
           _myTrip;
           _days;
-          _schedules = _myTrip.where((trip) => trip["dateIndex"] == (selectedIndex)).toList();
+          _schedules = _myTrip
+              .where((trip) => trip["dateIndex"] == (selectedIndex))
+              .toList();
         });
       }
     } catch (e) {
@@ -201,24 +202,37 @@ class _TripForPostState extends State<TripForAdvice> {
                                               mainAxisAlignment:
                                                   MainAxisAlignment.center,
                                               children: [
-                                                Text(
-                                                    "${_schedules[index]["location"]["name"]}",
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .titleMedium),
-                                                Text(
-                                                    "${_schedules[index]["location"]["category"]} · ${_schedules[index]["location"]["address"]}",
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .bodySmall!
-                                                        .copyWith(
-                                                            color: grayColor))
+                                                Row(
+                                                  children: [
+                                                    Text(
+                                                        "${_schedules[index]["location"]["name"]}",
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .titleMedium),
+                                                  ],
+                                                ),
+                                                SizedBox(
+                                                  width: MediaQuery.of(context)
+                                                          .size
+                                                          .width -
+                                                      155,
+                                                  child: (Text(
+                                                      "${_schedules[index]["location"]["category"]} · ${_schedules[index]["location"]["address"]}",
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      maxLines: 1,
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .bodySmall!
+                                                          .copyWith(
+                                                              color:
+                                                                  grayColor))),
+                                                )
                                               ],
                                             ),
+                                            Spacer(),
                                             IconButton(
                                               onPressed: () {
                                                 /*TODO 바텀바로 첨삭보기, 첨삭하기(현지인의 경우)*/

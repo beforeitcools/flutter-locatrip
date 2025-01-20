@@ -21,7 +21,7 @@ class SplashScreen extends StatelessWidget {
               height: 40,
             ),
             ClipRRect(
-              borderRadius: BorderRadius.circular(90),
+              borderRadius: BorderRadius.circular(80),
               child: Image.asset(
                 'assets/locat_app_icon.png',
                 width: 150,

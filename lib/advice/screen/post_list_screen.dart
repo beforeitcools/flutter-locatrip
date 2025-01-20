@@ -256,19 +256,6 @@ class _PostListScreen extends State<PostListScreen> {
                       )
                   ],
                 )),
-            /*TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => AdviceViewScreen(locationId: 1)),
-                );
-              },
-              child: Text(
-                '첨삭보기 (임시)',
-                style: TextStyle(color: blackColor),
-              ),
-            ),*/
           ],
         ),
         body: Container(

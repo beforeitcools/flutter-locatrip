@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/advice/screen/advice_post_screen.dart';
+import 'package:flutter_locatrip/advice/widget/dotted_line.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:flutter_locatrip/common/widget/loading_screen.dart';
 
@@ -133,30 +134,6 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
   Widget _buildHeader() {
     return Stack(
       children: [
-        // 점선 추가
-        /*Positioned(
-          left: 210, // 박스 중앙에 맞추기 위한 조정
-          top: 50, // 헤더 중앙에서 시작
-          bottom: 0, // 아래로 끝까지 이어짐
-          child: Container(
-            width: 1,
-            color: Colors.transparent,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final totalHeight = constraints.maxHeight;
-                return Column(
-                  children: List.generate(
-                    (totalHeight / 8).floor(),
-                    (i) => i.isEven
-                        ? Container(height: 4, color: grayColor)
-                        : Container(height: 4, color: Colors.transparent),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),*/
-
         _tripDayLocationId != 0
             // 헤더 콘텐츠
             ? Container(
@@ -169,7 +146,7 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
                       radius: 16,
                       backgroundColor: pointBlueColor,
                       child: Text(
-                        _orderIndex as String,
+                        '$_orderIndex',
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -239,13 +216,32 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
       itemCount: _adviceList.length,
       itemBuilder: (context, index) {
         final advice = _adviceList[index];
-        return _buildAdviceCard(
-            localAdviceId: advice['localAdviceId'] as int,
-            contents: advice['contents'] as String,
-            userId: advice['userId'] as int,
-            profilePic: advice['profilePic'] ?? '',
-            nickname: advice['nickname'] as String,
-            createdAt: advice['createdAt'] as String);
+        return Stack(
+          children: [
+            // Dotted line
+            if (index != 0)
+              Positioned.fill(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: DottedLine(
+                    height: 50,
+                    color: grayColor,
+                    dotWidth: 2.0,
+                    dotHeight: 3.0,
+                    spacing: 2.0,
+                  ),
+                ),
+              ),
+
+            _buildAdviceCard(
+                localAdviceId: advice['localAdviceId'] as int,
+                contents: advice['contents'] as String,
+                userId: advice['userId'] as int,
+                profilePic: advice['profilePic'] ?? '',
+                nickname: advice['nickname'] as String,
+                createdAt: advice['createdAt'] as String),
+          ],
+        );
       },
     );
   }
@@ -260,8 +256,11 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
       required String createdAt}) {
     return Column(
       children: [
+        SizedBox(
+          height: 26,
+        ),
         Container(
-          margin: EdgeInsets.symmetric(horizontal: 6, vertical: 16),
+          margin: EdgeInsets.symmetric(horizontal: 6),
           padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -321,6 +320,7 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
                   IconButton(
                     icon: const Icon(Icons.more_vert),
                     onPressed: () {
+                      // 수정/ 삭제
                       _showOptions(context);
                     },
                   ),
@@ -334,28 +334,6 @@ class _AdviceViewScreenState extends State<AdviceViewScreen> {
                 // maxLines: 3,
               ),
             ],
-          ),
-        ),
-        Center(
-          /*left: 210, // 점선 위치 조정
-          top: 75, // 헤더의 대략적 높이에서 시작 (고정값)
-          bottom: 0, // 하단 끝까지 점선*/
-          child: Container(
-            width: 1,
-            color: Colors.transparent,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final totalHeight = constraints.maxHeight;
-                return Column(
-                  children: List.generate(
-                    (totalHeight / 8).floor(),
-                    (i) => i.isEven
-                        ? Container(height: 4, color: grayColor)
-                        : Container(height: 4, color: Colors.transparent),
-                  ),
-                );
-              },
-            ),
           ),
         ),
       ],
