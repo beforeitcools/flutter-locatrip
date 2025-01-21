@@ -1,12 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_locatrip/advice/model/advice_model2.dart';
 import 'package:flutter_locatrip/advice/screen/editors_list_screen.dart';
-import 'package:flutter_locatrip/common/model/json_parser.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:intl/intl.dart';
 
 class AdvicePostScreen extends StatefulWidget {
   const AdvicePostScreen({Key? key}) : super(key: key);
@@ -16,9 +13,6 @@ class AdvicePostScreen extends StatefulWidget {
 }
 
 class _AdvicePostScreenState extends State<AdvicePostScreen> {
-  final AdviceModel2 _adviceModel = AdviceModel2();
-  final JsonParser _jsonParser = JsonParser();
-
   final ScrollController _scrollController = ScrollController();
   bool _isBottomSheetVisible = false;
   bool _isSelected = false;
@@ -27,14 +21,18 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
   double? longitude;
   GoogleMapController? mapController;
 
-  late int _tripId;
-  late int _userId;
-
-  Map<String, dynamic> _adviceAll = {};
-  List<dynamic> _advicePlaceList = [];
-  List<Map<String, dynamic>> _tripDayList = [];
-
-  bool _isLoading = true;
+  final List<Map<String, String>> adviceList = [
+    {
+      'author': '부산갈매기',
+      'date': '2024-12-13',
+      'content': '부산은 아름다운 항구 도시입니다...'
+    },
+    {'author': '서울나그네', 'date': '2024-12-14', 'content': '서울의 밤은 화려합니다...'},
+    {'author': '광주빛고을', 'date': '2024-12-15', 'content': '광주는 문화의 중심지입니다...'},
+    {'author': '경주빛고을', 'date': '2024-12-15', 'content': '경주는 문화의 중심지입니다...'},
+    {'author': '서울고을', 'date': '2024-12-15', 'content': '서울는 문화의 중심지입니다...'},
+    {'author': '동작구고을', 'date': '2024-12-15', 'content': '동작구는 문화의 중심지입니다...'},
+  ];
 
   @override
   void initState() {
@@ -42,49 +40,24 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
     _scrollController.addListener(() {
       if (_scrollController.position.atEdge) {
         bool isBottom = _scrollController.position.pixels != 0;
-        if (isBottom && !_isBottomSheetVisible) {
+        if (isBottom && !_isBottomSheetVisible && !_isSelected) {
           setState(() {
             _isBottomSheetVisible = true;
           });
           _showBottomSheet();
         }
+      } else {
+        if (_isBottomSheetVisible) {
+          setState(() {
+            _isBottomSheetVisible = false;
+          });
+          Navigator.of(context).pop(); // BottomSheet 닫기
+        }
       }
     });
 
-    _tripId = 1;
-    _userId = 2;
     latitude = 37.493196;
     longitude = 127.028549;
-
-    _loadData();
-  }
-
-  void _loadData() async {
-    try {
-      print('data$_tripId$_userId');
-      Map<String, dynamic> result =
-          await _adviceModel.selectAdviceList(context, _tripId, _userId);
-
-      if (result.isNotEmpty) {
-        print('result$result');
-
-        _adviceAll = result["all"];
-        _advicePlaceList = result["place"];
-        _tripDayList = _jsonParser.convertToList(result["posts"]);
-
-        print('_adviceAll $_adviceAll');
-        print('_advicePlaceList $_advicePlaceList');
-        print('_tripDayList $_tripDayList');
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      print('에러메시지!! $e');
-    }
   }
 
   @override
@@ -112,6 +85,7 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
   void _showBottomSheet() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
@@ -148,9 +122,11 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
               const SizedBox(height: 10),
               TextButton(
                 onPressed: () {
-                  Navigator.pop(context); // 바텀시트 닫기
-                  // 채택하기 기능 추가
-                  _onSelect();
+                  Navigator.pop(context);
+
+                  _scrollController.animateTo(0,
+                      duration: Duration(milliseconds: 300),
+                      curve: Curves.linear);
                 },
                 child: Text(
                   '채택하러가기',
@@ -164,85 +140,188 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
           ),
         );
       },
-    );
-  }
-
-  void _onSelect() {
-    setState(() {
-      _isSelected = true; // 하이라이트 활성화
+    ).whenComplete(() {
+      // BottomSheet가 닫힐 때 상태 업데이트
+      setState(() {
+        _isBottomSheetVisible = false;
+      });
     });
   }
 
-  // 날짜형식변환
-  String dateFormat(String dateString) {
-    DateTime date = DateTime.parse(dateString);
-    return DateFormat('y-M-d').format(date);
+  void _onSelect(value) {
+    setState(() {
+      _isSelected = !value; // 하이라이트 활성화
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            '첨삭글',
-            style: Theme.of(context).textTheme.headlineLarge,
-          ),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context),
-          ),
-          actions: [
-            TextButton.icon(
+      appBar: AppBar(
+        title: Text(
+          '첨삭글',
+          style: Theme.of(context).textTheme.headlineLarge,
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          TextButton(
+              style: TextButton.styleFrom(backgroundColor: pointBlueColor),
               onPressed: () {
                 // 채택하기 기능 추가
                 // 이미 채택되었으면 아무것도 하지 않음
-                if (!_isSelected) {
-                  _onSelect();
-                }
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => EditorsListScreen(),
-                  ),
-                );
+
+                _onSelect(_isSelected);
+
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //     builder: (context) => EditorsListScreen(),
+                //   ),
+                // );
               },
-              icon: Icon(
-                Icons.recommend,
-                color: _isSelected ? pointBlueColor : grayColor,
-              ),
-              label: Text(
-                '채택하기',
-                style: TextStyle(
-                  color: _isSelected ? pointBlueColor : grayColor,
+              child: Row(
+                children: [
+                  _isSelected
+                      ? Icon(
+                          Icons.check,
+                          color: Colors.white,
+                        )
+                      : Image.asset(
+                          "assets/icon/editor_choice.png",
+                          width: 20,
+                          color: Colors.white,
+                        ),
+                  SizedBox(
+                    width: 2,
+                  ),
+                  Text(
+                    _isSelected ? "채택됨" : '채택하기',
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              )),
+          SizedBox(
+            width: 16,
+          )
+        ],
+      ),
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          SliverToBoxAdapter(
+            child: Stack(
+              clipBehavior: Clip.none, // 클립을 해제하여 Positioned 요소가 넘어가도 보이도록 설정
+              children: [
+                // 지도 섹션
+                Container(
+                  height: 260, // Stack의 높이를 고정
+                  child: _buildMapSection(),
                 ),
+                // 메인 글 (지도 위에 살짝 걸치도록 Positioned 설정)
+                Positioned(
+                  top: 240, // 살짝 겹치는 높이 조정
+                  left: 16,
+                  right: 16,
+                  child: Material(
+                    // elevation: 5,
+                    borderRadius: BorderRadius.circular(12),
+                    child: _buildMainAdviceCard(adviceList[0]),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // 지도와 다음 Sliver 사이의 간격을 추가
+          SliverToBoxAdapter(
+            child: SizedBox(height: 80), // 겹친 영역에 대한 간격 확보
+          ),
+
+          // 나머지 글 섹션
+          SliverToBoxAdapter(
+            child: _buildSectionHeader('1', '강남역', '관광명소 · 서울 강남구'),
+          ),
+          SliverToBoxAdapter(
+            child: Center(
+              child: SizedBox(
+                height: 20,
+                child: _buildVerticalDashedLine(),
               ),
             ),
-          ],
-        ),
-        body: _isLoading
-            ? Center(
-                child: CircularProgressIndicator(),
-              )
-            : _tripDayList != null
-                ? SingleChildScrollView(
-                    controller: _scrollController,
-                    child: Column(
-                      children: [
-                        _buildMapSection(),
-                        if (_adviceAll != null)
-                          _buildMainAdviceCard(_adviceAll),
-                        ListView.builder(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemCount: _tripDayList.length,
-                            itemBuilder: (context, index) {
-                              return Column(children: [
-                                _buildSectionHeader(_tripDayList[index])
-                              ]);
-                            })
-                      ],
-                    ))
-                : SizedBox.shrink());
+          ),
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                print(adviceList[index]);
+                return _buildAdviceCard(adviceList[index + 1]);
+              },
+              childCount: 1,
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: _buildSectionHeader('2', '강남역', '관광명소 · 서울 강남구'),
+          ),
+          SliverToBoxAdapter(
+            child: Center(
+              child: SizedBox(
+                height: 20,
+                child: _buildVerticalDashedLine(),
+              ),
+            ),
+          ),
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                return _buildAdviceCard(adviceList[index + 2]);
+              },
+              childCount: 1,
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: _buildSectionHeader('3', '강남역', '관광명소 · 서울 강남구'),
+          ),
+          SliverToBoxAdapter(
+            child: Center(
+              child: SizedBox(
+                height: 20,
+                child: _buildVerticalDashedLine(),
+              ),
+            ),
+          ),
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                return _buildAdviceCard(adviceList[index + 3]);
+              },
+              childCount: 1,
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: _buildSectionHeader('4', '강남역', '관광명소 · 서울 강남구'),
+          ),
+          SliverToBoxAdapter(
+            child: Center(
+              child: SizedBox(
+                height: 20,
+                child: _buildVerticalDashedLine(),
+              ),
+            ),
+          ),
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                return _buildAdviceCard(adviceList[index + 4]);
+              },
+              childCount: 1,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   /// 지도 섹션
@@ -285,78 +364,75 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
             : Center(child: CircularProgressIndicator()));
   }
 
-  Widget _buildMainAdviceCard(Map<String, dynamic> advice) {
+  Widget _buildMainAdviceCard(Map<String, String> advice) {
     return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: grayColor.withOpacity(0.3),
-              spreadRadius: 2,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 작성자, 날짜, 프로필 이미지
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // 프로필 아이콘
-                const Icon(
-                  Icons.account_circle,
-                  size: 24,
+      // margin: EdgeInsets.symmetric(horizontal: 16, vertical: 25),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: grayColor.withOpacity(0.3),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 작성자, 날짜, 프로필 이미지
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                    ),
+                    child: Image.asset("assets/default_profile_image.png"),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    advice['author'] ?? '작성자 없음',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                advice['date'] ?? '날짜 없음',
+                style: const TextStyle(
+                  fontSize: 12,
                   color: grayColor,
                 ),
-                const SizedBox(width: 8),
-
-                // 작성자와 날짜
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        // advice['author'] ??
-                        '작성자 없음',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      Text(
-                        advice['createdAt'] != null
-                            ? dateFormat(advice['createdAt'])
-                            : "" ?? '날짜 없음',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: grayColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              advice['contents'] != null ? advice['contents'] : "",
-              style: const TextStyle(
-                fontSize: 14,
-                height: 1.5,
               ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            advice['content']!,
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.5,
             ),
-          ],
-        ));
+          ),
+        ],
+      ),
+    );
   }
 
   /// 섹션 헤더
-  Widget _buildSectionHeader(Map<String, dynamic> place) {
+  Widget _buildSectionHeader(String number, String title, String subtitle) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       padding: const EdgeInsets.all(12),
@@ -376,61 +452,30 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           CircleAvatar(
-            radius: 16,
+            radius: 12,
             backgroundColor: pointBlueColor,
-            child: Text(
-              place["orderIndex"] != null ? place["orderIndex"].toString() : "",
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            child: Text(number,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Colors.white, fontWeight: FontWeight.w700)),
           ),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                place["location"]?["name"] != null
-                    ? place["location"]["name"]
-                    : "",
+                title,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              Wrap(
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          place["location"]?["category"] != null
-                              ? place["location"]["category"]
-                              : "",
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: grayColor,
-                          ),
-                          softWrap: true,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const Text(" · "),
-                      Flexible(
-                        child: Text(
-                          place["location"]?["address"] != null
-                              ? place["location"]["address"]
-                              : "",
-                          softWrap: true,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              )
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
             ],
           ),
         ],
@@ -440,7 +485,7 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
 
   /// 카드 섹션
   /// 게시글 카드 (작성자, 날짜, 프로필 이미지)
-  Widget _buildAdviceCard(dynamic advice) {
+  Widget _buildAdviceCard(Map<String, String> advice) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       padding: const EdgeInsets.all(12.0),
@@ -462,44 +507,42 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
           // 작성자, 날짜, 프로필 이미지
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // 프로필 아이콘
-              const Icon(
-                Icons.account_circle,
-                size: 24,
-                color: grayColor,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                    ),
+                    child: Image.asset("assets/default_profile_image.png"),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    advice['author'] ?? '작성자 없음',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-
-              // 작성자와 날짜
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '작성자 없음',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      advice['createdAt'] ?? '날짜 없음',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: grayColor,
-                      ),
-                    ),
-                  ],
+              Text(
+                advice['date'] ?? '날짜 없음',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: grayColor,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-
           // 게시글 내용
           Text(
-            advice['contents'] ?? '내용 없음',
+            advice['content'] ?? '내용 없음',
             style: const TextStyle(
               fontSize: 14,
               height: 1.5,
