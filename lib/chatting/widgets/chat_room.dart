@@ -172,7 +172,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           }),
               Align(
                 alignment: Alignment.bottomCenter,
-                child: Padding(padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                child: Padding(padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom), //TODO 테스트해보고 아직 키보드 먹으면 얘 다시 보기
                   child: Row(
                       children: [
                         Padding(padding: EdgeInsets.only(left: 16, bottom: 16),

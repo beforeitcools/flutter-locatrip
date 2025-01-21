@@ -72,6 +72,12 @@ class _PostViewScreenState extends State<PostViewScreen> {
       _authenticatedLocalArea = isValidAndLocalArea['localArea'];
       // _postData 로 selectedRegions 의 Region 가져와서 _selectedRegionList 에 add
       // 예지씨 HELP~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ㅠㅠㅠㅠ
+      for(var p in _postData) {
+        // _postData[i]["selectedRegions"]["region"]의 저장된 모든 region 저장... 이걸 원하신 게 맞나요
+        // 아닐시 조건문을 ...
+          _selectedRegionList.add(p["selectedRegions"]["region"]);
+      }
+     }
       if (_selectedRegionList.contains(_authenticatedLocalArea)) {
         _isLocal = true;
       }
@@ -79,7 +85,7 @@ class _PostViewScreenState extends State<PostViewScreen> {
       if (_isUserAndPostCreatorSame == false && _isLocal == true) {
         _canAdvice = true;
       }
-    }
+
     print('여행 넘겨 받았어?!?!?!   $_postData');
     _updateValue(_postData["advicedTripData"]);
   }
