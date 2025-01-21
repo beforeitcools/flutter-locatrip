@@ -17,14 +17,6 @@ class PostBottomSheet extends StatefulWidget {
 
 class _PostBottomSheetState extends State<PostBottomSheet> {
   late List<dynamic> _trips;
-  /*final List<Map<String, String>> myTripLists = [
-    {'title': '부산 여행', 'dates': '2024년 12월 24일 - 12월 27일'},
-    {'title': '제주 여행', 'dates': '2024년 12월 24일 - 12월 27일'},
-    {'title': '서울 여행', 'dates': '2024년 12월 24일 - 12월 27일'},
-    {'title': '광주 여행', 'dates': '2024년 12월 24일 - 12월 27일'},
-    {'title': '대전 여행', 'dates': '2024년 12월 24일 - 12월 27일'},
-  ];*/
-
   List<bool> _isPressed = [];
   late int _selectedTripId;
 
@@ -91,7 +83,7 @@ class _PostBottomSheetState extends State<PostBottomSheet> {
                                   regionImages.keys
                                           .contains(trip['selectedRegion'])
                                       ? "${regionImages['${trip['selectedRegion']}']}"
-                                      : "assets/icon/delete.png",
+                                      : "assets/images/default.jpg",
                                   width: 40,
                                   height: 40,
                                   fit: BoxFit.cover,

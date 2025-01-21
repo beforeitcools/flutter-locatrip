@@ -58,20 +58,23 @@ class Recommendations extends StatelessWidget {
                               child: Column(
                                 children: [
                                   Container(
-                                    width: 60,
-                                    height: 60,
-                                    decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(6),
-                                        color: grayColor),
-                                    child: Image.asset(
-                                      regionImages.keys.contains(localArea)
-                                          ? "${regionImages[localArea]}"
-                                          : "assets/images/default.jpg",
-                                      width: 24,
-                                      height: 24,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
+                                      width: 60,
+                                      height: 60,
+                                      decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          color: grayColor),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Image.asset(
+                                          regionImages.keys.contains(localArea)
+                                              ? "${regionImages[localArea]}"
+                                              : "assets/images/default.jpg",
+                                          width: 24,
+                                          height: 24,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      )),
                                   SizedBox(height: 7),
                                   Container(
                                     alignment: Alignment.center,

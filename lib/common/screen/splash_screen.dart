@@ -12,16 +12,11 @@ class SplashScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            /*Image(
-              width: 150,
-              height: 150,
-              image: AssetImage('assets/locat_app_icon.png'),
-            )*/
             SizedBox(
               height: 40,
             ),
             ClipRRect(
-              borderRadius: BorderRadius.circular(80),
+              borderRadius: BorderRadius.circular(60),
               child: Image.asset(
                 'assets/locat_app_icon.png',
                 width: 150,

@@ -1,4 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/advice/model/advice_model.dart';
+import 'package:flutter_locatrip/common/widget/loading_screen.dart';
+
+import '../../common/screen/userpage_screen.dart';
 
 class EditorsListScreen extends StatefulWidget {
   final int postId;
@@ -10,43 +15,91 @@ class EditorsListScreen extends StatefulWidget {
 
 class _EditorsListScreenState extends State<EditorsListScreen> {
   late int _postId;
-  final List<String> editors = [
-    "롯데자이언츠우승",
-    "롯데자이언츠우승",
-    "롯데자이언츠우승",
-    "롯데자이언츠우승",
-    "롯데자이언츠우승",
-  ];
+  bool _isLoading = true;
+  final AdviceModel _adviceModel = AdviceModel();
+  late List<dynamic> _advicers = [];
+
+  Future<void> _loadAdvisersData(int postId) async {
+    try {
+      LoadingOverlay.show(context);
+      List<dynamic> result =
+          await _adviceModel.getAdvisersData(context, postId);
+      print("result: $result");
+      setState(() {
+        _advicers = result;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print("!!!!!!!!!!!!!!!!!!advicers 중 에러 발생 : $e");
+    } finally {
+      LoadingOverlay.hide();
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _postId = widget.postId;
+    _loadAdvisersData(_postId);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('첨삭자 목록'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
+        title: Text('첨삭자 목록'),
       ),
       body: ListView.separated(
-        itemCount: editors.length,
+        itemCount: _advicers.length,
         itemBuilder: (context, index) {
           return ListTile(
-            leading: const CircleAvatar(
-              backgroundColor: Colors.blue,
-              child: Icon(
-                Icons.account_circle,
-                color: Colors.white,
-              ),
-            ),
+            leading: _advicers[index]['profilePic'] != null
+                ? GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                UserpageScreen(userId: _advicers[index]['id'])),
+                      );
+                    },
+                    child: ClipOval(
+                      child: CachedNetworkImage(
+                        imageUrl: _advicers[index]['profilePic'],
+                        placeholder: (context, url) => SizedBox(
+                          width: 30,
+                          height: 30,
+                          child: Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Icon(
+                          Icons.error_outline,
+                          size: 28,
+                        ),
+                        fit: BoxFit.cover,
+                        width: 60,
+                        height: 60,
+                      ),
+                    ),
+                  )
+                : GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                UserpageScreen(userId: _advicers[index]['id'])),
+                      );
+                    },
+                    child: CircleAvatar(
+                        radius: 30,
+                        backgroundImage:
+                            AssetImage('assets/default_profile_image.png')
+                                as ImageProvider),
+                  ),
             title: Text(
-              editors[index],
+              _advicers[index]['nickname'],
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -59,7 +112,7 @@ class _EditorsListScreenState extends State<EditorsListScreen> {
             ),
             onTap: () {
               // 첨삭자 상세 페이지로 이동
-              print('${editors[index]} tapped');
+              print('${_advicers[index]['id']} tapped');
             },
           );
         },
@@ -71,62 +124,3 @@ class _EditorsListScreenState extends State<EditorsListScreen> {
     );
   }
 }
-
-/*class EditorsListScreen extends StatelessWidget {
-  final int postId;
-
-  final List<String> editors = [
-    "롯데자이언츠우승",
-    "롯데자이언츠우승",
-    "롯데자이언츠우승",
-    "롯데자이언츠우승",
-    "롯데자이언츠우승",
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('첨삭자 목록'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: ListView.separated(
-        itemCount: editors.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            leading: const CircleAvatar(
-              backgroundColor: Colors.blue,
-              child: Icon(
-                Icons.account_circle,
-                color: Colors.white,
-              ),
-            ),
-            title: Text(
-              editors[index],
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            trailing: const Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: Colors.grey,
-            ),
-            onTap: () {
-              // 첨삭자 상세 페이지로 이동
-              print('${editors[index]} tapped');
-            },
-          );
-        },
-        separatorBuilder: (context, index) => const Divider(
-          height: 1,
-          color: Colors.grey,
-        ),
-      ),
-    );
-  }
-}*/

@@ -28,7 +28,8 @@ class _AdviceWriteScreenState extends State<AdviceWriteScreen> {
   TextEditingController _contentsController = TextEditingController();
   final AdviceModel _adviceModel = AdviceModel();
 
-  Future<void> _insertAdvice(int postId, int tripDayLocationId) async {
+  Future<void> _insertAdviceAndUserAlarm(
+      int postId, int tripDayLocationId) async {
     if (_contentsController.text.isNotEmpty) {
       try {
         final FlutterSecureStorage storage = FlutterSecureStorage();
@@ -42,9 +43,21 @@ class _AdviceWriteScreenState extends State<AdviceWriteScreen> {
           "contents": _contentsController.text,
           "locationId": tripDayLocationId
         };
-        final result = await _adviceModel.insertAdvice(context, adviceData);
+        final Map<String, dynamic> insertedAdvice =
+            await _adviceModel.insertAdvice(context, adviceData);
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text("첨삭 등록")));
+
+        Map<String, Object> userAlarmData = {
+          "adviceNum": 1,
+          "userId": userId,
+          "local_advice_id": insertedAdvice['id']
+        };
+
+        final result =
+            await _adviceModel.insertUserAlarm(context, userAlarmData);
+        print(insertedAdvice);
+        print(result);
         Navigator.pop(context);
       } catch (e) {
         print('포스트를 저장하는 중 에러가 발생했습니다 : $e');
@@ -79,7 +92,7 @@ class _AdviceWriteScreenState extends State<AdviceWriteScreen> {
             TextButton(
                 // 등록하는 함수
                 onPressed: () {
-                  _insertAdvice(_postId, _tripDayLocationId);
+                  _insertAdviceAndUserAlarm(_postId, _tripDayLocationId);
                 },
                 child: Text("등록",
                     style: Theme.of(context)
