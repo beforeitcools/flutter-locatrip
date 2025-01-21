@@ -3,6 +3,7 @@ import 'package:flutter_locatrip/advice/screen/post_list_screen.dart';
 import 'package:flutter_locatrip/chatting/screen/chatting_screen.dart';
 import 'package:flutter_locatrip/mypage/screen/mypage_screen.dart';
 
+import '../../advice/screen/advice_post_screen.dart';
 import '../../main/screen/main_screen.dart';
 import '../../map/model/app_overlay_controller.dart';
 import '../../map/screen/map_screen.dart';
@@ -27,7 +28,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _pages = [
       MainScreen(onTapped: _onTappedMap),
       MapScreen(region: _submittedValue),
-      PostListScreen(),
+      // PostListScreen(),
+      AdvicePostScreen(),
       ChattingScreen(),
       MypageScreen(),
     ];
