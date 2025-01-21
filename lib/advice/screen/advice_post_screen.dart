@@ -219,12 +219,12 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
               children: [
                 // 지도 섹션
                 Container(
-                  height: 260, // Stack의 높이를 고정
+                  height: 200, // Stack의 높이를 고정
                   child: _buildMapSection(),
                 ),
                 // 메인 글 (지도 위에 살짝 걸치도록 Positioned 설정)
                 Positioned(
-                  top: 240, // 살짝 겹치는 높이 조정
+                  top: 180, // 살짝 겹치는 높이 조정
                   left: 16,
                   right: 16,
                   child: Material(
