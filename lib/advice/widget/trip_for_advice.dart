@@ -10,8 +10,13 @@ import '../screen/advice_write_screen.dart';
 class TripForAdvice extends StatefulWidget {
   String tripData;
   int postId;
+  bool canAdvice;
 
-  TripForAdvice({super.key, required this.tripData, required this.postId});
+  TripForAdvice(
+      {super.key,
+      required this.tripData,
+      required this.postId,
+      required this.canAdvice});
 
   @override
   State<TripForAdvice> createState() => _TripForPostState();
@@ -182,10 +187,12 @@ class _TripForPostState extends State<TripForAdvice> {
                                               onPressed: () {
                                                 /*TODO 바텀바로 첨삭보기, 첨삭하기(현지인의 경우)*/
                                                 showAdviceBottomSheet(
-                                                    widget.postId,
-                                                    _myTrip[index]["id"],
-                                                    _schedules[index]
-                                                        ["location"]["name"]);
+                                                  widget.postId,
+                                                  _myTrip[index]["id"],
+                                                  _schedules[index]["location"]
+                                                      ["name"],
+                                                  widget.canAdvice,
+                                                );
                                               },
                                               icon: Icon(Icons.forum_outlined),
                                               color: blackColor,
@@ -199,27 +206,63 @@ class _TripForPostState extends State<TripForAdvice> {
         )
     );
   }
-
-  void showAdviceBottomSheet(int postId, int tripDayLocationId, String locationName) {
-    showModalBottomSheet(context: context, builder: (context) {
-      return Container(
-        width: MediaQuery
-            .of(context)
-            .size
-            .width,
-        padding: EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextButton(
-                onPressed: () {
-                  /*TODO 첨삭하기 페이지*/ Navigator.push(context, MaterialPageRoute(
-                      builder: (context) =>
-                          AdviceWriteScreen(postId: postId,
-                              tripDayLocationId: tripDayLocationId,
-                              locationName: locationName)));
-                },
-                child: Text("첨삭하기", style: Theme.of(context).textTheme.labelLarge!.copyWith(color: blackColor))
+  
+  void showAdviceBottomSheet(
+      int postId, int tripDayLocationId, String locationName, bool canAdvice) {
+    showModalBottomSheet(
+        context: context,
+        builder: (context) {
+          return Container(
+            width: MediaQuery.of(context).size.width,
+            padding: EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (canAdvice)
+                  TextButton(
+                      onPressed: () {
+                        /*TODO 첨삭하기 페이지*/
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => AdviceWriteScreen(
+                                    postId: postId,
+                                    tripDayLocationId: tripDayLocationId,
+                                    locationName: locationName)));
+                      },
+                      child: Text(
+                        "첨삭하기",
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelLarge!
+                            .copyWith(color: blackColor),
+                      )),
+                TextButton(
+                    onPressed: () {
+                      /*TODO 첨삭보기 페이지*/
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => AdviceViewScreen(
+                                    postId: postId,
+                                    tripDayLocationId: tripDayLocationId,
+                                  )));
+                    },
+                    child: Text("첨삭보기",
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelLarge!
+                            .copyWith(color: blackColor))),
+                TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text("취소",
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelLarge!
+                            .copyWith(color: blackColor))),
+              ],
             ),
             TextButton(onPressed: () {
               /*TODO 첨삭보기 페이지*/ Navigator.push(context, MaterialPageRoute(
@@ -238,9 +281,7 @@ class _TripForPostState extends State<TripForAdvice> {
                     .labelLarge!
                     .copyWith(color: blackColor))
             ),
-          ],
         ),
-      );
     });
   }
 }

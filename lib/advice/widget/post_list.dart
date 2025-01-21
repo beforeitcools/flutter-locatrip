@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/advice/screen/post_view_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
+import '../../common/screen/userpage_screen.dart';
+
 class PostList extends StatelessWidget {
   final List<dynamic> filteredPost;
   final Function(int) navigateToPostViewPage;
@@ -48,33 +50,57 @@ class PostList extends StatelessWidget {
                               ListTile(
                                   // 프로필 이미지
                                   leading: post['profilePic'] != null
-                                      ? ClipOval(
-                                          child: CachedNetworkImage(
-                                            imageUrl: post['profilePic'],
-                                            placeholder: (context, url) =>
-                                                SizedBox(
-                                              width: 30,
-                                              height: 30,
-                                              child: Center(
-                                                child:
-                                                    CircularProgressIndicator(),
+                                      ? GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      UserpageScreen(
+                                                          userId:
+                                                              post['userId'])),
+                                            );
+                                          },
+                                          child: ClipOval(
+                                            child: CachedNetworkImage(
+                                              imageUrl: post['profilePic'],
+                                              placeholder: (context, url) =>
+                                                  SizedBox(
+                                                width: 30,
+                                                height: 30,
+                                                child: Center(
+                                                  child:
+                                                      CircularProgressIndicator(),
+                                                ),
                                               ),
+                                              errorWidget:
+                                                  (context, url, error) => Icon(
+                                                Icons.error_outline,
+                                                size: 28,
+                                              ),
+                                              fit: BoxFit.cover,
+                                              width: 60,
+                                              height: 60,
                                             ),
-                                            errorWidget:
-                                                (context, url, error) => Icon(
-                                              Icons.error_outline,
-                                              size: 28,
-                                            ),
-                                            fit: BoxFit.cover,
-                                            width: 60,
-                                            height: 60,
                                           ),
                                         )
-                                      : CircleAvatar(
-                                          radius: 30,
-                                          backgroundImage: AssetImage(
-                                                  'assets/default_profile_image.png')
-                                              as ImageProvider),
+                                      : GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      UserpageScreen(
+                                                          userId:
+                                                              post['userId'])),
+                                            );
+                                          },
+                                          child: CircleAvatar(
+                                              radius: 30,
+                                              backgroundImage: AssetImage(
+                                                      'assets/default_profile_image.png')
+                                                  as ImageProvider),
+                                        ),
                                   title: Text(
                                     post["title"],
                                     style:
