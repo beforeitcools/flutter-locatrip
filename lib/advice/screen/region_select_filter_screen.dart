@@ -208,7 +208,7 @@ class _RegionSelectFilterScreenState extends State<RegionSelectFilterScreen> {
         title: Text("지역 선택", style: Theme.of(context).textTheme.headlineLarge),
       ),
       body: Padding(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+        padding: EdgeInsets.fromLTRB(16, 16, 16, 16),
         child: GridView.builder(
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2, // Two columns

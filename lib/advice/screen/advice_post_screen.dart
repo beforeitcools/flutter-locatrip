@@ -213,6 +213,7 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [
+          // 지도 섹션
           SliverToBoxAdapter(
             child: Stack(
               clipBehavior: Clip.none, // 클립을 해제하여 Positioned 요소가 넘어가도 보이도록 설정
@@ -245,6 +246,7 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
           SliverToBoxAdapter(
             child: _buildSectionHeader('1', '강남역', '관광명소 · 서울 강남구'),
           ),
+
           SliverToBoxAdapter(
             child: Center(
               child: SizedBox(
@@ -253,6 +255,7 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
               ),
             ),
           ),
+
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
@@ -262,9 +265,11 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
               childCount: 1,
             ),
           ),
+
           SliverToBoxAdapter(
             child: _buildSectionHeader('2', '강남역', '관광명소 · 서울 강남구'),
           ),
+
           SliverToBoxAdapter(
             child: Center(
               child: SizedBox(
@@ -273,6 +278,7 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
               ),
             ),
           ),
+
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
@@ -281,9 +287,11 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
               childCount: 1,
             ),
           ),
+
           SliverToBoxAdapter(
             child: _buildSectionHeader('3', '강남역', '관광명소 · 서울 강남구'),
           ),
+
           SliverToBoxAdapter(
             child: Center(
               child: SizedBox(
@@ -292,6 +300,7 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
               ),
             ),
           ),
+
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
@@ -300,9 +309,11 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
               childCount: 1,
             ),
           ),
+
           SliverToBoxAdapter(
             child: _buildSectionHeader('4', '강남역', '관광명소 · 서울 강남구'),
           ),
+
           SliverToBoxAdapter(
             child: Center(
               child: SizedBox(
@@ -540,6 +551,7 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
             ],
           ),
           const SizedBox(height: 12),
+
           // 게시글 내용
           Text(
             advice['content'] ?? '내용 없음',

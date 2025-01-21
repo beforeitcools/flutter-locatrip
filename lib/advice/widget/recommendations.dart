@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_locatrip/advice/screen/post_view_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
 import '../../trip/model/recommend_region.dart';
@@ -22,13 +23,19 @@ class Recommendations extends StatelessWidget {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: postsInMyRegion.isEmpty
-                  ? Row(
-                      children: [
-                        Text(
-                          "$localArea 이/가 포함된 포스트가 없습니다.",
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
+                  ? Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "$localArea 이/가 포함된 포스트가 없습니다.",
+                            style: Theme.of(context).textTheme.bodySmall,
+                            textAlign: TextAlign.start,
+                          ),
+                        ],
+                      ),
                     )
                   : Row(
                       children: postsInMyRegion.map((post) {
@@ -39,7 +46,13 @@ class Recommendations extends StatelessWidget {
                             color: Colors.transparent,
                             child: InkWell(
                               // 포스트 페이지로 연결(postId)
-                              onTap: () {},
+                              onTap: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => PostViewScreen(
+                                            postId: post['postId'])));
+                              },
                               splashColor: Color.fromARGB(50, 43, 192, 228),
                               highlightColor: Color.fromARGB(30, 43, 192, 228),
                               child: Column(
@@ -53,7 +66,7 @@ class Recommendations extends StatelessWidget {
                                     child: Image.asset(
                                       regionImages.keys.contains(localArea)
                                           ? "${regionImages[localArea]}"
-                                          : "assets/icon/delete.png",
+                                          : "assets/images/default.jpg",
                                       width: 24,
                                       height: 24,
                                       fit: BoxFit.cover,

@@ -23,6 +23,7 @@ class LinkModel {
   Future<void> fetchLinkPreview(String link, BuildContext context) async {
     final SDio sdio = SDio();
     final Dio dio = await sdio.createDio();
+    // final Dio dio = Dio();
     dio.interceptors.add(AuthInterceptor(dio, context));
 
     try {

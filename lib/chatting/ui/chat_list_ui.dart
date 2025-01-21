@@ -24,7 +24,7 @@ class _ChatListUiState extends State<ChatListUi> {
   final ChatModel _chatModel = ChatModel();
 
   final FlutterSecureStorage _storage = FlutterSecureStorage();
-  final _channel =  WebSocketChannel.connect(Uri.parse("ws://localhost:8082"));
+  final _channel =  WebSocketChannel.connect(Uri.parse("wss://www.beforeitcools.site:7777"));
   List<dynamic> _unreadCounts = [];
 
   Future<void> _getToken() async{
@@ -57,12 +57,19 @@ class _ChatListUiState extends State<ChatListUi> {
     });
   }
 
+  Future<void> _updateRecentMessage() async
+  {
+    final result = await Navigator.push(context, MaterialPageRoute(builder: (context)=>ChatRoomPage(chatroomId: widget.chatroomId, chatroomName: widget.chatroomName)));
+    setState(() {
+      widget.currentMessage = result;
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return ListTile(
       hoverColor: Color.fromRGBO(170, 170, 170, 0.1),
-      onTap: (){Navigator.push(context, MaterialPageRoute(builder: (context)=> ChatRoomPage(chatroomId: widget.chatroomId, chatroomName: widget.chatroomName)));},
-      leading: CircleAvatar(radius: 20, child: Icon(Icons.add)),
+      onTap: (){_updateRecentMessage();},
+      leading: CircleAvatar(radius: 20, backgroundImage: AssetImage('assets/default_profile_image.png') as ImageProvider),
       title: Text(widget.chatroomName, style: Theme.of(context).textTheme.labelLarge), //TODO: 채팅방이름 sender로 하면 안되고 해당방에 있는 사람 중에 나 제외하고 ... (기본값) 외에 유저가 설정해준 값 할 수 ㅣㅇㅆ음
       subtitle: Text(widget.currentMessage, style: Theme.of(context).textTheme.labelMedium),
       trailing: _unreadCount != 0

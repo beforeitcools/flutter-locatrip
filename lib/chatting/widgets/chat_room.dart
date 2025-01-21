@@ -21,7 +21,7 @@ class ChatRoomPage extends StatefulWidget {
 
 class _ChatRoomPageState extends State<ChatRoomPage> {
 
-  late final uri = Uri.parse('ws://localhost:8082/chattingServer');// 서버 url
+  late final uri = Uri.parse('wss://www.beforeitcools.site:7777/chattingServer');// 서버 url
   late final WebSocketChannel _channel;
 
   final ChatModel _chatModel = ChatModel();
@@ -95,6 +95,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         setState(() {
           _chats.add(message);
           _textController.clear();
+          _scrollToBottom();
         });
         WidgetsBinding.instance.addPostFrameCallback((_) {_scrollToBottom();});
         await _chatModel.saveMessage(jsonMessage, context);
@@ -126,11 +127,12 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
       appBar: AppBar(
 
         leading: InkWell(
-          onTap: (){Navigator.pop(context);},
+          onTap: (){Navigator.pop(context, _chats.last["messageContents"]);},
           child:  Icon(Icons.arrow_back),
         ),
         title: Text(widget.chatroomName),
