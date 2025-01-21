@@ -142,79 +142,83 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           IconButton(onPressed: (){_pushToSetting(context);},
               icon: Icon(Icons.settings_outlined), color: grayColor)
         ],),
-        body: Container(
-          height: MediaQuery.of(context).size.height,
-          width: MediaQuery.of(context).size.width,
-          child: Stack(
-            children: [
-              StreamBuilder(
-                  stream: _channel.stream, // 이 스트림을 참조하께여 구독중
-                  builder: (context, snapshot){
-                    if(snapshot.hasData){
-                      {print('스냅샷 데이터 : ${snapshot.data}');
-                      Map<String, dynamic> mapData = jsonDecode(snapshot.data);
-                      _chats.add(mapData);}
-                      WidgetsBinding.instance.addPostFrameCallback((_) {_scrollToBottom();}); //TODO 테스트 했을 때 안 되면 여기 다시 봐
-                    }
-                return Container(
-                  padding: EdgeInsets.only(bottom: 80),
-                  // height: MediaQuery.of(context).size.height - 150,
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    shrinkWrap: true, // 리스트뷰의 크기를 현재 표시되는 아이템들의 크기에 맞게 자동으로 조절
-                    itemCount: _chats.length,
-                    itemBuilder: (context, index){
-                      final chat = _chats[index];
-                      return chat["userId"] == myUserId ? OwnMessageUi(text: chat["messageContents"], time: chat["sendTime"].toString()) : ReplyMessageUi(text: chat["messageContents"], time: chat["sendTime"].toString()); //TODO: userId 확인해서 "나"면 Own, 외에는 Reply
-                    },
-                  ),
-                );
-          }),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Padding(padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom), //TODO 테스트해보고 아직 키보드 먹으면 얘 다시 보기
-                  child: Row(
-                      children: [
-                        Padding(padding: EdgeInsets.only(left: 16, bottom: 16),
-                          child: IconButton(onPressed: (){}, icon: Icon(Icons.add_circle_outline), color: blackColor, iconSize: 30,),
+        body:GestureDetector(
+          onTap: (){ FocusManager.instance.primaryFocus?.unfocus();},
+          child: Container(
+            height: MediaQuery.of(context).size.height,
+            width: MediaQuery.of(context).size.width,
+            child: Stack(
+              children: [
+                StreamBuilder(
+                    stream: _channel.stream, // 이 스트림을 참조하께여 구독중
+                    builder: (context, snapshot){
+                      if(snapshot.hasData){
+                        {print('스냅샷 데이터 : ${snapshot.data}');
+                        Map<String, dynamic> mapData = jsonDecode(snapshot.data);
+                        _chats.add(mapData);}
+                        WidgetsBinding.instance.addPostFrameCallback((_) {_scrollToBottom();}); //TODO 테스트 했을 때 안 되면 여기 다시 봐
+                      }
+                      return Container(
+                        padding: EdgeInsets.only(bottom: 80),
+                        // height: MediaQuery.of(context).size.height - 150,
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          shrinkWrap: true, // 리스트뷰의 크기를 현재 표시되는 아이템들의 크기에 맞게 자동으로 조절
+                          itemCount: _chats.length,
+                          itemBuilder: (context, index){
+                            final chat = _chats[index];
+                            return chat["userId"] == myUserId ? OwnMessageUi(text: chat["messageContents"], time: chat["sendTime"].toString()) : ReplyMessageUi(text: chat["messageContents"], time: chat["sendTime"].toString()); //TODO: userId 확인해서 "나"면 Own, 외에는 Reply
+                          },
                         ),
-                        Expanded(child: Container(
-                            padding: EdgeInsets.only(right: 16, bottom: 16),
-                            width: MediaQuery.of(context).size.width - 55,
-                            child: Card(
-                                elevation: 0,
-                                color: Color.fromRGBO(170, 170, 170, 0.1),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-                                child: Row(
-                                  children: [
-                                    Expanded(child: TextFormField(
-                                      style: Theme.of(context).textTheme.bodyMedium,
-                                      textAlignVertical: TextAlignVertical.center,
-                                      keyboardType: TextInputType.multiline,
-                                      maxLines: 10,
-                                      minLines: 1,
-                                      controller: _textController,
-                                      onFieldSubmitted: (value){
-                                        if(value.isNotEmpty){
-                                          _channel.sink.add(value);
-                                          _textController.text = "";
+                      );
+                    }),
+                Align(
+                    alignment: Alignment.bottomCenter,
+                    // child: Padding(padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom), //TODO 테스트해보고 아직 키보드 먹으면 얘 다시 보기
+                    child: Row(
+                        children: [
+                          Padding(padding: EdgeInsets.only(left: 16, bottom: 16),
+                            child: IconButton(onPressed: (){}, icon: Icon(Icons.add_circle_outline), color: blackColor, iconSize: 30,),
+                          ),
+                          Expanded(child: Container(
+                              padding: EdgeInsets.only(right: 16, bottom: 16),
+                              width: MediaQuery.of(context).size.width - 55,
+                              child: Card(
+                                  elevation: 0,
+                                  color: Color.fromRGBO(170, 170, 170, 0.1),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                                  child: Row(
+                                    children: [
+                                      Expanded(child: TextFormField(
+                                        onTap: (){WidgetsBinding.instance.addPostFrameCallback((_) {_scrollToBottom();});},
+                                        style: Theme.of(context).textTheme.bodyMedium,
+                                        textAlignVertical: TextAlignVertical.center,
+                                        keyboardType: TextInputType.multiline,
+                                        maxLines: 10,
+                                        minLines: 1,
+                                        controller: _textController,
+                                        onFieldSubmitted: (value){
+                                          if(value.isNotEmpty){
+                                            _channel.sink.add(value);
+                                            _textController.text = "";
+                                          }
+                                        },
+                                        decoration: InputDecoration(
+                                            border: InputBorder.none,
+                                            hintText: "메세지를 입력하세요",
+                                            contentPadding: EdgeInsets.only(left: 20, right: 20, bottom: 15)),
+                                      )),
+                                      IconButton(onPressed: (){
+                                        if(_textController.text.isNotEmpty){
+                                          _sendMessage();
                                         }
-                                      },
-                                      decoration: InputDecoration(
-                                          border: InputBorder.none,
-                                          hintText: "메세지를 입력하세요",
-                                          contentPadding: EdgeInsets.only(left: 20, right: 20, bottom: 15)),
-                                    )),
-                                    IconButton(onPressed: (){
-                                      if(_textController.text.isNotEmpty){
-                                        _sendMessage();
-                                      }
-                                    }, icon: Icon(Icons.send), color: grayColor,)
-                                  ],
-                                )))),
-                      ]))
-              ),
-            ],
+                                      }, icon: Icon(Icons.send), color: grayColor,)
+                                    ],
+                                  )))),
+                        ]))
+                // ),
+              ],
+            ),
           ),
         )
     );
