@@ -72,15 +72,21 @@ class _PostViewScreenState extends State<PostViewScreen> {
     } else {
       _authenticatedLocalArea = isValidAndLocalArea['localArea'];
       // _postData 로 selectedRegions 의 Region 가져와서 _selectedRegionList 에 add
-      // 예지씨 HELP~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ㅠㅠㅠㅠ
-      if (_selectedRegionList.contains(_authenticatedLocalArea)) {
-        _isLocal = true;
+      for (var p in _postData) {
+        // _postData[i]["selectedRegions"]["region"]의 저장된 모든 region 저장... 이걸 원하신 게 맞나요
+        // 아닐시 조건문을 ...
+        _selectedRegionList.add(p["selectedRegions"]["region"]);
       }
-      _isUserAndPostCreatorSame = _myUserId == _postData['userId'];
-      // if (_isUserAndPostCreatorSame == false && _isLocal == true) {
-      _canAdvice = true;
-      // }
     }
+    if (_selectedRegionList.contains(_authenticatedLocalArea)) {
+      _isLocal = true;
+    }
+    _isUserAndPostCreatorSame = _myUserId == _postData['userId'];
+
+    if (_isUserAndPostCreatorSame == false && _isLocal == true) {
+      _canAdvice = true;
+    }
+
     print('여행 넘겨 받았어?!?!?!   $_postData');
     _updateValue(_postData["advicedTripData"]);
   }
@@ -250,13 +256,14 @@ class _PostViewScreenState extends State<PostViewScreen> {
                                               color: blackColor))
                                     ])),
                             SizedBox(height: 16),
-                            _tripData.isEmpty
-                                ? Center(child: CircularProgressIndicator())
-                                : TripForAdvice(
-                                    tripData: _tripData,
-                                    postId: widget.postId,
-                                    canAdvice: _canAdvice,
-                                  )
+                            Expanded(
+                                child: _tripData.isEmpty
+                                    ? Center(child: CircularProgressIndicator())
+                                    : TripForAdvice(
+                                        tripData: _tripData,
+                                        postId: widget.postId,
+                                        canAdvice: _canAdvice,
+                                      ))
                           ],
                         ),
                       )),
