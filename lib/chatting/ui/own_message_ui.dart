@@ -19,18 +19,20 @@ class OwnMessageUi extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              SizedBox(width: 50),
+              SizedBox(width: 20),
               Text("$onlyTime", style: Theme.of(context).textTheme.labelSmall!.copyWith(color: grayColor),),
-              ConstrainedBox(constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width - 55),
-                child: Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    color: pointBlueColor,
+              Flexible(child:  Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  color: pointBlueColor,
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width - 50),
                     child: Padding(
                         padding: EdgeInsets.all(10),
-                        child: Text(text, style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: Colors.white))
-                    )))
+                        child: Text(text, style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: Colors.white), softWrap: true, overflow: TextOverflow.visible)
+                    ),
+                  )))
             ],
           ),
         ));
