@@ -28,8 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _pages = [
       MainScreen(onTapped: _onTappedMap),
       MapScreen(region: _submittedValue),
-      // PostListScreen(),
-      AdvicePostScreen(),
+      PostListScreen(),
       ChattingScreen(),
       MypageScreen(),
     ];

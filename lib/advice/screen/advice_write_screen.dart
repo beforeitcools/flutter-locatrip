@@ -49,7 +49,7 @@ class _AdviceWriteScreenState extends State<AdviceWriteScreen> {
             .showSnackBar(SnackBar(content: Text("첨삭 등록")));
 
         Map<String, Object> userAlarmData = {
-          "adviceNum": 1,
+          "alarmNum": 1,
           "userId": userId,
           "local_advice_id": insertedAdvice['id']
         };

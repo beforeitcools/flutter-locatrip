@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/advice/model/advice_model.dart';
+import 'package:flutter_locatrip/advice/screen/advice_post_screen.dart';
 import 'package:flutter_locatrip/common/widget/loading_screen.dart';
 
 import '../../common/screen/userpage_screen.dart';
@@ -53,6 +54,14 @@ class _EditorsListScreenState extends State<EditorsListScreen> {
         itemCount: _advicers.length,
         itemBuilder: (context, index) {
           return ListTile(
+            onTap: () {
+              // 첨삭자 상세 페이지로 이동
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AdvicePostScreen(),
+                  ));
+            },
             leading: _advicers[index]['profilePic'] != null
                 ? GestureDetector(
                     onTap: () {
@@ -110,10 +119,6 @@ class _EditorsListScreenState extends State<EditorsListScreen> {
               size: 16,
               color: Colors.grey,
             ),
-            onTap: () {
-              // 첨삭자 상세 페이지로 이동
-              print('${_advicers[index]['id']} tapped');
-            },
           );
         },
         separatorBuilder: (context, index) => const Divider(

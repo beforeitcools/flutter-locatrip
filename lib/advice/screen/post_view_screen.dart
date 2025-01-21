@@ -77,9 +77,9 @@ class _PostViewScreenState extends State<PostViewScreen> {
         _isLocal = true;
       }
       _isUserAndPostCreatorSame = _myUserId == _postData['userId'];
-      if (_isUserAndPostCreatorSame == false && _isLocal == true) {
-        _canAdvice = true;
-      }
+      // if (_isUserAndPostCreatorSame == false && _isLocal == true) {
+      _canAdvice = true;
+      // }
     }
     print('여행 넘겨 받았어?!?!?!   $_postData');
     _updateValue(_postData["advicedTripData"]);
