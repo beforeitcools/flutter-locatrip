@@ -213,7 +213,7 @@ class _PostViewScreenState extends State<PostViewScreen> {
                                : TripForAdvice(
                              tripData: _tripData,
                              postId: widget.postId,
-                             //canAdvice: _canAdvice, //TODO 얘는머지
+                             canAdvice: _canAdvice,
                            ))
                           ],
                         ),
