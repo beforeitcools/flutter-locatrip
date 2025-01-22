@@ -136,6 +136,7 @@ class _MainScreenState extends State<MainScreen> {
       Map<String, dynamic> result = await _mypageModel.getMyTripData(context);
       if (result.isNotEmpty) {
         _myTripList.addAll(result["futureTrips"]);
+        _myTripList.addAll(result["pastTrips"]);
         print('_myTrip$_myTripList');
         setState(() {
           _isTripLoading = false;

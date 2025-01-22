@@ -480,7 +480,7 @@ class _MypageScreenState extends State<MypageScreen> {
                     ],
                   ),
                   // 임시 테스팅 용도
-                  GestureDetector(
+                  /*GestureDetector(
                     onTap: () {
                       Navigator.push(
                         context,
@@ -521,7 +521,7 @@ class _MypageScreenState extends State<MypageScreen> {
                         backgroundImage:
                             AssetImage('assets/default_profile_image.png')
                                 as ImageProvider),
-                  ),
+                  ),*/
                 ],
               ),
             ),

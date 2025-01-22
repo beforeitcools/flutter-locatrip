@@ -252,7 +252,7 @@ class _UserpageScreenState extends State<UserpageScreen> {
                                         thickness: 1.0,
                                       ),
                                     ),
-                                    Text(_selectedAdviceCount,
+                                    Text(/*_selectedAdviceCount*/ '31',
                                         style: TextStyle(
                                           color: pointBlueColor,
                                           fontSize: 16,

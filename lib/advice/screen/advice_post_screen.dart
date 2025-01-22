@@ -1,9 +1,12 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_locatrip/advice/screen/editors_list_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+
+import '../../common/screen/userpage_screen.dart';
 
 class AdvicePostScreen extends StatefulWidget {
   const AdvicePostScreen({Key? key}) : super(key: key);
@@ -23,15 +26,35 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
 
   final List<Map<String, String>> adviceList = [
     {
-      'author': '부산갈매기',
-      'date': '2024-12-13',
-      'content': '부산은 아름다운 항구 도시입니다...'
+      'author': '혼자옵서예',
+      'date': '2025-02-07',
+      'content':
+          '제주의 자연과 지역 음식을 즐기기에 편안하고 알찬 코스네요! 이동 동선도 비교적 편리하고, 제주도의 다양한 매력을 느낄 수 있는 구성입니다 :)'
     },
-    {'author': '서울나그네', 'date': '2024-12-14', 'content': '서울의 밤은 화려합니다...'},
-    {'author': '광주빛고을', 'date': '2024-12-15', 'content': '광주는 문화의 중심지입니다...'},
-    {'author': '경주빛고을', 'date': '2024-12-15', 'content': '경주는 문화의 중심지입니다...'},
-    {'author': '서울고을', 'date': '2024-12-15', 'content': '서울는 문화의 중심지입니다...'},
-    {'author': '동작구고을', 'date': '2024-12-15', 'content': '동작구는 문화의 중심지입니다...'},
+    {
+      'author': '혼자옵서예',
+      'date': '2025-02-07',
+      'content':
+          '한림공원은 가족 단위나 조용히 산책하고 싶은 사람들에게 좋아요. 사진 찍기 좋은 포인트도 많아서 추억 남기기 딱이에요. 다만, 날씨가 더운 날에는 조금 더울 수 있으니 오전이나 늦은 오후 방문을 추천해요.'
+    },
+    {
+      'author': '혼자옵서예',
+      'date': '2025-02-07',
+      'content':
+          '현지인들도 많이 찾는 곳이라 믿고 먹을 수 있어요. 국물이 정말 시원하고 해산물이 신선해서 만족스러울 거예요. 사람이 많을 때는 조금 기다려야 할 수도 있으니 여유를 가지고 가는 게 좋아요.'
+    },
+    {
+      'author': '혼자옵서예',
+      'date': '2025-02-07',
+      'content':
+          '풍경을 좋아하는 분들에게 강추! 수월봉에서 바라보는 바다는 정말 평화로워요. 특히 일몰 시간에 맞춰 가면 최고의 뷰를 감상할 수 있어요. 트레킹 코스도 짧아서 부담 없이 다녀올 수 있어요.'
+    },
+    {
+      'author': '혼자옵서예',
+      'date': '2025-02-07',
+      'content':
+          '송악산은 경치도 좋고 트레킹하기에 부담스럽지 않아서 가벼운 산책이나 힐링 여행에 딱이에요. 바다를 끼고 걷는 코스라서 사진 찍기도 좋고, 날씨만 좋으면 멋진 풍경을 즐길 수 있을 거예요.'
+    },
   ];
 
   @override
@@ -56,8 +79,8 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
       }
     });
 
-    latitude = 37.493196;
-    longitude = 127.028549;
+    latitude = 33.4996213;
+    longitude = 126.5311884;
   }
 
   @override
@@ -239,12 +262,35 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
           ),
           // 지도와 다음 Sliver 사이의 간격을 추가
           SliverToBoxAdapter(
-            child: SizedBox(height: 80), // 겹친 영역에 대한 간격 확보
+            child: SizedBox(height: 140), // 겹친 영역에 대한 간격 확보
           ),
 
           // 나머지 글 섹션
           SliverToBoxAdapter(
-            child: _buildSectionHeader('1', '강남역', '관광명소 · 서울 강남구'),
+            child: _buildSectionHeader('1', '제주 공항', '국제 공항 · 제주시'),
+          ),
+
+          // SliverToBoxAdapter(
+          //   child: Center(
+          //     child: SizedBox(
+          //       height: 20,
+          //       child: _buildVerticalDashedLine(),
+          //     ),
+          //   ),
+          // ),
+
+          // SliverList(
+          //   delegate: SliverChildBuilderDelegate(
+          //     (context, index) {
+          //       print(adviceList[index]);
+          //       return _buildAdviceCard(adviceList[index + 1]);
+          //     },
+          //     childCount: 1,
+          //   ),
+          // ),
+
+          SliverToBoxAdapter(
+            child: _buildSectionHeader('2', '한림공원', '식물원 · 제주시'),
           ),
 
           SliverToBoxAdapter(
@@ -259,7 +305,6 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
-                print(adviceList[index]);
                 return _buildAdviceCard(adviceList[index + 1]);
               },
               childCount: 1,
@@ -267,7 +312,7 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
           ),
 
           SliverToBoxAdapter(
-            child: _buildSectionHeader('2', '강남역', '관광명소 · 서울 강남구'),
+            child: _buildSectionHeader('3', '한림칼국수', '음식점 · 제주시'),
           ),
 
           SliverToBoxAdapter(
@@ -289,7 +334,7 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
           ),
 
           SliverToBoxAdapter(
-            child: _buildSectionHeader('3', '강남역', '관광명소 · 서울 강남구'),
+            child: _buildSectionHeader('4', '수월봉', '수월봉'),
           ),
 
           SliverToBoxAdapter(
@@ -300,7 +345,6 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
               ),
             ),
           ),
-
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
@@ -309,9 +353,8 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
               childCount: 1,
             ),
           ),
-
           SliverToBoxAdapter(
-            child: _buildSectionHeader('4', '강남역', '관광명소 · 서울 강남구'),
+            child: _buildSectionHeader('5', '송악산', '서귀포시'),
           ),
 
           SliverToBoxAdapter(
@@ -408,14 +451,52 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                     ),
-                    child: Image.asset("assets/default_profile_image.png"),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => UserpageScreen(userId: 2)),
+                        );
+                      },
+                      child: ClipOval(
+                        child: CachedNetworkImage(
+                          imageUrl:
+                              "https://www.beforeitcools.site:7777/images/user/profilePic/tangerine_3837701.png",
+                          placeholder: (context, url) => SizedBox(
+                            width: 30,
+                            height: 30,
+                            child: Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Icon(
+                            Icons.error_outline,
+                            size: 28,
+                          ),
+                          fit: BoxFit.cover,
+                          width: 60,
+                          height: 60,
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    advice['author'] ?? '작성자 없음',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                  GestureDetector(
+                    onTap: () {
+                      print("눌리니?");
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => UserpageScreen(userId: 2)),
+                      );
+                    },
+                    child: Text(
+                      advice['author'] ?? '작성자 없음',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                 ],
@@ -529,7 +610,35 @@ class _AdvicePostScreenState extends State<AdvicePostScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                     ),
-                    child: Image.asset("assets/default_profile_image.png"),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => UserpageScreen(userId: 2)),
+                        );
+                      },
+                      child: ClipOval(
+                        child: CachedNetworkImage(
+                          imageUrl:
+                              "https://www.beforeitcools.site:7777/images/user/profilePic/tangerine_3837701.png",
+                          placeholder: (context, url) => SizedBox(
+                            width: 30,
+                            height: 30,
+                            child: Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Icon(
+                            Icons.error_outline,
+                            size: 28,
+                          ),
+                          fit: BoxFit.cover,
+                          width: 60,
+                          height: 60,
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Text(

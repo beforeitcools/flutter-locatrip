@@ -71,11 +71,18 @@ class _PostViewScreenState extends State<PostViewScreen> {
       _isLocal = false;
     } else {
       _authenticatedLocalArea = isValidAndLocalArea['localArea'];
+      print(_postData);
       // _postData 로 selectedRegions 의 Region 가져와서 _selectedRegionList 에 add
-      for (var p in _postData) {
+
+      List<Map<String, dynamic>> parsed =
+          _jsonParser.convertToList(_postData['advicedTripData']);
+      print("parsed: $parsed");
+      List<dynamic> list = parsed[0]['trip']['selectedRegions'];
+      for (var p in list) {
         // _postData[i]["selectedRegions"]["region"]의 저장된 모든 region 저장... 이걸 원하신 게 맞나요
         // 아닐시 조건문을 ...
-        _selectedRegionList.add(p["selectedRegions"]["region"]);
+        print(p["region"]);
+        _selectedRegionList.add(p["region"]);
       }
     }
     if (_selectedRegionList.contains(_authenticatedLocalArea)) {
@@ -86,6 +93,7 @@ class _PostViewScreenState extends State<PostViewScreen> {
     if (_isUserAndPostCreatorSame == false && _isLocal == true) {
       _canAdvice = true;
     }
+    print(_selectedRegionList);
 
     print('여행 넘겨 받았어?!?!?!   $_postData');
     _updateValue(_postData["advicedTripData"]);

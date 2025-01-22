@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_locatrip/advice/screen/post_screen.dart';
 import 'package:flutter_locatrip/chatting/model/chat_model.dart';
+import 'package:flutter_locatrip/common/screen/alarm_screen.dart';
 import 'package:flutter_locatrip/common/widget/color.dart';
 
 import 'package:flutter_locatrip/mypage/model/mypage_model.dart';
@@ -865,7 +866,13 @@ class _TripViewScreenState extends State<TripViewScreen> {
                       icon: Icon(Icons.ios_share)),
               isEditing
                   ? IconButton(
-                      onPressed: null,
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => AlarmScreen()),
+                        );
+                      },
                       icon: Stack(
                         clipBehavior: Clip.none,
                         children: [
@@ -1010,10 +1017,13 @@ class _TripViewScreenState extends State<TripViewScreen> {
                                               if (tripInfo["chattingId"] !=
                                                   null) {
                                                 // 채팅방 들어가기
-                                                _chatModel.getExistTripChatroom(context, tripInfo["chattingId"]);
+                                                _chatModel.getExistTripChatroom(
+                                                    context,
+                                                    tripInfo["chattingId"]);
                                               } else {
                                                 // 채팅방 만들기
-                                                _chatModel.createTripChatroom(context);
+                                                _chatModel.createTripChatroom(
+                                                    context);
                                               }
                                             },
                                             icon: Icon(

@@ -50,14 +50,15 @@ class _AdviceWriteScreenState extends State<AdviceWriteScreen> {
 
         Map<String, Object> userAlarmData = {
           "alarmNum": 1,
-          "userId": userId,
-          "local_advice_id": insertedAdvice['id']
+          "userId": insertedAdvice['postCreatorUserId'],
+          "localAdviceId": insertedAdvice['localAdviceId']
         };
 
         final result =
             await _adviceModel.insertUserAlarm(context, userAlarmData);
-        print(insertedAdvice);
-        print(result);
+        print(
+            "-------------------------------------------------$insertedAdvice");
+        print("------------------------------------$result");
         Navigator.pop(context);
       } catch (e) {
         print('포스트를 저장하는 중 에러가 발생했습니다 : $e');

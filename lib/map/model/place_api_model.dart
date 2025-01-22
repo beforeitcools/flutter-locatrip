@@ -9,6 +9,8 @@ import 'api_key_loader.dart';
 class PlaceApiModel {
   Future<Map<String, dynamic>> getNearByPlaces(
       Map<String, dynamic> data) async {
+    /*final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();*/
     final dio = Dio();
     String? apiKey = await ApiKeyLoader.getApiKey('PLACES_API_KEY');
     // print('apiKey1 : $apiKey');
@@ -37,6 +39,8 @@ class PlaceApiModel {
   }
 
   Future<List<String>> getPlacePhotos(List<String> photos) async {
+    /*final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();*/
     final dio = Dio();
     String? apiKey = await ApiKeyLoader.getApiKey('PLACES_API_KEY');
     List<String> resultList = [];
@@ -72,6 +76,8 @@ class PlaceApiModel {
   }
 
   Future<List<dynamic>> getSearchPlace(Map<String, dynamic> data) async {
+    /*final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();*/
     final dio = Dio();
     String? apiKey = await ApiKeyLoader.getApiKey('PLACES_API_KEY');
 
@@ -99,6 +105,8 @@ class PlaceApiModel {
   }
 
   Future<Map<String, dynamic>> getPlaceDetail(String id) async {
+    /*final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();*/
     final dio = Dio();
     String? apiKey = await ApiKeyLoader.getApiKey('PLACES_API_KEY');
     print('id $id / apiKey $apiKey');
@@ -128,9 +136,9 @@ class PlaceApiModel {
 
   // 지역명으로 뷰포트 찾아오기
   Future<Map<String, dynamic>> getViewPorts(String address) async {
-    final SDio sdio = SDio();
-    final Dio dio = await sdio.createDio();
-    // final dio = Dio();
+    /*final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();*/
+    final dio = Dio();
     String? apiKey = await ApiKeyLoader.getApiKey2('GEOCODING_API_KEY');
     print('apiKey $apiKey');
 
@@ -154,6 +162,8 @@ class PlaceApiModel {
 
   // 좌표로 주소명 불러오기
   Future<Map<String, dynamic>> getAddressName(LatLng latlng) async {
+    /*final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();*/
     final dio = Dio();
     String? apiKey = await ApiKeyLoader.getApiKey2('GEOCODING_API_KEY');
     print('apiKey $apiKey');
@@ -178,6 +188,8 @@ class PlaceApiModel {
 
   Future<Map<String, dynamic>> getViewPortsInKorean(
       LatLng latlng, String language) async {
+    /*final SDio sdio = SDio();
+    final Dio dio = await sdio.createDio();*/
     final dio = Dio();
     String? apiKey = await ApiKeyLoader.getApiKey2('GEOCODING_API_KEY');
     print('apiKey $apiKey');

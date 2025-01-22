@@ -71,6 +71,7 @@ class MypageModel {
 
     try {
       final response = await dio.get("$backUrl/mypage/myTrip");
+      print("response: ${response.data}");
 
       if (response.statusCode == 200) {
         return response.data as Map<String, dynamic>;

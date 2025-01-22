@@ -38,6 +38,8 @@ class Recommendations extends StatelessWidget {
                       ),
                     )
                   : Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: postsInMyRegion.map((post) {
                         return Container(
                           width: MediaQuery.of(context).size.width / 4.5,
